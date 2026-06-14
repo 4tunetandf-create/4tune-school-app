@@ -18,50 +18,17 @@
 
 <div id="homeArea" style="display:none;">
 
-  <h3>会員追加</h3>
-  <input id="memberName">
-  <input id="memberCourse">
-  <button onclick="addMember()">追加</button>
-
-  <br><br>
-
   <input type="date" id="absenceDate">
   <button onclick="sendAbsence()">欠席申請</button>
 
 </div>
 
 <script>
-
 const GAS_URL =
 "https://script.google.com/macros/s/AKfycbzjPkLxYBJeBGk9yehLHfUUMhJmQUfxNiaVHyNqjd9MeAqkWOIINjIUBXsxIEpwqa78Mw/exec";
 
 let selectedMembers = [];
-// ======================
-// ボタン表示関係
-// ======================
-function showLoading() {
 
-  document.getElementById("status").innerHTML = "読み込み中...";
-
-  document.getElementById("registerArea").style.display = "none";
-  document.getElementById("homeArea").style.display = "none";
-}
-
-function showRegister() {
-
-  document.getElementById("status").innerHTML = "";
-
-  document.getElementById("registerArea").style.display = "block";
-  document.getElementById("homeArea").style.display = "none";
-}
-
-function showHome(text) {
-
-  document.getElementById("status").innerHTML = text;
-
-  document.getElementById("registerArea").style.display = "none";
-  document.getElementById("homeArea").style.display = "block";
-}
 
 // =======================
 // 初期処理
@@ -70,7 +37,7 @@ async function main() {
 
   try {
 
-    showLoading();
+    document.getElementById("status").innerHTML = "読み込み中...";
 
     await liff.init({
       liffId: "2010350476-xCTsckal"
@@ -85,18 +52,14 @@ async function main() {
 
     const checkData = await checkParent(profile.userId);
 
+    // 未登録
     if (!checkData.exists) {
-      showRegister();
+      showRegister(profile.userId);
       return;
     }
 
-    const homeText =
-      "こんにちは " + profile.displayName + " さん<br><br>" +
-      "<b>登録会員</b><br>";
-
-    showHome(homeText);
-
-    loadHome(profile);
+    // 登録済み
+    await loadHome(profile);
 
   } catch (e) {
     document.getElementById("status").innerHTML = "ERR: " + e.message;
@@ -104,16 +67,19 @@ async function main() {
 
 }
 
+
 // =======================
-// UI（登録画面）
+// 未登録UI
 // =======================
-function showRegisterUI(lineUserId) {
+function showRegister(lineUserId) {
 
   document.getElementById("status").innerHTML = `
     <h3>初回登録</h3>
     <p>保護者名を入力してください</p>
+
     <input id="parentName" placeholder="例：山田太郎">
     <br><br>
+
     <button onclick="registerParent('${lineUserId}')">
       登録する
     </button>
@@ -123,12 +89,9 @@ function showRegisterUI(lineUserId) {
 
 
 // =======================
-// ホーム画面
+// ホーム
 // =======================
 async function loadHome(profile) {
-
-  document.getElementById("status").innerHTML =
-    "会員情報取得中...";
 
   const res = await fetch(
     GAS_URL +
@@ -155,13 +118,24 @@ async function loadHome(profile) {
 
   }
 
-  document.getElementById("status").innerHTML = html;
+  html += `
+    <hr>
+    <h3>欠席申請</h3>
 
+    <input type="date" id="absenceDate">
+    <br><br>
+
+    <button onclick="sendAbsence()">
+      欠席申請
+    </button>
+  `;
+
+  document.getElementById("status").innerHTML = html;
 }
 
 
 // =======================
-// 登録処理
+// 保護者登録
 // =======================
 async function registerParent(lineUserId) {
 
@@ -182,14 +156,12 @@ async function registerParent(lineUserId) {
   });
 
   alert("登録完了");
-
   location.reload();
-
 }
 
 
 // =======================
-// 会員追加
+// 会員追加（※未使用なら削除OK）
 // =======================
 async function addMember() {
 
@@ -215,9 +187,7 @@ async function addMember() {
   });
 
   alert("会員を追加しました");
-
   location.reload();
-
 }
 
 
@@ -254,7 +224,6 @@ async function sendAbsence() {
 
   alert("申請完了");
   selectedMembers = [];
-
 }
 
 
@@ -270,12 +239,11 @@ function selectMember(id, name) {
   } else {
     selectedMembers.push({ id, name });
   }
-
 }
 
 
 // =======================
-// API（保護者確認）
+// API
 // =======================
 async function checkParent(lineUserId) {
 
@@ -286,25 +254,6 @@ async function checkParent(lineUserId) {
   );
 
   return await res.json();
-
-}
-
-
-// =======================
-// API（保護者ID取得）
-// =======================
-async function getParentId(lineUserId) {
-
-  const res = await fetch(
-    GAS_URL +
-    "?action=getParentByLineId&lineUserId=" +
-    encodeURIComponent(lineUserId)
-  );
-
-  const data = await res.json();
-
-  return data.parentId;
-
 }
 
 
@@ -312,7 +261,6 @@ async function getParentId(lineUserId) {
 // 起動
 // =======================
 main();
-
 </script>
 </body>
 </html>
