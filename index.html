@@ -75,18 +75,105 @@ function showRegister(lineUserId) {
 
   document.getElementById("status").innerHTML = `
     <h3>初回登録</h3>
-    <p>保護者名を入力してください</p>
 
+    <p>保護者名</p>
     <input id="parentName" placeholder="例：山田太郎">
+
+    <hr>
+
+    <p>お子さま（複数OK）</p>
+
+    <div id="childrenArea">
+
+      <div class="childRow">
+        <input class="childName" placeholder="子ども名">
+        <input class="childCourse" placeholder="コース">
+      </div>
+
+    </div>
+
+    <button onclick="addChildRow()">＋追加</button>
+
     <br><br>
 
-    <button onclick="registerParent('${lineUserId}')">
+    <button onclick="registerAll('${lineUserId}')">
       登録する
     </button>
   `;
-
 }
+function addChildRow() {
 
+  const div = document.createElement("div");
+
+  div.className = "childRow";
+
+  div.innerHTML = `
+    <input class="childName" placeholder="子ども名">
+    <input class="childCourse" placeholder="コース">
+  `;
+
+  document.getElementById("childrenArea").appendChild(div);
+}
+async function registerAll(lineUserId) {
+
+  const parentName = document.getElementById("parentName").value;
+
+  if (!parentName) {
+    alert("保護者名を入力してください");
+    return;
+  }
+
+  // ① 保護者登録
+  const parentRes = await fetch(GAS_URL, {
+    method: "POST",
+    body: JSON.stringify({
+      action: "createParent",
+      lineUserId: lineUserId,
+      name: parentName
+    })
+  });
+
+  const parentData = await parentRes.json();
+  const parentId = parentData.parentId;
+
+  // ② 子ども取得
+  const names = document.querySelectorAll(".childName");
+  const courses = document.querySelectorAll(".childCourse");
+
+  let children = [];
+
+  for (let i = 0; i < names.length; i++) {
+
+    const name = names[i].value;
+
+    if (!name) continue;
+
+    children.push({
+      name: name,
+      course: courses[i].value
+    });
+
+  }
+
+  // ③ 会員登録（兄弟分ループ）
+  for (const c of children) {
+
+    await fetch(GAS_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        action: "addMember",
+        parentId: parentId,
+        name: c.name,
+        course: c.course
+      })
+    });
+
+  }
+
+  alert("登録完了（保護者＋子ども）");
+
+  location.reload();
+}
 
 // =======================
 // ホーム
