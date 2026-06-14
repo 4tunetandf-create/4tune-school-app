@@ -87,16 +87,21 @@ async function main() {
 
 function selectMember(id, name) {
 
-  selectedMember = { id, name };
+  const exists = selectedMembers.find(m => m.id === id);
 
-  document.getElementById("status").innerHTML +=
-    "<br><br>選択中: " + name;
+  if (exists) {
+    selectedMembers = selectedMembers.filter(m => m.id !== id);
+    alert(name + " を解除しました");
+  } else {
+    selectedMembers.push({ id, name });
+    alert(name + " を追加しました");
+  }
 
 }
 
 async function sendAbsence() {
 
-  if (!selectedMember) {
+  if (selectedMembers.length === 0) {
     alert("会員を選択してください");
     return;
   }
@@ -108,24 +113,26 @@ async function sendAbsence() {
     return;
   }
 
-  const response = await fetch(GAS_URL, {
+  for (const m of selectedMembers) {
 
-    method: "POST",
+    await fetch(GAS_URL, {
 
-    body: JSON.stringify({
-      action: "absenceRequest",
-      memberId: selectedMember.id,
-      memberName: selectedMember.name,
-      absenceDate: date
-    })
+      method: "POST",
 
-  });
+      body: JSON.stringify({
+        action: "absenceRequest",
+        memberId: m.id,
+        memberName: m.name,
+        absenceDate: date
+      })
 
-  await response.json();
+    });
+
+  }
 
   alert("申請完了");
 
-  selectedMember = null;
+  selectedMembers = [];
 
 }
 
