@@ -11,7 +11,20 @@
 <h1>スクール管理アプリ</h1>
 
 <div id="status">読み込み中...</div>
+<br><br>
 
+<h3>会員追加</h3>
+
+<input id="memberName" placeholder="名前">
+<br><br>
+
+<input id="memberCourse" placeholder="コース（任意）">
+<br><br>
+
+<button onclick="addMember()">
+会員を追加
+</button>
+  
 <input type="date" id="absenceDate">
 <br><br>
 
@@ -26,6 +39,10 @@ const GAS_URL =
 
 let selectedMembers = [];
 
+
+// =======================
+// 初期処理
+// =======================
 async function main() {
 
   try {
@@ -44,32 +61,13 @@ async function main() {
 
     const profile = await liff.getProfile();
 
-    // 保護者存在チェック（追加）
-    const checkRes = await fetch(
-      GAS_URL +
-      "?action=getParentByLineId&lineUserId=" +
-      encodeURIComponent(profile.userId)
-    );
+    const checkData = await checkParent(profile.userId);
 
-    const checkData = await checkRes.json();
-
-    // 未登録 → 登録画面
     if (!checkData.exists) {
-
-      document.getElementById("status").innerHTML = `
-        <h3>初回登録</h3>
-        <p>保護者名を入力してください</p>
-        <input id="parentName" placeholder="例：山田太郎">
-        <br><br>
-        <button onclick="registerParent('${profile.userId}')">
-          登録する
-        </button>
-      `;
-
+      showRegisterUI(profile.userId);
       return;
     }
 
-    // 登録済み → ホーム画面
     loadHome(profile);
 
   } catch (error) {
@@ -83,19 +81,40 @@ async function main() {
 
 }
 
+
+// =======================
+// UI（登録画面）
+// =======================
+function showRegisterUI(lineUserId) {
+
+  document.getElementById("status").innerHTML = `
+    <h3>初回登録</h3>
+    <p>保護者名を入力してください</p>
+    <input id="parentName" placeholder="例：山田太郎">
+    <br><br>
+    <button onclick="registerParent('${lineUserId}')">
+      登録する
+    </button>
+  `;
+
+}
+
+
+// =======================
 // ホーム画面
+// =======================
 async function loadHome(profile) {
 
   document.getElementById("status").innerHTML =
     "会員情報取得中...";
 
-  const response = await fetch(
+  const res = await fetch(
     GAS_URL +
     "?action=getMembersByLineId&lineUserId=" +
     encodeURIComponent(profile.userId)
   );
 
-  const data = await response.json();
+  const data = await res.json();
 
   let html = "";
 
@@ -118,7 +137,10 @@ async function loadHome(profile) {
 
 }
 
-// 初回登録
+
+// =======================
+// 登録処理
+// =======================
 async function registerParent(lineUserId) {
 
   const name = document.getElementById("parentName").value;
@@ -143,20 +165,43 @@ async function registerParent(lineUserId) {
 
 }
 
-// 会員選択（複数対応）
-function selectMember(id, name) {
 
-  const exists = selectedMembers.find(m => m.id === id);
+// =======================
+// 会員追加
+// =======================
+async function addMember() {
 
-  if (exists) {
-    selectedMembers = selectedMembers.filter(m => m.id !== id);
-  } else {
-    selectedMembers.push({ id, name });
+  const name = document.getElementById("memberName").value;
+  const course = document.getElementById("memberCourse").value;
+
+  if (!name) {
+    alert("名前を入力してください");
+    return;
   }
+
+  const profile = await liff.getProfile();
+  const parentId = await getParentId(profile.userId);
+
+  await fetch(GAS_URL, {
+    method: "POST",
+    body: JSON.stringify({
+      action: "addMember",
+      parentId: parentId,
+      name: name,
+      course: course
+    })
+  });
+
+  alert("会員を追加しました");
+
+  location.reload();
 
 }
 
+
+// =======================
 // 欠席申請
+// =======================
 async function sendAbsence() {
 
   if (selectedMembers.length === 0) {
@@ -174,26 +219,76 @@ async function sendAbsence() {
   for (const m of selectedMembers) {
 
     await fetch(GAS_URL, {
-
       method: "POST",
-
       body: JSON.stringify({
         action: "absenceRequest",
         memberId: m.id,
         memberName: m.name,
         absenceDate: date
       })
-
     });
 
   }
 
   alert("申請完了");
-
   selectedMembers = [];
 
 }
 
+
+// =======================
+// 会員選択
+// =======================
+function selectMember(id, name) {
+
+  const exists = selectedMembers.find(m => m.id === id);
+
+  if (exists) {
+    selectedMembers = selectedMembers.filter(m => m.id !== id);
+  } else {
+    selectedMembers.push({ id, name });
+  }
+
+}
+
+
+// =======================
+// API（保護者確認）
+// =======================
+async function checkParent(lineUserId) {
+
+  const res = await fetch(
+    GAS_URL +
+    "?action=getParentByLineId&lineUserId=" +
+    encodeURIComponent(lineUserId)
+  );
+
+  return await res.json();
+
+}
+
+
+// =======================
+// API（保護者ID取得）
+// =======================
+async function getParentId(lineUserId) {
+
+  const res = await fetch(
+    GAS_URL +
+    "?action=getParentByLineId&lineUserId=" +
+    encodeURIComponent(lineUserId)
+  );
+
+  const data = await res.json();
+
+  return data.parentId;
+
+}
+
+
+// =======================
+// 起動
+// =======================
 main();
 
 </script>
