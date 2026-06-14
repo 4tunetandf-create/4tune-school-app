@@ -10,18 +10,21 @@
 
 <h1>スクール管理アプリ</h1>
 
-<div id="status">
-  読み込み中...
-</div>
+<div id="status">読み込み中...</div>
 
-<button onclick="testAbsence()">
-欠席申請テスト
+<input type="date" id="absenceDate">
+<br><br>
+
+<button onclick="sendAbsence()">
+欠席申請
 </button>
 
 <script>
 
 const GAS_URL =
 "https://script.google.com/macros/s/AKfycbzjPkLxYBJeBGk9yehLHfUUMhJmQUfxNiaVHyNqjd9MeAqkWOIINjIUBXsxIEpwqa78Mw/exec";
+
+let selectedMember = null;
 
 async function main() {
 
@@ -55,16 +58,23 @@ async function main() {
     let html = "";
 
     html += "こんにちは " + profile.displayName + " さん<br><br>";
-
     html += "<b>登録会員</b><br>";
 
     for (const member of data.members) {
-      html += "・" + member.name + "<br>";
+
+      html += `
+        <div style="margin:6px 0;">
+          <button onclick="selectMember('${member.memberId}', '${member.name}')">
+            ${member.name}
+          </button>
+        </div>
+      `;
+
     }
 
     document.getElementById("status").innerHTML = html;
 
-  } catch(error) {
+  } catch (error) {
 
     document.getElementById("status").innerHTML =
       "ERR : " + error.message;
@@ -75,7 +85,28 @@ async function main() {
 
 }
 
-async function testAbsence() {
+function selectMember(id, name) {
+
+  selectedMember = { id, name };
+
+  document.getElementById("status").innerHTML +=
+    "<br><br>選択中: " + name;
+
+}
+
+async function sendAbsence() {
+
+  if (!selectedMember) {
+    alert("会員を選択してください");
+    return;
+  }
+
+  const date = document.getElementById("absenceDate").value;
+
+  if (!date) {
+    alert("日付を選択してください");
+    return;
+  }
 
   const response = await fetch(GAS_URL, {
 
@@ -83,16 +114,18 @@ async function testAbsence() {
 
     body: JSON.stringify({
       action: "absenceRequest",
-      memberId: "MEM001",
-      memberName: "テスト会員",
-      absenceDate: "2026-06-14"
+      memberId: selectedMember.id,
+      memberName: selectedMember.name,
+      absenceDate: date
     })
 
   });
 
-  const result = await response.json();
+  await response.json();
 
-  alert("登録完了");
+  alert("申請完了");
+
+  selectedMember = null;
 
 }
 
