@@ -13,24 +13,27 @@
 <div id="status">読み込み中...</div>
 <br><br>
 
-<h3>会員追加</h3>
+<div id="status"></div>
 
-<input id="memberName" placeholder="名前">
-<br><br>
+<div id="registerArea" style="display:none;">
+  <h3>初回登録</h3>
+  <input id="parentName">
+  <button onclick="registerParent()">登録</button>
+</div>
 
-<input id="memberCourse" placeholder="コース（任意）">
-<br><br>
+<div id="homeArea" style="display:none;">
 
-<button onclick="addMember()">
-会員を追加
-</button>
-  
-<input type="date" id="absenceDate">
-<br><br>
+  <h3>会員追加</h3>
+  <input id="memberName">
+  <input id="memberCourse">
+  <button onclick="addMember()">追加</button>
 
-<button onclick="sendAbsence()">
-欠席申請
-</button>
+  <br><br>
+
+  <input type="date" id="absenceDate">
+  <button onclick="sendAbsence()">欠席申請</button>
+
+</div>
 
 <script>
 
@@ -38,7 +41,32 @@ const GAS_URL =
 "https://script.google.com/macros/s/AKfycbzjPkLxYBJeBGk9yehLHfUUMhJmQUfxNiaVHyNqjd9MeAqkWOIINjIUBXsxIEpwqa78Mw/exec";
 
 let selectedMembers = [];
+// ======================
+// ボタン表示関係
+// ======================
+function showLoading() {
 
+  document.getElementById("status").innerHTML = "読み込み中...";
+
+  document.getElementById("registerArea").style.display = "none";
+  document.getElementById("homeArea").style.display = "none";
+}
+
+function showRegister() {
+
+  document.getElementById("status").innerHTML = "";
+
+  document.getElementById("registerArea").style.display = "block";
+  document.getElementById("homeArea").style.display = "none";
+}
+
+function showHome(text) {
+
+  document.getElementById("status").innerHTML = text;
+
+  document.getElementById("registerArea").style.display = "none";
+  document.getElementById("homeArea").style.display = "block";
+}
 
 // =======================
 // 初期処理
@@ -47,8 +75,7 @@ async function main() {
 
   try {
 
-    document.getElementById("status").innerHTML =
-      "LIFF初期化開始";
+    showLoading();
 
     await liff.init({
       liffId: "2010350476-xCTsckal"
@@ -64,23 +91,23 @@ async function main() {
     const checkData = await checkParent(profile.userId);
 
     if (!checkData.exists) {
-      showRegisterUI(profile.userId);
+      showRegister();
       return;
     }
 
+    const homeText =
+      "こんにちは " + profile.displayName + " さん<br><br>" +
+      "<b>登録会員</b><br>";
+
+    showHome(homeText);
+
     loadHome(profile);
 
-  } catch (error) {
-
-    document.getElementById("status").innerHTML =
-      "ERR : " + error.message;
-
-    console.error(error);
-
+  } catch (e) {
+    document.getElementById("status").innerHTML = "ERR: " + e.message;
   }
 
 }
-
 
 // =======================
 // UI（登録画面）
