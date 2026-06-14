@@ -16,6 +16,9 @@
 
 <script>
 
+const GAS_URL =
+"https://script.google.com/macros/s/AKfycbzjPkLxYBJeBGk9yehLHfUUMhJmQUfxNiaVHyNqjd9MeAqkWOIINjIUBXsxIEpwqa78Mw/exec";
+
 async function main() {
 
   try {
@@ -27,17 +30,42 @@ async function main() {
       liffId: "2010350476-xCTsckal"
     });
 
+    if (!liff.isLoggedIn()) {
+      liff.login();
+      return;
+    }
+
     const profile = await liff.getProfile();
 
     document.getElementById("status").innerHTML =
-      "こんにちは " + profile.displayName + " さん<br><br>" +
-      "LINE ID:<br>" +
-      profile.userId;
+      "会員情報取得中...";
+
+    const response = await fetch(
+      GAS_URL +
+      "?action=getMembersByLineId&lineUserId=" +
+      encodeURIComponent(profile.userId)
+    );
+
+    const data = await response.json();
+
+    let html = "";
+
+    html += "こんにちは " + profile.displayName + " さん<br><br>";
+
+    html += "<b>登録会員</b><br>";
+
+    for (const member of data.members) {
+      html += "・" + member.name + "<br>";
+    }
+
+    document.getElementById("status").innerHTML = html;
 
   } catch(error) {
 
     document.getElementById("status").innerHTML =
       "ERR : " + error.message;
+
+    console.error(error);
 
   }
 
