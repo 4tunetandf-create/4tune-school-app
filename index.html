@@ -44,35 +44,33 @@ async function main() {
 
     const profile = await liff.getProfile();
 
-    document.getElementById("status").innerHTML =
-      "会員情報取得中...";
-
-    const response = await fetch(
+    // 保護者存在チェック（追加）
+    const checkRes = await fetch(
       GAS_URL +
-      "?action=getMembersByLineId&lineUserId=" +
+      "?action=getParentByLineId&lineUserId=" +
       encodeURIComponent(profile.userId)
     );
 
-    const data = await response.json();
+    const checkData = await checkRes.json();
 
-    let html = "";
+    // 未登録 → 登録画面
+    if (!checkData.exists) {
 
-    html += "こんにちは " + profile.displayName + " さん<br><br>";
-    html += "<b>登録会員</b><br>";
-
-    for (const member of data.members) {
-
-      html += `
-        <div style="margin:6px 0;">
-          <button onclick="selectMember('${member.memberId}', '${member.name}')">
-            ${member.name}
-          </button>
-        </div>
+      document.getElementById("status").innerHTML = `
+        <h3>初回登録</h3>
+        <p>保護者名を入力してください</p>
+        <input id="parentName" placeholder="例：山田太郎">
+        <br><br>
+        <button onclick="registerParent('${profile.userId}')">
+          登録する
+        </button>
       `;
 
+      return;
     }
 
-    document.getElementById("status").innerHTML = html;
+    // 登録済み → ホーム画面
+    loadHome(profile);
 
   } catch (error) {
 
@@ -85,20 +83,80 @@ async function main() {
 
 }
 
+// ホーム画面
+async function loadHome(profile) {
+
+  document.getElementById("status").innerHTML =
+    "会員情報取得中...";
+
+  const response = await fetch(
+    GAS_URL +
+    "?action=getMembersByLineId&lineUserId=" +
+    encodeURIComponent(profile.userId)
+  );
+
+  const data = await response.json();
+
+  let html = "";
+
+  html += "こんにちは " + profile.displayName + " さん<br><br>";
+  html += "<b>登録会員</b><br>";
+
+  for (const member of data.members) {
+
+    html += `
+      <div style="margin:6px 0;">
+        <button onclick="selectMember('${member.memberId}', '${member.name}')">
+          ${member.name}
+        </button>
+      </div>
+    `;
+
+  }
+
+  document.getElementById("status").innerHTML = html;
+
+}
+
+// 初回登録
+async function registerParent(lineUserId) {
+
+  const name = document.getElementById("parentName").value;
+
+  if (!name) {
+    alert("名前を入力してください");
+    return;
+  }
+
+  await fetch(GAS_URL, {
+    method: "POST",
+    body: JSON.stringify({
+      action: "createParent",
+      lineUserId: lineUserId,
+      name: name
+    })
+  });
+
+  alert("登録完了");
+
+  location.reload();
+
+}
+
+// 会員選択（複数対応）
 function selectMember(id, name) {
 
   const exists = selectedMembers.find(m => m.id === id);
 
   if (exists) {
     selectedMembers = selectedMembers.filter(m => m.id !== id);
-    alert(name + " を解除しました");
   } else {
     selectedMembers.push({ id, name });
-    alert(name + " を追加しました");
   }
 
 }
 
+// 欠席申請
 async function sendAbsence() {
 
   if (selectedMembers.length === 0) {
@@ -139,6 +197,5 @@ async function sendAbsence() {
 main();
 
 </script>
-
 </body>
 </html>
