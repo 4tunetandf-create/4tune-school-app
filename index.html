@@ -66,7 +66,34 @@ async function main() {
   }
 
 }
+// =======================
+// 処理中のプロテクト
+// =======================
+const UI_LOCK = {
+  count: 0
+};
 
+function lockUI(text = "処理中...") {
+
+  UI_LOCK.count++;
+
+  document.body.style.pointerEvents = "none";
+  document.body.style.opacity = "0.6";
+
+  const status = document.getElementById("status");
+  if (status) status.innerHTML = text;
+}
+
+function unlockUI() {
+
+  UI_LOCK.count = Math.max(0, UI_LOCK.count - 1);
+
+  if (UI_LOCK.count === 0) {
+    document.body.style.pointerEvents = "auto";
+    document.body.style.opacity = "1";
+  }
+}
+  
 
 // =======================
 // 未登録UI
@@ -252,29 +279,32 @@ async function registerParent(lineUserId) {
 // =======================
 async function addMember() {
 
-  const name = document.getElementById("memberName").value;
-  const course = document.getElementById("memberCourse").value;
+  lockUI("会員登録中...");
 
-  if (!name) {
-    alert("名前を入力してください");
-    return;
+  try {
+
+    const name = document.getElementById("memberName").value;
+    const course = document.getElementById("memberCourse").value;
+
+    const profile = await liff.getProfile();
+    const parentId = await getParentId(profile.userId);
+
+    await fetch(GAS_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        action: "addMember",
+        parentId,
+        name,
+        course
+      })
+    });
+
+    alert("完了");
+    location.reload();
+
+  } finally {
+    unlockUI();
   }
-
-  const profile = await liff.getProfile();
-  const parentId = await getParentId(profile.userId);
-
-  await fetch(GAS_URL, {
-    method: "POST",
-    body: JSON.stringify({
-      action: "addMember",
-      parentId: parentId,
-      name: name,
-      course: course
-    })
-  });
-
-  alert("会員を追加しました");
-  location.reload();
 }
 
 
@@ -283,34 +313,30 @@ async function addMember() {
 // =======================
 async function sendAbsence() {
 
-  if (selectedMembers.length === 0) {
-    alert("会員を選択してください");
-    return;
+  lockUI("申請中...");
+
+  try {
+
+    for (const m of selectedMembers) {
+
+      await fetch(GAS_URL, {
+        method: "POST",
+        body: JSON.stringify({
+          action: "absenceRequest",
+          memberId: m.id,
+          memberName: m.name,
+          absenceDate: document.getElementById("absenceDate").value
+        })
+      });
+
+    }
+
+    alert("申請完了");
+    selectedMembers = [];
+
+  } finally {
+    unlockUI();
   }
-
-  const date = document.getElementById("absenceDate").value;
-
-  if (!date) {
-    alert("日付を選択してください");
-    return;
-  }
-
-  for (const m of selectedMembers) {
-
-    await fetch(GAS_URL, {
-      method: "POST",
-      body: JSON.stringify({
-        action: "absenceRequest",
-        memberId: m.id,
-        memberName: m.name,
-        absenceDate: date
-      })
-    });
-
-  }
-
-  alert("申請完了");
-  selectedMembers = [];
 }
 
 
