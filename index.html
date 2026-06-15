@@ -344,13 +344,14 @@ async function addMember() {
 // 欠席申請
 // =======================
 async function sendAbsence() {
-
+console.log(document.getElementById("status").innerHTML);
+console.log(document.getElementById("absenceDate"));
   lockUI("申請中...");
 
   try {
 
     const date = document.getElementById("absenceDate").value;
-alert(date);
+
 
     for (const m of selectedMembers) {
 
