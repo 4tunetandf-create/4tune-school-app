@@ -352,6 +352,11 @@ async function sendAbsence() {
 
     const date = dateElement.value;
 
+    if (!dateElement.value) {
+  　alert("日付を選択してください");
+　  return;
+　　}
+
     for (const m of selectedMembers) {
 
       await fetch(GAS_URL, {
