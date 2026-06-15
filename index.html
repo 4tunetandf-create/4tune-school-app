@@ -489,30 +489,44 @@ grouped[item.memberName].push(item);
       <b>${memberName}</b><br>
     `;
 
-for (const item of grouped[memberName]) {
+for (const memberName in grouped) {
 
   html += `
-    ・${item.absenceDate}
-    （${item.status}）
+    <b>${memberName}</b><br>
   `;
 
-  if (item.status === "申請中") {
+  for (const item of grouped[memberName]) {
+
+    let cancelButton = "";
+
+    if (
+      item.status === "申請中" ||
+      item.status === "振替待ち"
+    ) {
+
+      cancelButton = `
+        <button onclick="
+          cancelAbsence(
+            '${item.memberId}',
+            '${item.rawDate}'
+          )
+        ">
+          取消
+        </button>
+      `;
+
+    }
 
     html += `
-      <button
-        onclick="
-cancelAbsence(
-  '${item.memberId}',
-  '${item.rawDate}'
-)
-        "
-      >
-        取消
-      </button>
+      ・${item.absenceDate}
+      （${item.status}）
+      ${cancelButton}
+      <br>
     `;
+
   }
 
-  html += "<br>";
+  html += `<br>`;
 
 }
 
