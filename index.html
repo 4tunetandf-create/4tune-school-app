@@ -458,91 +458,82 @@ function renderHome(profile) {
     <hr>
   `;
 
-// =====================
-// 欠席エリア
-// =====================
-html += `<h3>欠席</h3>`;
+  // =====================
+  // 欠席エリア
+  // =====================
+  html += `<h3>欠席</h3>`;
 
-if (!CACHE.absences || CACHE.absences.length === 0) {
-
-  html += `
-    連絡済みの欠席はありません
-  `;
-
-} else {
-
-  const grouped = {};
-
-  for (const item of CACHE.absences) {
-
-    if (!grouped[item.memberName]) {
-      grouped[item.memberName] = [];
-    }
-
-grouped[item.memberName].push(item);
-
-  }
-
-  for (const memberName in grouped) {
+  if (!CACHE.absences || CACHE.absences.length === 0) {
 
     html += `
-      <b>${memberName}</b><br>
+      連絡済みの欠席はありません
     `;
 
-for (const memberName in grouped) {
+  } else {
 
-  html += `
-    <b>${memberName}</b><br>
-  `;
+    const grouped = {};
 
-  for (const item of grouped[memberName]) {
+    for (const item of CACHE.absences) {
 
-    let cancelButton = "";
+      if (!grouped[item.memberName]) {
+        grouped[item.memberName] = [];
+      }
 
-    if (
-      item.status === "申請中" ||
-      item.status === "振替待ち"
-    ) {
+      grouped[item.memberName].push(item);
 
-      cancelButton = `
-        <button onclick="
-          cancelAbsence(
-            '${item.memberId}',
-            '${item.rawDate}'
-          )
-        ">
-          取消
-        </button>
+    }
+
+    for (const memberName in grouped) {
+
+      html += `
+        <b>${memberName}</b><br>
       `;
 
+      for (const item of grouped[memberName]) {
+
+        let cancelButton = "";
+
+        if (
+          item.status === "申請中" ||
+          item.status === "振替待ち"
+        ) {
+
+          cancelButton = `
+            <button onclick="
+              cancelAbsence(
+                '${item.memberId}',
+                '${item.rawDate}'
+              )
+            ">
+              取消
+            </button>
+          `;
+
+        }
+
+        html += `
+          ・${item.absenceDate}
+          （${item.status}）
+          ${cancelButton}
+          <br>
+        `;
+
+      }
+
+      html += `<br>`;
+
     }
 
-    html += `
-      ・${item.absenceDate}
-      （${item.status}）
-      ${cancelButton}
-      <br>
-    `;
-
   }
 
-  html += `<br>`;
-
-}
-
-    html += `<br>`;
-
-  }
-
-}
-
-html += `<hr>`;
+  html += `<hr>`;
 
   // =====================
   // 振替エリア
   // =====================
   html += `
     <h3>振替</h3>
+
     <div id="transferList">
       現在表示できる振替情報はありません
     </div>
@@ -568,6 +559,7 @@ html += `<hr>`;
   `;
 
   document.getElementById("status").innerHTML = html;
+
 }
 
 function showAbsenceForm() {
