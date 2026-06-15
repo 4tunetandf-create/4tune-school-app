@@ -422,11 +422,9 @@ function renderHome(profile) {
     <hr>
   `;
 
-  // =====================
-  // 欠席エリア
-  // =====================
-  html += `
-    <h3>欠席</h3>
+// =====================
+// 欠席エリア
+// =====================
 html += `<h3>欠席</h3>`;
 
 if (!CACHE.absences || CACHE.absences.length === 0) {
@@ -448,8 +446,7 @@ if (!CACHE.absences || CACHE.absences.length === 0) {
 
 }
 
-    <hr>
-  `;
+html += `<hr>`;
 
   // =====================
   // 振替エリア
