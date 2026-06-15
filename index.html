@@ -441,12 +441,35 @@ if (!CACHE.absences || CACHE.absences.length === 0) {
 
 } else {
 
+  const grouped = {};
+
   for (const item of CACHE.absences) {
 
+    if (!grouped[item.memberName]) {
+      grouped[item.memberName] = [];
+    }
+
+    grouped[item.memberName].push(
+      item.absenceDate
+    );
+
+  }
+
+  for (const memberName in grouped) {
+
     html += `
-      ${item.memberName}<br>
-      ・${item.absenceDate}<br><br>
+      <b>${memberName}</b><br>
     `;
+
+    for (const date of grouped[memberName]) {
+
+      html += `
+        ・${date}<br>
+      `;
+
+    }
+
+    html += `<br>`;
 
   }
 
