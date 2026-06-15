@@ -363,7 +363,7 @@ function renderHome(profile) {
 
   let html = "";
 
-  html += "こんにちは " + profile.displayName + " さん<br><br>";
+  html += "こんにちは " + profile.displayName + " さma<br><br>";
   html += "<b>登録会員</b><br>";
 
   for (const member of CACHE.members) {
