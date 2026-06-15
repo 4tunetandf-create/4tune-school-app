@@ -394,11 +394,27 @@ function renderHome(profile) {
 
   for (const member of CACHE.members) {
 
+    const isSelected = selectedMembers.some(m => m.id === member.memberId);
+
     html += `
       <div style="margin:6px 0;">
-        <button onclick="selectMember('${member.memberId}', '${member.name}')">
+
+        <button 
+          onclick="selectMember('${member.memberId}', '${member.name}')"
+          style="
+            padding:8px 12px;
+            border-radius:6px;
+            border:1px solid #ccc;
+            background:${isSelected ? '#4CAF50' : '#ffffff'};
+            color:${isSelected ? '#ffffff' : '#000000'};
+            font-weight:${isSelected ? 'bold' : 'normal'};
+            transition:0.2s;
+          "
+        >
           ${member.name}
+          ${isSelected ? ' ✔' : ''}
         </button>
+
       </div>
     `;
   }
