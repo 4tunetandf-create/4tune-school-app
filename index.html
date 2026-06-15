@@ -346,16 +346,21 @@ async function sendAbsence() {
     return;
   }
 
+  if (selectedMembers.length === 0) {
+    alert("会員を選択してください");
+    return;
+  }
+
+  const date = dateElement.value;
+
+  if (!date) {
+    alert("日付を選択してください");
+    return;
+  }
+
   lockUI("申請中...");
 
   try {
-
-    const date = dateElement.value;
-
-    if (!dateElement.value) {
-      alert("日付を選択してください");
-      return;
-    }
 
     for (const m of selectedMembers) {
 
@@ -379,10 +384,11 @@ async function sendAbsence() {
     await returnToHome();
 
   } finally {
+
     unlockUI();
+
   }
 }
-
 
 // =======================
 // 会員選択
