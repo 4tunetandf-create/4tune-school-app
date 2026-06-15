@@ -367,9 +367,11 @@ async function sendAbsence() {
 
   try {
 
+    let messages = [];
+
     for (const m of selectedMembers) {
 
-      await fetch(GAS_URL, {
+      const res = await fetch(GAS_URL, {
         method: "POST",
         body: JSON.stringify({
           action: "absenceRequest",
@@ -379,9 +381,25 @@ async function sendAbsence() {
         })
       });
 
+      const result = await res.json();
+
+      if (!result.success) {
+
+        messages.push(
+          m.name + "：" + result.message
+        );
+
+      } else {
+
+        messages.push(
+          m.name + "：申請完了"
+        );
+
+      }
+
     }
 
-    alert("申請完了");
+    alert(messages.join("\n"));
 
     selectedMembers = [];
     CACHE.absences = null;
@@ -395,6 +413,7 @@ async function sendAbsence() {
   }
 
 }
+  
 // =======================
 // 会員選択
 // =======================
