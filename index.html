@@ -592,6 +592,31 @@ function showTransferForm() {
   alert("振替申請は次工程で実装します");
 
 }
+
+// =======================
+// 取り消し
+// =======================
+async function cancelAbsence(memberId, absenceDate) {
+
+  if (!confirm("欠席を取り消しますか？")) {
+    return;
+  }
+
+  await fetch(GAS_URL, {
+    method: "POST",
+    body: JSON.stringify({
+      action: "changeRequestStatus",
+      memberId: memberId,
+      absenceDate: absenceDate,
+      status: "取消"
+    })
+  });
+
+  CACHE.absences = null;
+
+  await returnToHome();
+
+}
   
 // =======================
 // 起動
