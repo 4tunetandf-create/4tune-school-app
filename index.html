@@ -389,46 +389,112 @@ function renderHome(profile) {
 
   let html = "";
 
-  html += "こんにちは " + profile.displayName + " さま<br><br>";
-  html += "<b>登録会員</b><br>";
-
-  for (const member of CACHE.members) {
-
-    const isSelected = selectedMembers.some(m => m.id === member.memberId);
-
-    html += `
-      <div style="margin:6px 0;">
-
-        <button 
-          onclick="selectMember('${member.memberId}', '${member.name}')"
-          style="
-            padding:8px 12px;
-            border-radius:6px;
-            border:1px solid #ccc;
-            background:${isSelected ? '#4CAF50' : '#ffffff'};
-            color:${isSelected ? '#ffffff' : '#000000'};
-            font-weight:${isSelected ? 'bold' : 'normal'};
-            transition:0.2s;
-          "
-        >
-          ${member.name}
-          ${isSelected ? ' ✔' : ''}
-        </button>
-
-      </div>
-    `;
-  }
-
+  // =====================
+  // ヘッダー
+  // =====================
   html += `
+    <h2>こんにちは ${profile.displayName} さま</h2>
     <hr>
-    <input type="date" id="absenceDate">
+  `;
+
+  // =====================
+  // 欠席エリア
+  // =====================
+  html += `
+    <h3>欠席</h3>
+    <div id="absenceList">
+      現在表示できる欠席情報はありません
+    </div>
+
+    <hr>
+  `;
+
+  // =====================
+  // 振替エリア
+  // =====================
+  html += `
+    <h3>振替</h3>
+    <div id="transferList">
+      現在表示できる振替情報はありません
+    </div>
+
+    <hr>
+  `;
+
+  // =====================
+  // 操作ボタン
+  // =====================
+  html += `
+    <button onclick="showAbsenceForm()">
+      欠席申請
+    </button>
+
     <br><br>
-    <button onclick="sendAbsence()">欠席申請</button>
+
+    <button onclick="showTransferForm()">
+      振替申請
+    </button>
+
+    <hr>
   `;
 
   document.getElementById("status").innerHTML = html;
 }
 
+function showAbsenceForm() {
+
+  let html = "";
+
+  html += "<h3>欠席申請</h3>";
+
+  html += "<p>対象会員を選択してください</p>";
+
+  for (const member of CACHE.members) {
+
+    const isSelected =
+      selectedMembers.some(m => m.id === member.memberId);
+
+    html += `
+      <div style="margin:6px 0;">
+        <button
+          onclick="selectMember('${member.memberId}','${member.name}')"
+          style="
+            background:${isSelected ? '#4CAF50' : '#ffffff'};
+            color:${isSelected ? '#ffffff' : '#000000'};
+          "
+        >
+          ${member.name}
+          ${isSelected ? " ✔" : ""}
+        </button>
+      </div>
+    `;
+  }
+
+  html += `
+    <br>
+    <input type="date" id="absenceDate">
+    <br><br>
+
+    <button onclick="sendAbsence()">
+      申請する
+    </button>
+
+    <br><br>
+
+    <button onclick="returnToHome()">
+      戻る
+    </button>
+  `;
+
+  document.getElementById("status").innerHTML = html;
+}
+
+function showTransferForm() {
+
+  alert("振替申請は次工程で実装します");
+
+}
+  
 // =======================
 // 起動
 // =======================
