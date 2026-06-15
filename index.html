@@ -29,6 +29,11 @@ const GAS_URL =
 
 let selectedMembers = [];
 
+let CACHE = {
+  profile: null,
+  members: null
+};  
+  
 
 // =======================
 // 初期処理
@@ -37,7 +42,7 @@ async function main() {
 
   try {
 
-    document.getElementById("status").innerHTML = "読み込み中...";
+    lockUI("読み込み中...");
 
     await liff.init({
       liffId: "2010350476-xCTsckal"
@@ -48,24 +53,22 @@ async function main() {
       return;
     }
 
-    const profile = await liff.getProfile();
+    CACHE.profile = await liff.getProfile();
 
-    const checkData = await checkParent(profile.userId);
+    const checkData = await checkParent(CACHE.profile.userId);
 
-    // 未登録
     if (!checkData.exists) {
-      showRegister(profile.userId);
+      showRegister(CACHE.profile.userId);
       return;
     }
 
-    // 登録済み
-    await loadHome(profile);
+    await loadHome(CACHE.profile);
 
-  } catch (e) {
-    document.getElementById("status").innerHTML = "ERR: " + e.message;
+  } finally {
+    unlockUI();
   }
-
 }
+  
 // =======================
 // 処理中のプロテクト
 // =======================
@@ -138,6 +141,7 @@ function showRegister(lineUserId) {
     </button>
   `;
 }
+  
 function addChildRow() {
 
   const div = document.createElement("div");
@@ -151,6 +155,7 @@ function addChildRow() {
 
   document.getElementById("childrenArea").appendChild(div);
 }
+  
 async function registerAll(lineUserId) {
 
   const parentName = document.getElementById("parentName").value;
@@ -208,7 +213,8 @@ async function registerAll(lineUserId) {
   }
 
   alert("登録完了（保護者＋子ども）");
-
+  CACHE.members = null;
+  
   location.reload();
 }
 
@@ -217,44 +223,29 @@ async function registerAll(lineUserId) {
 // =======================
 async function loadHome(profile) {
 
-  const res = await fetch(
-    GAS_URL +
-    "?action=getMembersByLineId&lineUserId=" +
-    encodeURIComponent(profile.userId)
-  );
+  lockUI("会員情報取得中...");
 
-  const data = await res.json();
+  try {
 
-  let html = "";
+    // ★キャッシュ優先
+    if (!CACHE.members) {
 
-  html += "こんにちは " + profile.displayName + " さん<br><br>";
-  html += "<b>登録会員</b><br>";
+      const res = await fetch(
+        GAS_URL +
+        "?action=getMembersByLineId&lineUserId=" +
+        encodeURIComponent(profile.userId)
+      );
 
-  for (const member of data.members) {
+      const data = await res.json();
+      CACHE.members = data.members;
 
-    html += `
-      <div style="margin:6px 0;">
-        <button onclick="selectMember('${member.memberId}', '${member.name}')">
-          ${member.name}
-        </button>
-      </div>
-    `;
+    }
 
+    renderHome(profile);
+
+  } finally {
+    unlockUI();
   }
-
-  html += `
-    <hr>
-    <h3>欠席申請</h3>
-
-    <input type="date" id="absenceDate">
-    <br><br>
-
-    <button onclick="sendAbsence()">
-      欠席申請
-    </button>
-  `;
-
-  document.getElementById("status").innerHTML = html;
 }
 
 
@@ -279,6 +270,7 @@ async function registerParent(lineUserId) {
     });
 
     alert("登録完了");
+    CACHE.members = null;
 
     await returnToHome(); // ★初期画面へ
 
@@ -314,6 +306,7 @@ async function addMember() {
     });
 
     alert("登録完了");
+    CACHE.members = null;
 
     await returnToHome(); // ★ここがポイント
 
@@ -389,6 +382,36 @@ async function checkParent(lineUserId) {
   return await res.json();
 }
 
+// ======================
+// 描写関係
+// ======================
+function renderHome(profile) {
+
+  let html = "";
+
+  html += "こんにちは " + profile.displayName + " さん<br><br>";
+  html += "<b>登録会員</b><br>";
+
+  for (const member of CACHE.members) {
+
+    html += `
+      <div style="margin:6px 0;">
+        <button onclick="selectMember('${member.memberId}', '${member.name}')">
+          ${member.name}
+        </button>
+      </div>
+    `;
+  }
+
+  html += `
+    <hr>
+    <input type="date" id="absenceDate">
+    <br><br>
+    <button onclick="sendAbsence()">欠席申請</button>
+  `;
+
+  document.getElementById("status").innerHTML = html;
+}
 
 // =======================
 // 起動
