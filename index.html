@@ -501,10 +501,10 @@ for (const item of grouped[memberName]) {
     html += `
       <button
         onclick="
-          cancelAbsence(
-            '${item.memberId}',
-            '${item.absenceDate}'
-          )
+cancelAbsence(
+  '${item.memberId}',
+  '${item.rawDate}'
+)
         "
       >
         取消
