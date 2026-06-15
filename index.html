@@ -344,14 +344,24 @@ async function addMember() {
 // 欠席申請
 // =======================
 async function sendAbsence() {
-console.log(document.getElementById("status").innerHTML);
-console.log(document.getElementById("absenceDate"));
+
+  const dateElement =
+    document.getElementById("absenceDate");
+
+  alert("dateElement=" + dateElement);
+
+  if (!dateElement) {
+    alert("absenceDateが見つかりません");
+    return;
+  }
+
+  alert("value=" + dateElement.value);
+
   lockUI("申請中...");
 
   try {
 
-    const date = document.getElementById("absenceDate").value;
-
+    const date = dateElement.value;
 
     for (const m of selectedMembers) {
 
@@ -372,11 +382,12 @@ console.log(document.getElementById("absenceDate"));
     selectedMembers = [];
     CACHE.absences = null;
 
-    await returnToHome(); // ★戻る
+    await returnToHome();
 
   } finally {
     unlockUI();
   }
+
 }
 
 
