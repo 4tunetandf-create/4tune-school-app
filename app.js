@@ -197,7 +197,7 @@ async function registerAll(lineUserId) {
 // =======================
 async function loadHome(profile) {
 
-  lockUI("会員情報取得中desu...");
+  lockUI("会員情報取得中...");
 
   try {
 
