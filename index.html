@@ -341,14 +341,10 @@ async function sendAbsence() {
   const dateElement =
     document.getElementById("absenceDate");
 
-  alert("dateElement=" + dateElement);
-
   if (!dateElement) {
-    alert("absenceDateが見つかりません");
+    alert("日付入力欄が見つかりません");
     return;
   }
-
-  alert("value=" + dateElement.value);
 
   lockUI("申請中...");
 
@@ -380,7 +376,6 @@ async function sendAbsence() {
   } finally {
     unlockUI();
   }
-
 }
 
 
