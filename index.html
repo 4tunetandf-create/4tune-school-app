@@ -479,9 +479,7 @@ if (!CACHE.absences || CACHE.absences.length === 0) {
       grouped[item.memberName] = [];
     }
 
-    grouped[item.memberName].push(
-      item.absenceDate
-    );
+grouped[item.memberName].push(item);
 
   }
 
@@ -491,13 +489,32 @@ if (!CACHE.absences || CACHE.absences.length === 0) {
       <b>${memberName}</b><br>
     `;
 
-    for (const date of grouped[memberName]) {
+for (const item of grouped[memberName]) {
 
-      html += `
-        ・${date}<br>
-      `;
+  html += `
+    ・${item.absenceDate}
+    （${item.status}）
+  `;
 
-    }
+  if (item.status === "申請中") {
+
+    html += `
+      <button
+        onclick="
+          cancelAbsence(
+            '${item.memberId}',
+            '${item.absenceDate}'
+          )
+        "
+      >
+        取消
+      </button>
+    `;
+  }
+
+  html += "<br>";
+
+}
 
     html += `<br>`;
 
