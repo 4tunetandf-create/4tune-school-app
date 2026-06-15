@@ -458,75 +458,69 @@ function renderHome(profile) {
     <hr>
   `;
 
-  // =====================
-  // 欠席エリア
-  // =====================
-  html += `<h3>欠席</h3>`;
+// =====================
+// 欠席エリア（固定順）
+// =====================
+html += `<h3>欠席</h3>`;
 
-  if (!CACHE.absences || CACHE.absences.length === 0) {
+if (!CACHE.absences || CACHE.absences.length === 0) {
 
-    html += `
-      連絡済みの欠席はありません
-    `;
+  html += `連絡済みの欠席はありません`;
 
-  } else {
+} else {
 
-    const grouped = {};
+  // memberIdごとに整理
+  const map = {};
 
-    for (const item of CACHE.absences) {
+  for (const item of CACHE.absences) {
 
-      if (!grouped[item.memberName]) {
-        grouped[item.memberName] = [];
-      }
-
-      grouped[item.memberName].push(item);
-
+    if (!map[item.memberId]) {
+      map[item.memberId] = [];
     }
 
-    for (const memberName in grouped) {
-
-      html += `
-        <b>${memberName}</b><br>
-      `;
-
-      for (const item of grouped[memberName]) {
-
-        let cancelButton = "";
-
-        if (
-          item.status === "申請中" ||
-          item.status === "振替待ち"
-        ) {
-
-          cancelButton = `
-            <button onclick="
-              cancelAbsence(
-                '${item.memberId}',
-                '${item.rawDate}'
-              )
-            ">
-              取消
-            </button>
-          `;
-
-        }
-
-        html += `
-          ・${item.absenceDate}
-          （${item.status}）
-          ${cancelButton}
-          <br>
-        `;
-
-      }
-
-      html += `<br>`;
-
-    }
-
+    map[item.memberId].push(item);
   }
 
-  html += `<hr>`;
+  // ★ここが重要：兄弟順固定（会員マスタ順）
+  for (const member of CACHE.members) {
+
+    const list = map[member.memberId];
+
+    if (!list || list.length === 0) continue;
+
+    html += `<b>${member.name}</b><br>`;
+
+    for (const item of list) {
+
+      let cancelButton = "";
+
+      if (
+        item.status === "申請中" ||
+        item.status === "振替待ち"
+      ) {
+        cancelButton = `
+          <button onclick="
+            cancelAbsence(
+              '${item.memberId}',
+              '${item.rawDate}'
+            )
+          ">
+            取消
+          </button>
+        `;
+      }
+
+      html += `
+        ・${item.absenceDate}
+        （${item.status}）
+        ${cancelButton}
+        <br>
+      `;
+    }
+
+    html += `<br>`;
+  }
+}
 
   // =====================
   // 振替エリア
