@@ -31,8 +31,9 @@ let selectedMembers = [];
 
 let CACHE = {
   profile: null,
-  members: null
-};  
+  members: null,
+  absences: null
+};
   
 
 // =======================
@@ -227,7 +228,9 @@ async function loadHome(profile) {
 
   try {
 
-    // ★キャッシュ優先
+    // ======================
+    // 会員一覧取得
+    // ======================
     if (!CACHE.members) {
 
       const res = await fetch(
@@ -237,15 +240,36 @@ async function loadHome(profile) {
       );
 
       const data = await res.json();
+
       CACHE.members = data.members;
+
+    }
+
+    // ======================
+    // 欠席一覧取得
+    // ======================
+    if (!CACHE.absences) {
+
+      const absenceRes = await fetch(
+        GAS_URL +
+        "?action=getAbsenceList&lineUserId=" +
+        encodeURIComponent(profile.userId)
+      );
+
+      const absenceData = await absenceRes.json();
+
+      CACHE.absences = absenceData.absences;
 
     }
 
     renderHome(profile);
 
   } finally {
+
     unlockUI();
+
   }
+
 }
 
 
@@ -344,6 +368,7 @@ async function sendAbsence() {
     alert("申請完了");
 
     selectedMembers = [];
+    CACHE.absences = null;
 
     await returnToHome(); // ★戻る
 
@@ -402,9 +427,26 @@ function renderHome(profile) {
   // =====================
   html += `
     <h3>欠席</h3>
-    <div id="absenceList">
-      現在表示できる欠席情報はありません
-    </div>
+html += `<h3>欠席</h3>`;
+
+if (!CACHE.absences || CACHE.absences.length === 0) {
+
+  html += `
+    連絡済みの欠席はありません
+  `;
+
+} else {
+
+  for (const item of CACHE.absences) {
+
+    html += `
+      ${item.memberName}<br>
+      ・${item.absenceDate}<br><br>
+    `;
+
+  }
+
+}
 
     <hr>
   `;
