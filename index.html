@@ -702,6 +702,7 @@ function selectTransfer(memberId, memberName, absenceDate) {
 }
 
 async function sendTransfer() {
+  alert(JSON.stringify(selectedTransfer));
 
   const date = document.getElementById("transferDate").value;
 
