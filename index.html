@@ -541,18 +541,47 @@ if (!CACHE.absences || CACHE.absences.length === 0) {
   }
 }
 
-  // =====================
-  // 振替エリア
-  // =====================
-  html += `
-    <h3>振替</h3>
+// =====================
+// 振替エリア
+// =====================
+html += `<h3>振替</h3>`;
 
-    <div id="transferList">
-      現在表示できる振替情報はありません
-    </div>
+if (!CACHE.transfers || CACHE.transfers.length === 0) {
 
-    <hr>
-  `;
+  html += `現在表示できる振替情報はありません`;
+
+} else {
+
+  for (const item of CACHE.transfers) {
+
+    let cancelButton = "";
+
+    if (item.status === "申請中") {
+
+      cancelButton = `
+        <button onclick="
+          cancelTransfer(
+            '${item.memberId}',
+            '${item.transferDate}'
+          )
+        ">
+          取消
+        </button>
+      `;
+    }
+
+    html += `
+      <b>${item.memberName}</b><br>
+      ${item.transferDate}
+      （${item.status}）
+      ${cancelButton}
+      <br><br>
+    `;
+  }
+
+}
+
+html += `<hr>`;
 
   // =====================
   // 操作ボタン
