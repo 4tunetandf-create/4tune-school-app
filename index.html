@@ -691,7 +691,7 @@ function showTransferForm() {
   document.getElementById("status").innerHTML = html;
 }
 
-function selectTransfer(memberId,memberName,absenceDate) {
+function selectTransfer(memberId, memberName, absenceDate) {
 
   selectedTransfer = {
     memberId,
@@ -710,15 +710,16 @@ async function sendTransfer() {
     return;
   }
 
-  await fetch(GAS_URL, {
-    method: "POST",
-    body: JSON.stringify({
+await fetch(GAS_URL, {
+  method: "POST",
+  body: JSON.stringify({
     action: "transferRequest",
     memberId: selectedTransfer.memberId,
     memberName: selectedTransfer.memberName,
-transferDate: date
-    })
-  });
+    absenceDate: selectedTransfer.absenceDate,
+    transferDate: date
+  })
+});
 
   CACHE.absences = null;
   selectedTransfer = null;
