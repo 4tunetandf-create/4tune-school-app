@@ -680,11 +680,6 @@ function showAbsenceForm() {
   document.getElementById("status").innerHTML = html;
 }
 
-function showTransferForm() {
-
-  alert("振替申請は次工程で実装します");
-
-}
 
 // =======================
 // 振替画面
@@ -695,18 +690,34 @@ function showTransferForm() {
 
   html += "<p>振替する欠席を選択</p>";
 
-  for (const item of CACHE.absences) {
+for (const item of CACHE.absences) {
 
-    if (item.status !== "申請中") continue;
+  const hasTransfer =
+    CACHE.transfers &&
+    CACHE.transfers.some(t =>
+      t.memberId === item.memberId &&
+      t.rawAbsenceDate === item.rawDate
+    );
 
-    html += `
-      <div style="margin:6px 0;">
-        <button onclick="selectTransfer('${item.memberId}','${item.memberName}','${item.rawDate}')">
-          ${item.memberName} / ${item.absenceDate}
-        </button>
-      </div>
-    `;
+  if (
+    item.status !== "申請中" &&
+    !(item.status === "振替待ち" && !hasTransfer)
+  ) {
+    continue;
   }
+
+  html += `
+    <div style="margin:6px 0;">
+      <button onclick="selectTransfer(
+        '${item.memberId}',
+        '${item.memberName}',
+        '${item.rawDate}'
+      )">
+        ${item.memberName} / ${item.absenceDate}
+      </button>
+    </div>
+  `;
+}
 
   html += `
     <br>
@@ -730,7 +741,6 @@ function selectTransfer(memberId, memberName, absenceDate) {
 }
 
 async function sendTransfer() {
-  alert(JSON.stringify(selectedTransfer));
 
   const date = document.getElementById("transferDate").value;
 
