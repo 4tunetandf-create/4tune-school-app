@@ -548,35 +548,63 @@ html += `<h3>振替</h3>`;
 
 if (!CACHE.transfers || CACHE.transfers.length === 0) {
 
-  html += `現在表示できる振替情報はありません`;
+  html += `
+    現在表示できる振替情報はありません
+  `;
 
 } else {
 
+  const map = {};
+
   for (const item of CACHE.transfers) {
 
-    let cancelButton = "";
-
-    if (item.status === "申請中") {
-
-      cancelButton = `
-        <button onclick="
-          cancelTransfer(
-            '${item.memberId}',
-            '${item.transferDate}'
-          )
-        ">
-          取消
-        </button>
-      `;
+    if (!map[item.memberId]) {
+      map[item.memberId] = [];
     }
 
-    html += `
-      <b>${item.memberName}</b><br>
-      ${item.transferDate}
-      （${item.status}）
-      ${cancelButton}
-      <br><br>
-    `;
+    map[item.memberId].push(item);
+
+  }
+
+  // 会員マスタ順固定
+  for (const member of CACHE.members) {
+
+    const list = map[member.memberId];
+
+    if (!list || list.length === 0) continue;
+
+    html += `<b>${member.name}</b><br>`;
+
+    for (const item of list) {
+
+      let cancelButton = "";
+
+      if (item.status === "申請中") {
+
+        cancelButton = `
+          <button onclick="
+            cancelTransfer(
+              '${item.memberId}',
+              '${item.rawAbsenceDate}'
+            )
+          ">
+            取消
+          </button>
+        `;
+
+      }
+
+      html += `
+        欠席：${item.absenceDate}<br>
+        ↓<br>
+        振替：${item.transferDate}<br>
+        （${item.status}）
+        ${cancelButton}
+        <br><br>
+      `;
+
+    }
+
   }
 
 }
