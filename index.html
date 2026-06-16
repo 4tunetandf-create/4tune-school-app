@@ -750,10 +750,12 @@ await fetch(GAS_URL, {
   })
 });
 
-  CACHE.absences = null;
-  selectedTransfer = null;
+CACHE.absences = null;
+CACHE.transfers = null;
 
-  await returnToHome();
+selectedTransfer = null;
+
+await returnToHome();
 }
 
 // =======================
