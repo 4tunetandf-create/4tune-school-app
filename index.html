@@ -690,41 +690,54 @@ function showTransferForm() {
 
   html += "<p>振替する欠席を選択</p>";
 
-for (const item of CACHE.absences) {
+  for (const item of CACHE.absences) {
 
-  const hasTransfer =
-    CACHE.transfers &&
-    CACHE.transfers.some(t =>
-      t.memberId === item.memberId &&
-      t.rawAbsenceDate === item.rawDate
-    );
+    // この欠席に対する振替申請が既にあるか
+    const hasTransfer =
+      CACHE.transfers &&
+      CACHE.transfers.some(t =>
+        t.memberId === item.memberId &&
+        t.rawAbsenceDate === item.rawDate
+      );
 
-  if (
-    item.status !== "申請中" &&
-    !(item.status === "振替待ち" && !hasTransfer)
-  ) {
-    continue;
+    // 表示条件
+    const canTransfer =
+      item.status === "申請中" ||
+      (
+        item.status === "振替待ち" &&
+        !hasTransfer
+      );
+
+    if (!canTransfer) {
+      continue;
+    }
+
+    html += `
+      <div style="margin:6px 0;">
+        <button onclick="selectTransfer(
+          '${item.memberId}',
+          '${item.memberName}',
+          '${item.rawDate}'
+        )">
+          ${item.memberName} / ${item.absenceDate}
+        </button>
+      </div>
+    `;
   }
-
-  html += `
-    <div style="margin:6px 0;">
-      <button onclick="selectTransfer(
-        '${item.memberId}',
-        '${item.memberName}',
-        '${item.rawDate}'
-      )">
-        ${item.memberName} / ${item.absenceDate}
-      </button>
-    </div>
-  `;
-}
 
   html += `
     <br>
     <input type="date" id="transferDate">
+
     <br><br>
-    <button onclick="sendTransfer()">申請</button>
-    <button onclick="returnToHome()">戻る</button>
+
+    <button onclick="sendTransfer()">
+      申請
+    </button>
+
+    <button onclick="returnToHome()">
+      戻る
+    </button>
   `;
 
   document.getElementById("status").innerHTML = html;
