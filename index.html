@@ -26,7 +26,8 @@ let selectedTransfer = null;
 let CACHE = {
   profile: null,
   members: null,
-  absences: null
+  absences: null,
+  transfers: null
 };
   
 
@@ -255,6 +256,23 @@ async function loadHome(profile) {
       CACHE.absences = absenceData.absences;
 
     }
+
+    // ======================
+    // 振替一覧取得
+    // ======================
+    if (!CACHE.transfers) {
+
+  const transferRes = await fetch(
+    GAS_URL +
+    "?action=getTransferList&lineUserId=" +
+    encodeURIComponent(profile.userId)
+  );
+
+  const transferData = await transferRes.json();
+
+  CACHE.transfers = transferData.transfers;
+
+}
 
     renderHome(profile);
 
@@ -626,7 +644,7 @@ function showTransferForm() {
 
     html += `
       <div style="margin:6px 0;">
-        <button onclick="selectTransfer('${item.memberId}','${item.rawDate}')">
+        <button onclick="selectTransfer('${item.memberId}','${item.memberName}','${item.rawDate}')">
           ${item.memberName} / ${item.absenceDate}
         </button>
       </div>
@@ -644,8 +662,14 @@ function showTransferForm() {
   document.getElementById("status").innerHTML = html;
 }
 
-function selectTransfer(memberId, absenceDate) {
-  selectedTransfer = { memberId, absenceDate };
+function selectTransfer(memberId,memberName,absenceDate) {
+
+  selectedTransfer = {
+    memberId,
+    memberName,
+    absenceDate
+  };
+
 }
 
 async function sendTransfer() {
@@ -660,10 +684,10 @@ async function sendTransfer() {
   await fetch(GAS_URL, {
     method: "POST",
     body: JSON.stringify({
-      action: "transferRequest",
-      memberId: selectedTransfer.memberId,
-      absenceDate: selectedTransfer.absenceDate,
-      transferDate: date
+    action: "transferRequest",
+    memberId: selectedTransfer.memberId,
+    memberName: selectedTransfer.memberName,
+transferDate: date
     })
   });
 
