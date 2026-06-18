@@ -23,11 +23,12 @@
 let selectedMembers = [];
 let selectedTransfer = null;
 
-let CACHE = {
+CACHE = {
   profile: null,
   members: null,
   absences: null,
-  transfers: null
+  transfers: null,
+  schedules: null
 };
   
 
@@ -627,15 +628,9 @@ html += `<hr>`;
   // 操作ボタン
   // =====================
   html += `
-    <button onclick="showAbsenceForm()">
-      欠席申請
-    </button>
-
-    <br><br>
-
-    <button onclick="showTransferForm()">
-      振替申請
-    </button>
+    <button onclick="showSchedule()">スケジュール</button><br>
+    <button onclick="showAbsenceForm()">欠席申請</button><br>
+    <button onclick="showTransferForm()">振替申請</button>
 
     <hr>
   `;
