@@ -866,6 +866,76 @@ async function cancelTransfer(
   await returnToHome();
 
 }
+
+// =======================
+// スケジュール管理
+// =======================
+async function loadSchedule() {
+
+  if (CACHE.schedules) {
+    return;
+  }
+
+  const res = await fetch(
+    GAS_URL + "?action=getSchedule"
+  );
+
+  const data = await res.json();
+
+  CACHE.schedules = data.schedules;
+
+}
+
+// スケジュール管理
+async function showSchedule() {
+
+  await loadSchedule();
+
+  let html = "";
+
+  html += "<h3>スケジュール</h3>";
+
+  const schedules =
+    [...CACHE.schedules].sort(
+      (a, b) =>
+        new Date(a.date) -
+        new Date(b.date)
+    );
+
+  for (const item of schedules) {
+
+    html += `
+      <div style="
+        border:1px solid #ccc;
+        padding:8px;
+        margin-bottom:8px;
+      ">
+        <b>${item.date}</b><br>
+
+        ${item.className}<br>
+
+        ${item.startTime}
+        ～
+        ${item.endTime}<br>
+
+        ${item.place}<br>
+
+        【${item.type}】
+      </div>
+    `;
+
+  }
+
+  html += `
+    <button onclick="returnToHome()">
+      戻る
+    </button>
+  `;
+
+  document.getElementById("status").innerHTML =
+    html;
+
+}
   
 // =======================
 // 起動
