@@ -23,6 +23,8 @@
 let selectedMembers = [];
 let selectedTransfer = null;
 
+let currentCalendarDate = new Date();
+
 let CACHE = {
   profile: null,
   members: null,
@@ -893,12 +895,34 @@ async function showSchedule() {
 
   const today = new Date();
 
-  const year = today.getFullYear();
-  const month = today.getMonth();
+const year =
+  currentCalendarDate.getFullYear();
 
-  let html = `
-    <h3>${year}年${month + 1}月 スケジュール</h3>
-  `;
+const month =
+  currentCalendarDate.getMonth();
+
+html += `
+  <div style="
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:10px;
+  ">
+
+    <button onclick="prevMonth()">
+      ◀
+    </button>
+
+    <h3>
+      ${year}年${month + 1}月
+    </h3>
+
+    <button onclick="nextMonth()">
+      ▶
+    </button>
+
+  </div>
+`;
 
   const firstDay =
     new Date(year, month, 1);
@@ -1033,6 +1057,26 @@ function showScheduleDetail(dateStr) {
     `場所：${item.place}\n` +
     `種別：${item.type}`
   );
+
+}
+
+function prevMonth() {
+
+  currentCalendarDate.setMonth(
+    currentCalendarDate.getMonth() - 1
+  );
+
+  showSchedule();
+
+}
+
+function nextMonth() {
+
+  currentCalendarDate.setMonth(
+    currentCalendarDate.getMonth() + 1
+  );
+
+  showSchedule();
 
 }
   
