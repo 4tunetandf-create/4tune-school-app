@@ -888,46 +888,121 @@ async function loadSchedule() {
 
 // スケジュール管理
 async function showSchedule() {
-    alert("showSchedule開始");
 
   await loadSchedule();
 
-  let html = "";
+  const today = new Date();
 
-  html += "<h3>スケジュール</h3>";
+  const year = today.getFullYear();
+  const month = today.getMonth();
 
-  const schedules =
-    [...CACHE.schedules].sort(
-      (a, b) =>
-        new Date(a.date) -
-        new Date(b.date)
-    );
+  let html = `
+    <h3>${year}年${month + 1}月 スケジュール</h3>
+  `;
 
-  for (const item of schedules) {
+  const firstDay =
+    new Date(year, month, 1);
+
+  const lastDay =
+    new Date(year, month + 1, 0);
+
+  const startWeek =
+    firstDay.getDay();
+
+  const totalDays =
+    lastDay.getDate();
+
+  html += `
+    <table
+      border="1"
+      style="
+        width:100%;
+        border-collapse:collapse;
+        text-align:center;
+      "
+    >
+      <tr>
+        <th>日</th>
+        <th>月</th>
+        <th>火</th>
+        <th>水</th>
+        <th>木</th>
+        <th>金</th>
+        <th>土</th>
+      </tr>
+      <tr>
+  `;
+
+  let cellCount = 0;
+
+  for (let i = 0; i < startWeek; i++) {
+
+    html += `<td></td>`;
+    cellCount++;
+
+  }
+
+  for (let day = 1; day <= totalDays; day++) {
+
+    const dateStr =
+      `${year}/${String(month + 1).padStart(2, "0")}/${String(day).padStart(2, "0")}`;
+
+    const schedules =
+      CACHE.schedules.filter(
+        s => s.date === dateStr
+      );
+
+    let mark = "";
+
+    if (schedules.length > 0) {
+
+      const type =
+        schedules[0].type;
+
+      if (type === "通常") mark = "●";
+      else if (type === "振替可") mark = "★";
+      else if (type === "雨天") mark = "▲";
+      else if (type === "休講") mark = "■";
+
+    }
 
     html += `
-      <div style="
-        border:1px solid #ccc;
-        padding:8px;
-        margin-bottom:8px;
-      ">
-        <b>${item.date}</b><br>
-
-        ${item.className}<br>
-
-        ${item.startTime}
-        ～
-        ${item.endTime}<br>
-
-        ${item.place}<br>
-
-        【${item.type}】
-      </div>
+      <td
+        style="
+          height:70px;
+          vertical-align:top;
+          cursor:pointer;
+        "
+        onclick="showScheduleDetail('${dateStr}')"
+      >
+        ${day}<br>
+        ${mark}
+      </td>
     `;
+
+    cellCount++;
+
+    if (cellCount % 7 === 0) {
+
+      html += `</tr><tr>`;
+
+    }
+
+  }
+
+  while (cellCount % 7 !== 0) {
+
+    html += `<td></td>`;
+    cellCount++;
 
   }
 
   html += `
+      </tr>
+    </table>
+
+    <br>
+
     <button onclick="returnToHome()">
       戻る
     </button>
@@ -935,6 +1010,29 @@ async function showSchedule() {
 
   document.getElementById("status").innerHTML =
     html;
+
+}
+
+function showScheduleDetail(dateStr) {
+
+  const schedules =
+    CACHE.schedules.filter(
+      s => s.date === dateStr
+    );
+
+  if (schedules.length === 0) {
+    return;
+  }
+
+  const item = schedules[0];
+
+  alert(
+    `日付：${item.date}\n\n` +
+    `クラス：${item.className}\n` +
+    `時間：${item.startTime}～${item.endTime}\n` +
+    `場所：${item.place}\n` +
+    `種別：${item.type}`
+  );
 
 }
   
