@@ -23,7 +23,7 @@
 let selectedMembers = [];
 let selectedTransfer = null;
 
-CACHE = {
+let CACHE = {
   profile: null,
   members: null,
   absences: null,
@@ -888,6 +888,7 @@ async function loadSchedule() {
 
 // スケジュール管理
 async function showSchedule() {
+    alert("showSchedule開始");
 
   await loadSchedule();
 
