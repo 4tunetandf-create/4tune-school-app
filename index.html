@@ -690,9 +690,13 @@ function showTransferForm() {
 
   html += "<p>振替する欠席を選択</p>";
 
+  // =====================
+  // 会員ごとに整理
+  // =====================
+  const map = {};
+
   for (const item of CACHE.absences) {
 
-    // この欠席に対する振替申請が既にあるか
     const hasTransfer =
       CACHE.transfers &&
       CACHE.transfers.some(t =>
@@ -700,7 +704,6 @@ function showTransferForm() {
         t.rawAbsenceDate === item.rawDate
       );
 
-    // 表示条件
     const canTransfer =
       item.status === "申請中" ||
       (
@@ -708,25 +711,48 @@ function showTransferForm() {
         !hasTransfer
       );
 
-    if (!canTransfer) {
-      continue;
+    if (!canTransfer) continue;
+
+    if (!map[item.memberId]) {
+      map[item.memberId] = [];
     }
 
-    html += `
-      <div style="margin:6px 0;">
-        <button onclick="selectTransfer(
-          '${item.memberId}',
-          '${item.memberName}',
-          '${item.rawDate}'
-        )">
-          ${item.memberName} / ${item.absenceDate}
-        </button>
-      </div>
-    `;
+    map[item.memberId].push(item);
+
+  }
+
+  // =====================
+  // 会員マスタ順で表示
+  // =====================
+  for (const member of CACHE.members) {
+
+    const list = map[member.memberId];
+
+    if (!list || list.length === 0) continue;
+
+    html += `<b>${member.name}</b><br>`;
+
+    for (const item of list) {
+
+      html += `
+        <div style="margin:6px 0;">
+          <button onclick="selectTransfer(
+            '${item.memberId}',
+            '${item.memberName}',
+            '${item.rawDate}'
+          )">
+            ${item.absenceDate}
+          </button>
+        </div>
+      `;
+
+    }
+
+    html += `<br>`;
+
   }
 
   html += `
-    <br>
     <input type="date" id="transferDate">
 
     <br><br>
