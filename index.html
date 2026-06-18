@@ -893,13 +893,13 @@ async function showSchedule() {
 
   await loadSchedule();
 
-  const today = new Date();
+  let html = "";
 
-const year =
-  currentCalendarDate.getFullYear();
+  const year =
+    currentCalendarDate.getFullYear();
 
-const month =
-  currentCalendarDate.getMonth();
+  const month =
+    currentCalendarDate.getMonth();
 
 html += `
   <div style="
