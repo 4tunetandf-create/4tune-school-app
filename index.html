@@ -874,13 +874,6 @@ async function cancelTransfer(
 // =======================
 async function loadSchedule() {
 
-  alert("① loadSchedule開始");
-
-  if (CACHE.schedules) {
-    alert("② CACHEあり");
-    return;
-  }
-
   const url =
     GAS_URL +
     "?action=getScheduleByLineId" +
@@ -889,20 +882,16 @@ async function loadSchedule() {
       CACHE.profile.userId
     );
 
-  alert("③ URL作成完了");
-
-  const res = await fetch(url);
-
-  alert("④ fetch成功");
+const res = await fetch(
+  GAS_URL +
+  "?action=getScheduleByLineId" +
+  "&lineUserId=" +
+  encodeURIComponent(
+    CACHE.profile.userId
+  )
+);
 
   const data = await res.json();
-
-  alert("⑤ json変換成功");
-
-  alert(
-    "取得件数：" +
-    (data.schedules ? data.schedules.length : "undefined")
-  );
 
   CACHE.schedules = data.schedules;
 
@@ -911,11 +900,7 @@ async function loadSchedule() {
 // スケジュール管理
 async function showSchedule() {
 
-    alert("A");
-
   await loadSchedule();
-
-    alert("B");
 
 let html = "";
   
@@ -1074,37 +1059,46 @@ function showScheduleDetail(dateStr) {
     return;
   }
 
-  const item = schedules[0];
+  let html = `
+    <h3>${dateStr}</h3>
+  `;
 
-  document.getElementById(
-    "scheduleModalContent"
-  ).innerHTML = `
+  for (const item of schedules) {
 
-    <h3>${item.date}</h3>
+    html += `
 
-    <p>
-      <b>${item.className}</b>
-    </p>
+      <hr>
 
-    <p>
-      ${item.startTime}
-      ～
-      ${item.endTime}
-    </p>
+      <p>
+        <b>${item.className}</b>
+      </p>
 
-    <p>
-      ${item.place}
-    </p>
+      <p>
+        ${item.startTime}
+        ～
+        ${item.endTime}
+      </p>
 
-    <p>
-      ${item.type}
-    </p>
+      <p>
+        ${item.place}
+      </p>
 
+      <p>
+        ${item.type}
+      </p>
+
+    `;
+  }
+
+  html += `
     <button onclick="closeScheduleModal()">
       閉じる
     </button>
-
   `;
+
+  document.getElementById(
+    "scheduleModalContent"
+  ).innerHTML = html;
 
   document.getElementById(
     "scheduleModal"
