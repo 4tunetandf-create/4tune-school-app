@@ -879,7 +879,12 @@ async function loadSchedule() {
   }
 
 const res = await fetch(
-  GAS_URL + "?action=getSchedule"
+  GAS_URL +
+  "?action=getScheduleByLineId" +
+  "&lineUserId=" +
+  encodeURIComponent(
+    CACHE.profile.userId
+  )
 );
 
   const data = await res.json();
