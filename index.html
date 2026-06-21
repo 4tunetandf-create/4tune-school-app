@@ -900,13 +900,14 @@ async function showSchedule() {
 
   let html = "";
 
+  const today = new Date();
+
   const year =
     currentCalendarDate.getFullYear();
 
   const month =
     currentCalendarDate.getMonth();
-
-html += `
+  
   <div style="
     display:flex;
     justify-content:space-between;
