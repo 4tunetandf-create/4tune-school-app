@@ -874,20 +874,35 @@ async function cancelTransfer(
 // =======================
 async function loadSchedule() {
 
+  alert("① loadSchedule開始");
+
   if (CACHE.schedules) {
+    alert("② CACHEあり");
     return;
   }
 
-const res = await fetch(
-  GAS_URL +
-  "?action=getScheduleByLineId" +
-  "&lineUserId=" +
-  encodeURIComponent(
-    CACHE.profile.userId
-  )
-);
+  const url =
+    GAS_URL +
+    "?action=getScheduleByLineId" +
+    "&lineUserId=" +
+    encodeURIComponent(
+      CACHE.profile.userId
+    );
+
+  alert("③ URL作成完了");
+
+  const res = await fetch(url);
+
+  alert("④ fetch成功");
 
   const data = await res.json();
+
+  alert("⑤ json変換成功");
+
+  alert(
+    "取得件数：" +
+    (data.schedules ? data.schedules.length : "undefined")
+  );
 
   CACHE.schedules = data.schedules;
 
