@@ -898,8 +898,6 @@ async function showSchedule() {
 
   await loadSchedule();
 
-  let html = "";
-
   const today = new Date();
 
   const year =
@@ -907,7 +905,8 @@ async function showSchedule() {
 
   const month =
     currentCalendarDate.getMonth();
-  
+
+  html += `
   <div style="
     display:flex;
     justify-content:space-between;
