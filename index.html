@@ -911,8 +911,14 @@ async function loadSchedule() {
 // スケジュール管理
 async function showSchedule() {
 
+    alert("A");
+
   await loadSchedule();
 
+    alert("B");
+
+let html = "";
+  
   const today = new Date();
 
   const year =
