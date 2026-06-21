@@ -758,12 +758,13 @@ async function showTransferForm() {
 
         <button
           ${disabled ? "disabled" : ""}
-          onclick="
-            selectTransferMember(
-              '${member.memberId}',
-              '${member.name}'
-            )
-          "
+onclick="
+  selectTransferMember(
+    '${member.memberId}',
+    '${member.name}',
+    '${member.classId}'
+  )
+"
         >
           ${member.name}
           （残${count}回）
@@ -777,11 +778,18 @@ async function showTransferForm() {
   // 振替可能日のみ取得
   // =====================
 
-  const transferDates =
-    CACHE.schedules
-      .filter(
-        s => s.type === "振替可"
-      )
+let transferDates = [];
+
+if (selectedTransfer) {
+
+  transferDates =
+    CACHE.schedules.filter(
+      s =>
+        s.type === "振替可" &&
+        s.classId === selectedTransfer.classId
+    );
+
+}
       .sort(
         (a, b) =>
           new Date(a.date) -
@@ -831,15 +839,15 @@ async function showTransferForm() {
   
 function selectTransferMember(
   memberId,
-  memberName
+  memberName,
+  classId
 ) {
 
-  selectedTransfer = {
-
-    memberId,
-    memberName
-
-  };
+selectedTransfer = {
+  memberId,
+  memberName,
+  classId
+};
 
 }
 
