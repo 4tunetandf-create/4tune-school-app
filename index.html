@@ -989,11 +989,6 @@ async function cancelTransfer(
 // =======================
 async function loadSchedule() {
 
-  // 既に取得済なら終了
-  if (CACHE.schedules) {
-    return;
-  }
-
   const res = await fetch(
     GAS_URL +
     "?action=getScheduleByLineId" +
