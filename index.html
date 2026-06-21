@@ -1288,39 +1288,60 @@ async function submitAbsenceMulti(
 
   try {
 
+    const results = [];
+
     for (const member of members) {
 
-      await fetch(API_URL, {
+      const response =
+        await fetch(API_URL, {
 
-        method: "POST",
+          method: "POST",
 
-        body: JSON.stringify({
+          body: JSON.stringify({
 
-          action: "absenceRequest",
+            action: "absenceRequest",
 
-          memberId:
-            member.memberId,
+            memberId:
+              member.memberId,
 
-          memberName:
-            member.memberName,
+            memberName:
+              member.memberName,
 
-          absenceDate:
-            dateStr.replaceAll("/", "-")
+            absenceDate:
+              dateStr.replaceAll("/", "-")
 
-        })
+          })
 
-      });
+        });
+
+      const result =
+        await response.json();
+
+      if (result.success) {
+
+        results.push(
+          `${member.memberName}：登録完了`
+        );
+
+      } else {
+
+        results.push(
+          `${member.memberName}：${result.message}`
+        );
+
+      }
 
     }
 
     alert(
-      "欠席申請を登録しました"
+      results.join("\n")
     );
 
     closeScheduleModal();
 
-    await loadAbsenceList();
-
+  await loadAbsenceList();
+  await loadTransferList();
+  await loadSchedule();
   } catch (e) {
 
     alert(
