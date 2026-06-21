@@ -1404,6 +1404,179 @@ async function submitAbsenceMulti(
 // =====================
 // スケジュールからの振り替え
 // =====================
+function transferFromSchedule(dateStr) {
+
+  let html = `
+    <h3>振替する会員を選択</h3>
+  `;
+
+  for (const member of CACHE.members) {
+
+    const count =
+      CACHE.absences.filter(
+        a =>
+          a.memberId === member.memberId &&
+          (
+            a.status === "申請中" ||
+            a.status === "振替待ち"
+          ) &&
+          a.consumeStatus !== "消費済"
+      ).length;
+
+    html += `
+      <p>
+        <label>
+          <input
+            type="radio"
+            name="transferMember"
+            value="${member.memberId}"
+            data-name="${member.name}"
+            ${count === 0 ? "disabled" : ""}
+          >
+          ${member.name}
+          （残${count}回）
+        </label>
+      </p>
+    `;
+  }
+
+  html += `
+    <button
+      onclick="
+        confirmTransferFromSchedule(
+          '${dateStr}'
+        )
+      "
+    >
+      振替申請
+    </button>
+
+    <button
+      onclick="
+        showScheduleDetail(
+          '${dateStr}'
+        )
+      "
+    >
+      戻る
+    </button>
+  `;
+
+  document.getElementById(
+    "scheduleModalContent"
+  ).innerHTML = html;
+}
+
+function confirmTransferFromSchedule(
+  dateStr
+) {
+
+  const selected =
+    document.querySelector(
+      'input[name="transferMember"]:checked'
+    );
+
+  if (!selected) {
+
+    alert("会員を選択してください");
+    return;
+
+  }
+
+  const memberId =
+    selected.value;
+
+  const memberName =
+    selected.dataset.name;
+
+  let html = `
+    <h3>振替確認</h3>
+
+    <p>
+      ${memberName}
+    </p>
+
+    <p>
+      振替日
+      ${dateStr}
+    </p>
+
+    <button
+      onclick="
+        submitTransferFromSchedule(
+          '${memberId}',
+          '${memberName}',
+          '${dateStr}'
+        )
+      "
+    >
+      はい
+    </button>
+
+    <button
+      onclick="
+        transferFromSchedule(
+          '${dateStr}'
+        )
+      "
+    >
+      戻る
+    </button>
+  `;
+
+  document.getElementById(
+    "scheduleModalContent"
+  ).innerHTML = html;
+}
+
+async function submitTransferFromSchedule(
+  memberId,
+  memberName,
+  dateStr
+) {
+
+  const res = await fetch(
+    GAS_URL,
+    {
+      method: "POST",
+      body: JSON.stringify({
+
+        action: "transferRequest",
+
+        memberId:
+          memberId,
+
+        memberName:
+          memberName,
+
+        transferDate:
+          dateStr.replaceAll("/", "-")
+
+      })
+    }
+  );
+
+  const result =
+    await res.json();
+
+  if (!result.success) {
+
+    alert(result.message);
+    return;
+
+  }
+
+  alert(
+    "振替申請を登録しました"
+  );
+
+  closeScheduleModal();
+
+  CACHE.absences = null;
+  CACHE.transfers = null;
+
+  await returnToHome();
+}
   
 // =====================
 // スケジュールの月遷移
