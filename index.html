@@ -276,6 +276,25 @@ async function loadHome(profile) {
   CACHE.transfers = transferData.transfers;
 
 }
+    // =========================
+    // スケジュール取得
+    // =========================
+    if (!CACHE.schedules) {
+
+  const scheduleRes = await fetch(
+    GAS_URL +
+    "?action=getScheduleByLineId" +
+    "&lineUserId=" +
+    encodeURIComponent(profile.userId)
+  );
+
+  const scheduleData =
+    await scheduleRes.json();
+
+  CACHE.schedules =
+    scheduleData.schedules;
+
+}
 
     renderHome(profile);
 
@@ -594,6 +613,10 @@ const remainCount =
   CACHE.absences.filter(
     a =>
       a.memberId === member.memberId &&
+      (
+        a.status === "申請中" ||
+        a.status === "振替待ち"
+      ) &&
       a.consumeStatus !== "消費済"
   ).length;
 
@@ -706,54 +729,89 @@ function showAbsenceForm() {
 // =======================
 function showTransferForm() {
 
+  if (!CACHE.schedules) {
+  await loadSchedule();
+}
+
   let html = "<h3>振替申請</h3>";
 
   html += "<p>対象会員を選択してください</p>";
 
-for (const member of CACHE.members) {
+  for (const member of CACHE.members) {
 
-const count =
-  CACHE.absences.filter(
-    a =>
-      a.memberId === member.memberId &&
-      (
-        a.status === "申請中" ||
-        a.status === "振替待ち"
-      ) &&
-      a.consumeStatus !== "消費済"
-  ).length;
+    const count =
+      CACHE.absences.filter(
+        a =>
+          a.memberId === member.memberId &&
+          (
+            a.status === "申請中" ||
+            a.status === "振替待ち"
+          ) &&
+          a.consumeStatus !== "消費済"
+      ).length;
 
-  const disabled =
-    count === 0;
+    const disabled =
+      count === 0;
+
+    html += `
+      <div style="margin:8px 0;">
+
+        <button
+          ${disabled ? "disabled" : ""}
+          onclick="
+            selectTransferMember(
+              '${member.memberId}',
+              '${member.name}'
+            )
+          "
+        >
+          ${member.name}
+          （残${count}回）
+        </button>
+
+      </div>
+    `;
+  }
+
+  // =====================
+  // 振替可能日のみ取得
+  // =====================
+
+  const transferDates =
+    CACHE.schedules
+      .filter(
+        s => s.type === "振替可"
+      )
+      .sort(
+        (a, b) =>
+          new Date(a.date) -
+          new Date(b.date)
+      );
 
   html += `
-    <div style="margin:8px 0;">
-
-      <button
-        ${disabled ? "disabled" : ""}
-        onclick="
-          selectTransferMember(
-            '${member.memberId}',
-            '${member.name}'
-          )
-        "
-      >
-        ${member.name}
-        （残${count}回）
-      </button>
-
-    </div>
-  `;
-}
-
-  html += `
-
     <br>
 
-    <input
-      type="date"
-      id="transferDate"
-    >
+    <p>振替日を選択</p>
+
+    <select id="transferDate">
+      <option value="">
+        選択してください
+      </option>
+  `;
+
+  for (const item of transferDates) {
+
+    html += `
+      <option value="${item.date}">
+        ${item.date}
+        ${item.className}
+        (${item.startTime})
+      </option>
+    `;
+  }
+
+  html += `
+    </select>
 
     <br><br>
 
@@ -764,7 +822,6 @@ const count =
     <button onclick="returnToHome()">
       戻る
     </button>
-
   `;
 
   document.getElementById("status").innerHTML =
@@ -788,10 +845,10 @@ function selectTransferMember(
 
 async function sendTransfer() {
 
-  const date =
-    document.getElementById(
-      "transferDate"
-    ).value;
+const date =
+  document.getElementById(
+    "transferDate"
+  ).value;
 
   if (
     !selectedTransfer ||
@@ -932,22 +989,19 @@ async function cancelTransfer(
 // =======================
 async function loadSchedule() {
 
-  const url =
+  // 既に取得済なら終了
+  if (CACHE.schedules) {
+    return;
+  }
+
+  const res = await fetch(
     GAS_URL +
     "?action=getScheduleByLineId" +
     "&lineUserId=" +
     encodeURIComponent(
       CACHE.profile.userId
-    );
-
-const res = await fetch(
-  GAS_URL +
-  "?action=getScheduleByLineId" +
-  "&lineUserId=" +
-  encodeURIComponent(
-    CACHE.profile.userId
-  )
-);
+    )
+  );
 
   const data = await res.json();
 
