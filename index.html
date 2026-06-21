@@ -729,140 +729,114 @@ function showAbsenceForm() {
 // =======================
 async function showTransferForm() {
 
-if (!CACHE.schedules) {
-await loadSchedule();
-}
+  if (!CACHE.schedules) {
+    await loadSchedule();
+  }
 
-let html = "<h3>振替申請</h3>";
+  let html = "<h3>振替申請</h3>";
 
-html += "<p>対象会員を選択してください</p>";
+  html += "<p>対象会員を選択してください</p>";
 
-for (const member of CACHE.members) {
+  for (const member of CACHE.members) {
 
-```
-const count =
-  CACHE.absences.filter(
-    a =>
-      a.memberId === member.memberId &&
-      (
-        a.status === "申請中" ||
-        a.status === "振替待ち"
-      ) &&
-      a.consumeStatus !== "消費済"
-  ).length;
+    const count =
+      CACHE.absences.filter(
+        a =>
+          a.memberId === member.memberId &&
+          (
+            a.status === "申請中" ||
+            a.status === "振替待ち"
+          ) &&
+          a.consumeStatus !== "消費済"
+      ).length;
 
-const disabled =
-  count === 0;
+    const disabled = count === 0;
 
-const checked =
-  selectedTransfer &&
-  selectedTransfer.memberId === member.memberId
-    ? "checked"
-    : "";
+    const checked =
+      selectedTransfer &&
+      selectedTransfer.memberId === member.memberId
+        ? "checked"
+        : "";
 
-html += `
-  <div style="margin:8px 0;">
+    html += `
+      <div style="margin:8px 0;">
+        <label>
+          <input
+            type="radio"
+            name="transferMember"
+            value="${member.memberId}"
+            ${checked}
+            onchange="
+              selectTransferMember(
+                '${member.memberId}',
+                '${member.name}',
+                '${member.classId}'
+              )
+            "
+            ${disabled ? "disabled" : ""}
+          >
+          ${member.name}
+          （残${count}回）
+        </label>
+      </div>
+    `;
+  }
 
-    <label>
+  let transferDates = [];
 
-      <input
-        type="radio"
-        name="transferMember"
-        value="${member.memberId}"
-        ${checked}
-        ${disabled ? "disabled" : ""}
-        onchange="
-          selectTransferMember(
-            '${member.memberId}',
-            '${member.name}',
-            '${member.classId}'
-          )
-        "
-      >
+  if (selectedTransfer) {
 
-      ${member.name}
-      （残${count}回）
+    transferDates =
+      CACHE.schedules
+        .filter(
+          s =>
+            s.type === "振替可" &&
+            s.classId === selectedTransfer.classId
+        )
+        .sort(
+          (a, b) =>
+            new Date(a.date) -
+            new Date(b.date)
+        );
+  }
 
-    </label>
+  html += `
+    <br>
+    <p>振替日を選択</p>
 
-  </div>
-`;
-```
+    <select id="transferDate">
+      <option value="">
+        選択してください
+      </option>
+  `;
 
-}
+  for (const item of transferDates) {
 
-// =====================
-// 振替可能日のみ取得
-// =====================
+    html += `
+      <option value="${item.date}">
+        ${item.date}
+        ${item.className}
+        (${item.startTime})
+      </option>
+    `;
+  }
 
-let transferDates = [];
+  html += `
+    </select>
 
-if (selectedTransfer) {
+    <br><br>
 
-```
-transferDates =
-  CACHE.schedules
-    .filter(
-      s =>
-        s.type === "振替可" &&
-        s.classId === selectedTransfer.classId
-    )
-    .sort(
-      (a, b) =>
-        new Date(a.date) -
-        new Date(b.date)
-    );
-```
+    <button onclick="sendTransfer()">
+      申請
+    </button>
 
-}
+    <button onclick="returnToHome()">
+      戻る
+    </button>
+  `;
 
-html += ` <br>
-
-```
-<p>振替日を選択</p>
-
-<select id="transferDate">
-
-  <option value="">
-    選択してください
-  </option>
-```
-
-`;
-
-for (const item of transferDates) {
-
-```
-html += `
-  <option value="${item.date}">
-    ${item.date}
-    ${item.className}
-    (${item.startTime})
-  </option>
-`;
-```
-
-}
-
-html += ` </select>
-
-```
-<br><br>
-
-<button onclick="sendTransfer()">
-  申請
-</button>
-
-<button onclick="returnToHome()">
-  戻る
-</button>
-```
-
-`;
-
-document.getElementById("status").innerHTML =
-html;
-
+  document.getElementById("status").innerHTML =
+    html;
 }
 
   
