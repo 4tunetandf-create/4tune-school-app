@@ -1144,22 +1144,49 @@ function showScheduleDetail(dateStr) {
 }
 
 // =====================
-// 仮関数
+// スケジュールからの欠席
 // =====================
 
 function absenceFromSchedule(dateStr) {
 
-  // 後で実装
-    alert("欠席ボタン");
+  let html = `
+    <h3>欠席する会員を選択</h3>
+  `;
+
+  for (const member of CACHE.members) {
+
+    html += `
+      <p>
+        <button
+          onclick="
+            confirmAbsence(
+              '${member.memberId}',
+              '${member.name}',
+              '${dateStr}'
+            )
+          "
+        >
+          ${member.name}
+        </button>
+      </p>
+    `;
+
+  }
+
+  html += `
+    <button
+      onclick="showScheduleDetail('${dateStr}')"
+    >
+      戻る
+    </button>
+  `;
+
+  document.getElementById(
+    "scheduleModalContent"
+  ).innerHTML = html;
 
 }
-
-function transferFromSchedule(dateStr) {
-
-  // 後で実装
-    alert("振替ボタン");
-
-}
+  
 function closeScheduleModal() {
 
   document.getElementById(
@@ -1167,6 +1194,61 @@ function closeScheduleModal() {
   ).style.display = "none";
 
 }
+
+function confirmAbsence(
+  memberId,
+  memberName,
+  dateStr
+) {
+
+  let html = `
+    <h3>欠席確認</h3>
+
+    <p>
+      ${dateStr}
+    </p>
+
+    <p>
+      ${memberName} さんを
+      欠席登録しますか？
+    </p>
+
+    <button
+      onclick="
+        submitAbsenceFromSchedule(
+          '${memberId}',
+          '${memberName}',
+          '${dateStr}'
+        )
+      "
+    >
+      はい
+    </button>
+
+    <button
+      onclick="
+        absenceFromSchedule(
+          '${dateStr}'
+        )
+      "
+    >
+      戻る
+    </button>
+  `;
+
+  document.getElementById(
+    "scheduleModalContent"
+  ).innerHTML = html;
+
+}
+
+// =====================
+// スケジュールからの振り替え
+// =====================
+  
+// =====================
+// スケジュールの月遷移
+// =====================
 
 function prevMonth() {
 
