@@ -1088,9 +1088,46 @@ function showScheduleDetail(dateStr) {
       </p>
 
     `;
+
+    // =====================
+    // ボタン表示
+    // =====================
+
+    if (
+      item.type === "通常" ||
+      item.type === "雨天" ||
+      item.type === "休講"
+    ) {
+
+      html += `
+        <button
+          onclick="absenceFromSchedule('${item.date}')"
+        >
+          欠席
+        </button>
+      `;
+
+    }
+
+    if (
+      item.type === "振替可"
+    ) {
+
+      html += `
+        <button
+          onclick="transferFromSchedule('${item.date}')"
+        >
+          振替
+        </button>
+      `;
+
+    }
+
   }
 
   html += `
+    <br><br>
+
     <button onclick="closeScheduleModal()">
       閉じる
     </button>
@@ -1106,6 +1143,23 @@ function showScheduleDetail(dateStr) {
 
 }
 
+// =====================
+// 仮関数
+// =====================
+
+function absenceFromSchedule(dateStr) {
+
+  // 後で実装
+    alert("欠席ボタン");
+
+}
+
+function transferFromSchedule(dateStr) {
+
+  // 後で実装
+    alert("振替ボタン");
+
+}
 function closeScheduleModal() {
 
   document.getElementById(
