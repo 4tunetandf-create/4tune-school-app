@@ -756,19 +756,38 @@ async function showTransferForm() {
     html += `
       <div style="margin:8px 0;">
 
-        <button
-          ${disabled ? "disabled" : ""}
-onclick="
-  selectTransferMember(
-    '${member.memberId}',
-    '${member.name}',
-    '${member.classId}'
-  )
-"
-        >
-          ${member.name}
-          （残${count}回）
-        </button>
+const checked =
+  selectedTransfer &&
+  selectedTransfer.memberId === member.memberId
+    ? "checked"
+    : "";
+
+html += `
+  <div style="margin:8px 0;">
+
+    <label>
+      <input
+        type="radio"
+        name="transferMember"
+        value="${member.memberId}"
+        ${checked}
+        onchange="
+          selectTransferMember(
+            '${member.memberId}',
+            '${member.name}',
+            '${member.classId}'
+          )
+        "
+        ${disabled ? "disabled" : ""}
+      >
+
+      ${member.name}
+      （残${count}回）
+
+    </label>
+
+  </div>
+`;
 
       </div>
     `;
@@ -844,11 +863,13 @@ function selectTransferMember(
   classId
 ) {
 
-selectedTransfer = {
-  memberId,
-  memberName,
-  classId
-};
+  selectedTransfer = {
+    memberId,
+    memberName,
+    classId
+  };
+
+  showTransferForm();
 
 }
 
