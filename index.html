@@ -590,13 +590,12 @@ function renderHome(profile) {
           new Date(b.rawTransferDate)
       );
 
-      const remainCount =
-        CACHE.absences.filter(
-          a =>
-            a.memberId === member.memberId &&
-            a.status === "振替待ち" &&
-            a.consumeStatus !== "消費済"
-        ).length;
+const remainCount =
+  CACHE.absences.filter(
+    a =>
+      a.memberId === member.memberId &&
+      a.consumeStatus !== "消費済"
+  ).length;
 
       html += `
         <b>
@@ -713,13 +712,12 @@ function showTransferForm() {
 
 for (const member of CACHE.members) {
 
-  const count =
-    CACHE.absences.filter(
-      a =>
-        a.memberId === member.memberId &&
-        a.status === "振替待ち" &&
-        a.consumeStatus !== "消費済"
-    ).length;
+const count =
+  CACHE.absences.filter(
+    a =>
+      a.memberId === member.memberId &&
+      a.consumeStatus !== "消費済"
+  ).length;
 
   const disabled =
     count === 0;
@@ -805,14 +803,13 @@ async function sendTransfer() {
   // 残振替回数チェック
   // =====================
 
-  const count =
-    CACHE.absences.filter(
-      a =>
-        a.memberId ===
-          selectedTransfer.memberId &&
-        a.status === "振替待ち" &&
-        a.consumeStatus !== "消費済"
-    ).length;
+const count =
+  CACHE.absences.filter(
+    a =>
+      a.memberId ===
+        selectedTransfer.memberId &&
+      a.consumeStatus !== "消費済"
+  ).length;
 
   if (count === 0) {
 
