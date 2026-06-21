@@ -729,32 +729,30 @@ function showAbsenceForm() {
 // =======================
 async function showTransferForm() {
 
-  if (!CACHE.schedules) {
-    await loadSchedule();
-  }
+if (!CACHE.schedules) {
+await loadSchedule();
+}
 
-  let html = "<h3>振替申請</h3>";
+let html = "<h3>振替申請</h3>";
 
-  html += "<p>対象会員を選択してください</p>";
+html += "<p>対象会員を選択してください</p>";
 
-  for (const member of CACHE.members) {
+for (const member of CACHE.members) {
 
-    const count =
-      CACHE.absences.filter(
-        a =>
-          a.memberId === member.memberId &&
-          (
-            a.status === "申請中" ||
-            a.status === "振替待ち"
-          ) &&
-          a.consumeStatus !== "消費済"
-      ).length;
+```
+const count =
+  CACHE.absences.filter(
+    a =>
+      a.memberId === member.memberId &&
+      (
+        a.status === "申請中" ||
+        a.status === "振替待ち"
+      ) &&
+      a.consumeStatus !== "消費済"
+  ).length;
 
-    const disabled =
-      count === 0;
-
-    html += `
-      <div style="margin:8px 0;">
+const disabled =
+  count === 0;
 
 const checked =
   selectedTransfer &&
@@ -766,11 +764,13 @@ html += `
   <div style="margin:8px 0;">
 
     <label>
+
       <input
         type="radio"
         name="transferMember"
         value="${member.memberId}"
         ${checked}
+        ${disabled ? "disabled" : ""}
         onchange="
           selectTransferMember(
             '${member.memberId}',
@@ -778,7 +778,6 @@ html += `
             '${member.classId}'
           )
         "
-        ${disabled ? "disabled" : ""}
       >
 
       ${member.name}
@@ -788,74 +787,84 @@ html += `
 
   </div>
 `;
+```
 
-      </div>
-    `;
-  }
+}
 
-  // =====================
-  // 振替可能日のみ取得
-  // =====================
+// =====================
+// 振替可能日のみ取得
+// =====================
 
 let transferDates = [];
 
 if (selectedTransfer) {
 
-  transferDates =
-    CACHE.schedules
-      .filter(
-        s =>
-          s.type === "振替可" &&
-          s.classId === selectedTransfer.classId
-      )
-      .sort(
-        (a, b) =>
-          new Date(a.date) -
-          new Date(b.date)
-      );
+```
+transferDates =
+  CACHE.schedules
+    .filter(
+      s =>
+        s.type === "振替可" &&
+        s.classId === selectedTransfer.classId
+    )
+    .sort(
+      (a, b) =>
+        new Date(a.date) -
+        new Date(b.date)
+    );
+```
 
 }
 
-  html += `
-    <br>
+html += ` <br>
 
-    <p>振替日を選択</p>
+```
+<p>振替日を選択</p>
 
-    <select id="transferDate">
-      <option value="">
-        選択してください
-      </option>
-  `;
+<select id="transferDate">
 
-  for (const item of transferDates) {
+  <option value="">
+    選択してください
+  </option>
+```
 
-    html += `
-      <option value="${item.date}">
-        ${item.date}
-        ${item.className}
-        (${item.startTime})
-      </option>
-    `;
-  }
+`;
 
-  html += `
-    </select>
+for (const item of transferDates) {
 
-    <br><br>
-
-    <button onclick="sendTransfer()">
-      申請
-    </button>
-
-    <button onclick="returnToHome()">
-      戻る
-    </button>
-  `;
-
-  document.getElementById("status").innerHTML =
-    html;
+```
+html += `
+  <option value="${item.date}">
+    ${item.date}
+    ${item.className}
+    (${item.startTime})
+  </option>
+`;
+```
 
 }
+
+html += ` </select>
+
+```
+<br><br>
+
+<button onclick="sendTransfer()">
+  申請
+</button>
+
+<button onclick="returnToHome()">
+  戻る
+</button>
+```
+
+`;
+
+document.getElementById("status").innerHTML =
+html;
+
+}
+
   
 function selectTransferMember(
   memberId,
