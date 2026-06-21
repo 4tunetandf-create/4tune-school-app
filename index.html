@@ -783,18 +783,19 @@ let transferDates = [];
 if (selectedTransfer) {
 
   transferDates =
-    CACHE.schedules.filter(
-      s =>
-        s.type === "振替可" &&
-        s.classId === selectedTransfer.classId
-    );
-
-}
+    CACHE.schedules
+      .filter(
+        s =>
+          s.type === "振替可" &&
+          s.classId === selectedTransfer.classId
+      )
       .sort(
         (a, b) =>
           new Date(a.date) -
           new Date(b.date)
       );
+
+}
 
   html += `
     <br>
