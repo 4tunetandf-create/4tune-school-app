@@ -727,11 +727,11 @@ function showAbsenceForm() {
 // =======================
 // 振替画面
 // =======================
-function showTransferForm() {
+async function showTransferForm() {
 
   if (!CACHE.schedules) {
-  await loadSchedule();
-}
+    await loadSchedule();
+  }
 
   let html = "<h3>振替申請</h3>";
 
