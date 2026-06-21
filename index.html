@@ -1102,10 +1102,19 @@ let html = "";
     const dateStr =
       `${year}/${String(month + 1).padStart(2, "0")}/${String(day).padStart(2, "0")}`;
 
-    const schedules =
-      CACHE.schedules.filter(
-        s => s.date === dateStr
-      );
+const memberClassIds =
+  CACHE.members.map(
+    m => m.classId
+  );
+
+const schedules =
+  CACHE.schedules.filter(
+    s =>
+      s.date === dateStr &&
+      memberClassIds.includes(
+        s.classId
+      )
+  );
 
     let mark = "";
 
@@ -1170,10 +1179,19 @@ let html = "";
 
 function showScheduleDetail(dateStr) {
 
-  const schedules =
-    CACHE.schedules.filter(
-      s => s.date === dateStr
-    );
+const memberClassIds =
+  CACHE.members.map(
+    m => m.classId
+  );
+
+const schedules =
+  CACHE.schedules.filter(
+    s =>
+      s.date === dateStr &&
+      memberClassIds.includes(
+        s.classId
+      )
+  );
 
   if (schedules.length === 0) {
     return;
