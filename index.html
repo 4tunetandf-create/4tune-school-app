@@ -1094,9 +1094,7 @@ function showScheduleDetail(dateStr) {
     // =====================
 
     if (
-      item.type === "通常" ||
-      item.type === "雨天" ||
-      item.type === "休講"
+      item.type === "通常"
     ) {
 
       html += `
@@ -1110,7 +1108,7 @@ function showScheduleDetail(dateStr) {
     }
 
     if (
-      item.type === "振替可"
+      item.type === "振替可" 
     ) {
 
       html += `
@@ -1157,28 +1155,42 @@ function absenceFromSchedule(dateStr) {
 
     html += `
       <p>
-        <button
-          onclick="
-            confirmAbsence(
-              '${member.memberId}',
-              '${member.name}',
-              '${dateStr}'
-            )
-          "
-        >
+        <label>
+          <input
+            type="checkbox"
+            name="absenceMember"
+            value="${member.memberId}"
+            data-name="${member.name}"
+          >
           ${member.name}
-        </button>
+        </label>
       </p>
     `;
 
   }
 
   html += `
+
     <button
-      onclick="showScheduleDetail('${dateStr}')"
+      onclick="
+        confirmAbsenceMulti(
+          '${dateStr}'
+        )
+      "
+    >
+      欠席申請
+    </button>
+
+    <button
+      onclick="
+        showScheduleDetail(
+          '${dateStr}'
+        )
+      "
     >
       戻る
     </button>
+
   `;
 
   document.getElementById(
@@ -1187,19 +1199,38 @@ function absenceFromSchedule(dateStr) {
 
 }
   
-function closeScheduleModal() {
+function confirmAbsenceMulti(dateStr) {
 
-  document.getElementById(
-    "scheduleModal"
-  ).style.display = "none";
+  const checked =
+    document.querySelectorAll(
+      'input[name="absenceMember"]:checked'
+    );
 
-}
+  if (checked.length === 0) {
 
-function confirmAbsence(
-  memberId,
-  memberName,
-  dateStr
-) {
+    alert(
+      "会員を選択してください"
+    );
+
+    return;
+
+  }
+
+  const members = [];
+
+  checked.forEach(item => {
+
+    members.push({
+
+      memberId:
+        item.value,
+
+      memberName:
+        item.dataset.name
+
+    });
+
+  });
 
   let html = `
     <h3>欠席確認</h3>
@@ -1209,18 +1240,26 @@ function confirmAbsence(
     </p>
 
     <p>
-      ${memberName} さんを
-      欠席登録しますか？
+      以下の会員を欠席登録します
     </p>
+  `;
 
+  members.forEach(member => {
+
+    html += `
+      <p>
+        ・${member.memberName}
+      </p>
+    `;
+
+  });
+
+  html += `
     <button
-      onclick="
-        submitAbsenceFromSchedule(
-          '${memberId}',
-          '${memberName}',
-          '${dateStr}'
-        )
-      "
+      onclick='submitAbsenceMulti(
+        ${JSON.stringify(members)},
+        "${dateStr}"
+      )'
     >
       はい
     </button>
@@ -1239,6 +1278,58 @@ function confirmAbsence(
   document.getElementById(
     "scheduleModalContent"
   ).innerHTML = html;
+
+}
+
+async function submitAbsenceMulti(
+  members,
+  dateStr
+) {
+
+  try {
+
+    for (const member of members) {
+
+      await fetch(API_URL, {
+
+        method: "POST",
+
+        body: JSON.stringify({
+
+          action: "absenceRequest",
+
+          memberId:
+            member.memberId,
+
+          memberName:
+            member.memberName,
+
+          absenceDate:
+            dateStr.replaceAll("/", "-")
+
+        })
+
+      });
+
+    }
+
+    alert(
+      "欠席申請を登録しました"
+    );
+
+    closeScheduleModal();
+
+    await loadAbsenceList();
+
+  } catch (e) {
+
+    alert(
+      "登録に失敗しました"
+    );
+
+    console.error(e);
+
+  }
 
 }
 
