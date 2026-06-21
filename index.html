@@ -1141,6 +1141,14 @@ function showScheduleDetail(dateStr) {
 
 }
 
+function closeScheduleModal() {
+
+  document.getElementById(
+    "scheduleModal"
+  ).style.display = "none";
+
+}
+
 // =====================
 // スケジュールからの欠席
 // =====================
@@ -1288,60 +1296,41 @@ async function submitAbsenceMulti(
 
   try {
 
-    const results = [];
-
     for (const member of members) {
 
-      const response =
-        await fetch(API_URL, {
+      await fetch(GAS_URL, {
 
-          method: "POST",
+        method: "POST",
 
-          body: JSON.stringify({
+        body: JSON.stringify({
 
-            action: "absenceRequest",
+          action: "absenceRequest",
 
-            memberId:
-              member.memberId,
+          memberId:
+            member.memberId,
 
-            memberName:
-              member.memberName,
+          memberName:
+            member.memberName,
 
-            absenceDate:
-              dateStr.replaceAll("/", "-")
+          absenceDate:
+            dateStr.replaceAll("/", "-")
 
-          })
+        })
 
-        });
-
-      const result =
-        await response.json();
-
-      if (result.success) {
-
-        results.push(
-          `${member.memberName}：登録完了`
-        );
-
-      } else {
-
-        results.push(
-          `${member.memberName}：${result.message}`
-        );
-
-      }
+      });
 
     }
 
     alert(
-      results.join("\n")
+      "欠席申請を登録しました"
     );
 
     closeScheduleModal();
 
-  await loadAbsenceList();
-  await loadTransferList();
-  await loadSchedule();
+    CACHE.absences = null;
+
+    await returnToHome();
+
   } catch (e) {
 
     alert(
