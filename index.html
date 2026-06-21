@@ -590,7 +590,20 @@ for (const member of CACHE.members) {
       new Date(b.rawTransferDate)
   );
 
-  html += `<b>${member.name}</b><br>`;
+const remainCount =
+  CACHE.absences.filter(
+    a =>
+      a.memberId === member.memberId &&
+      a.status === "振替待ち" &&
+      a.consumeStatus !== "消費済"
+  ).length;
+
+html += `
+  <b>
+    ${member.name}
+    （振替残数：${remainCount}）
+  </b><br>
+`;
 
   for (const item of sortedList) {
 
@@ -611,13 +624,12 @@ for (const member of CACHE.members) {
 
     }
 
-    html += `
-      欠席：${item.absenceDate}<br>
-      ↓<br>
-      振替：${item.transferDate}<br>
-      （${item.status}）
-      ${cancelButton}
-      <br><br>
+html += `
+  振替：${item.transferDate}<br>
+  （${item.status}）
+  ${cancelButton}
+  <br><br>
+`;
     `;
   }
 }
