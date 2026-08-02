@@ -1,50 +1,155 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>4TUNE School App</title>
+
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      background: #f5f7f6;
+      color: #222;
+    }
+
+    main {
+      max-width: 560px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 14px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    input,
+    button {
+      box-sizing: border-box;
+      font: inherit;
+    }
+
+    input {
+      width: 100%;
+      padding: 11px;
+      margin: 5px 0 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+
+    button {
+      padding: 10px 14px;
+      margin: 4px 2px;
+      border: 0;
+      border-radius: 8px;
+      background: #4f9c8a;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      background: #777;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      background: #fff;
+    }
+
+    th,
+    td {
+      border: 1px solid #ddd;
+      padding: 7px 2px;
+      text-align: center;
+    }
+
+    td {
+      height: 54px;
+      vertical-align: top;
+    }
+
+    td.has-schedule {
+      cursor: pointer;
+      background: #edf7f4;
+    }
+
+    .calendar-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .muted {
+      color: #666;
+    }
+
+    #scheduleModal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 10;
+    }
+
+    #scheduleModalContent {
+      max-width: 420px;
+      margin: 80px auto;
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+    }
+  </style>
 </head>
 
 <body>
 
-<div id="status"></div>
+  <main id="status">
+    読み込み中...
+  </main>
 
-<div id="registerArea" style="display:none;">
-  <h3>初回登録</h3>
-  <input id="parentName">
-  <button onclick="registerParent()">登録</button>
-</div>
+  <div
+    id="scheduleModal"
+    onclick="closeScheduleModal(event)"
+  >
+    <div id="scheduleModalContent"></div>
+  </div>
 
 <script>
-  const GAS_URL =
-"https://script.google.com/macros/s/AKfycbzjPkLxYBJeBGk9yehLHfUUMhJmQUfxNiaVHyNqjd9MeAqkWOIINjIUBXsxIEpwqa78Mw/exec";
+const GAS_URL =
+  "https://script.google.com/macros/s/AKfycbzjPkLxYBJeBGk9yehLHfUUMhJmQUfxNiaVHyNqjd9MeAqkWOIINjIUBXsxIEpwqa78Mw/exec";
 
-let selectedMembers = [];
-let selectedTransfer = null;
+const LIFF_ID = "2010350476-xCTsckal";
 
-let currentCalendarDate = new Date();
-
-let CACHE = {
+const CACHE = {
   profile: null,
   members: null,
-  absences: null,
-  transfers: null,
   schedules: null
 };
-  
+
+let currentCalendarDate = new Date();
+let uiLockCount = 0;
+
 
 // =======================
 // 初期処理
 // =======================
 async function main() {
 
+  lockUI("読み込み中...");
+
   try {
 
-    lockUI("読み込み中...");
-
     await liff.init({
-      liffId: "2010350476-xCTsckal"
+      liffId: LIFF_ID
     });
 
     if (!liff.isLoggedIn()) {
@@ -54,398 +159,315 @@ async function main() {
 
     CACHE.profile = await liff.getProfile();
 
-    const checkData = await checkParent(CACHE.profile.userId);
+    const parent = await apiGet(
+      "getParentByLineId",
+      {
+        lineUserId: CACHE.profile.userId
+      }
+    );
 
-    if (!checkData.exists) {
+    if (!parent.exists) {
       showRegister(CACHE.profile.userId);
       return;
     }
 
-    await loadHome(CACHE.profile);
+    await loadHome();
+
+  } catch (error) {
+
+    showError(error);
 
   } finally {
+
     unlockUI();
+
   }
 }
-  
-// =======================
-// 処理中のプロテクト
-// =======================
-const UI_LOCK = {
-  count: 0
-};
 
+
+// =======================
+// API通信
+// =======================
+async function apiGet(action, params = {}) {
+
+  const query = new URLSearchParams({
+    action,
+    ...params
+  });
+
+  const response = await fetch(
+    `${GAS_URL}?${query.toString()}`
+  );
+
+  if (!response.ok) {
+    throw new Error("データの取得に失敗しました");
+  }
+
+  return response.json();
+}
+
+
+async function apiPost(data) {
+
+  const response = await fetch(
+    GAS_URL,
+    {
+      method: "POST",
+      body: JSON.stringify(data)
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error("データの登録に失敗しました");
+  }
+
+  return response.json();
+}
+
+
+// =======================
+// UIロック
+// =======================
 function lockUI(text = "処理中...") {
 
-  UI_LOCK.count++;
+  uiLockCount++;
 
   document.body.style.pointerEvents = "none";
-  document.body.style.opacity = "0.6";
+  document.body.style.opacity = "0.65";
 
-  const status = document.getElementById("status");
-  if (status) status.innerHTML = text;
+  const status =
+    document.getElementById("status");
+
+  if (status && text) {
+    status.textContent = text;
+  }
 }
+
 
 function unlockUI() {
 
-  UI_LOCK.count = Math.max(0, UI_LOCK.count - 1);
+  uiLockCount =
+    Math.max(0, uiLockCount - 1);
 
-  if (UI_LOCK.count === 0) {
+  if (uiLockCount === 0) {
+
     document.body.style.pointerEvents = "auto";
     document.body.style.opacity = "1";
+
   }
 }
 
-// =======================
-// homeに戻る
-// =======================
-async function returnToHome() {
 
-  const profile = await liff.getProfile();
-  await loadHome(profile);
+// =======================
+// HTMLエスケープ
+// =======================
+function escapeHtml(value) {
+
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 
 }
-  
+
 
 // =======================
-// 未登録UI
+// エラー画面
+// =======================
+function showError(error) {
+
+  console.error(error);
+
+  document.getElementById("status").innerHTML = `
+    <section class="card">
+
+      <h2>読み込みに失敗しました</h2>
+
+      <p class="muted">
+        通信環境を確認して、もう一度お試しください
+      </p>
+
+      <button onclick="location.reload()">
+        再読み込み
+      </button>
+
+    </section>
+  `;
+
+}
+
+
+// =======================
+// 初回登録画面
 // =======================
 function showRegister(lineUserId) {
 
   document.getElementById("status").innerHTML = `
-    <h3>初回登録</h3>
+    <section class="card">
 
-    <p>保護者名</p>
-    <input id="parentName" placeholder="例：山田太郎">
+      <h2>初回登録</h2>
 
-    <hr>
+      <label>
+        保護者名
 
-    <p>お子さま（複数OK）</p>
+        <input
+          id="parentName"
+          placeholder="例：山田太郎"
+        >
+      </label>
 
-    <div id="childrenArea">
+      <h3>お子さま</h3>
 
-      <div class="childRow">
-        <input class="childName" placeholder="子ども名">
-        <input class="childCourse" placeholder="コース">
+      <div id="childrenArea">
+
+        <div class="childRow">
+
+          <input
+            class="childName"
+            placeholder="子ども名"
+          >
+
+          <input
+            class="childCourse"
+            placeholder="クラスID・コース"
+          >
+
+        </div>
+
       </div>
 
-    </div>
+      <button
+        class="secondary"
+        onclick="addChildRow()"
+      >
+        ＋ お子さまを追加
+      </button>
 
-    <button onclick="addChildRow()">＋追加</button>
+      <button
+        onclick="registerAll('${lineUserId}')"
+      >
+        登録する
+      </button>
 
-    <br><br>
-
-    <button onclick="registerAll('${lineUserId}')">
-      登録する
-    </button>
+    </section>
   `;
+
 }
-  
+
+
+// =======================
+// 子どもの入力欄を追加
+// =======================
 function addChildRow() {
 
-  const div = document.createElement("div");
+  const row =
+    document.createElement("div");
 
-  div.className = "childRow";
+  row.className = "childRow";
 
-  div.innerHTML = `
-    <input class="childName" placeholder="子ども名">
-    <input class="childCourse" placeholder="コース">
+  row.innerHTML = `
+    <input
+      class="childName"
+      placeholder="子ども名"
+    >
+
+    <input
+      class="childCourse"
+      placeholder="クラスID・コース"
+    >
   `;
 
-  document.getElementById("childrenArea").appendChild(div);
+  document
+    .getElementById("childrenArea")
+    .appendChild(row);
+
 }
-  
+
+
+// =======================
+// 保護者・子どもの登録
+// =======================
 async function registerAll(lineUserId) {
 
-  const parentName = document.getElementById("parentName").value;
+  const parentName =
+    document
+      .getElementById("parentName")
+      .value
+      .trim();
+
+  const names = [
+    ...document.querySelectorAll(".childName")
+  ];
+
+  const courses = [
+    ...document.querySelectorAll(".childCourse")
+  ];
+
+  const children =
+    names
+      .map((input, index) => ({
+        name: input.value.trim(),
+        course: courses[index].value.trim()
+      }))
+      .filter(child => child.name);
 
   if (!parentName) {
     alert("保護者名を入力してください");
     return;
   }
 
-  // ① 保護者登録
-  const parentRes = await fetch(GAS_URL, {
-    method: "POST",
-    body: JSON.stringify({
+  if (children.length === 0) {
+    alert("お子さまの名前を入力してください");
+    return;
+  }
+
+  lockUI("登録中...");
+
+  try {
+
+    const parent = await apiPost({
       action: "createParent",
-      lineUserId: lineUserId,
+      lineUserId,
       name: parentName
-    })
-  });
-
-  const parentData = await parentRes.json();
-  const parentId = parentData.parentId;
-
-  // ② 子ども取得
-  const names = document.querySelectorAll(".childName");
-  const courses = document.querySelectorAll(".childCourse");
-
-  let children = [];
-
-  for (let i = 0; i < names.length; i++) {
-
-    const name = names[i].value;
-
-    if (!name) continue;
-
-    children.push({
-      name: name,
-      course: courses[i].value
     });
 
-  }
+    if (!parent.success) {
 
-  // ③ 会員登録（兄弟分ループ）
-  for (const c of children) {
-
-    await fetch(GAS_URL, {
-      method: "POST",
-      body: JSON.stringify({
-        action: "addMember",
-        parentId: parentId,
-        name: c.name,
-        course: c.course
-      })
-    });
-
-  }
-
-  alert("登録完了（保護者＋子ども）");
-  CACHE.members = null;
-  
-  location.reload();
-}
-
-// =======================
-// ホーム
-// =======================
-async function loadHome(profile) {
-
-  lockUI("会員情報取得中...");
-
-  try {
-
-    // ======================
-    // 会員一覧取得
-    // ======================
-    if (!CACHE.members) {
-
-      const res = await fetch(
-        GAS_URL +
-        "?action=getMembersByLineId&lineUserId=" +
-        encodeURIComponent(profile.userId)
+      throw new Error(
+        parent.message ||
+        "保護者登録に失敗しました"
       );
-
-      const data = await res.json();
-
-      CACHE.members = data.members;
 
     }
 
-    // ======================
-    // 欠席一覧取得
-    // ======================
-    if (!CACHE.absences) {
+    for (const child of children) {
 
-      const absenceRes = await fetch(
-        GAS_URL +
-        "?action=getAbsenceList&lineUserId=" +
-        encodeURIComponent(profile.userId)
-      );
-
-      const absenceData = await absenceRes.json();
-
-      CACHE.absences = absenceData.absences;
-
-    }
-
-    // ======================
-    // 振替一覧取得
-    // ======================
-    if (!CACHE.transfers) {
-
-  const transferRes = await fetch(
-    GAS_URL +
-    "?action=getTransferList&lineUserId=" +
-    encodeURIComponent(profile.userId)
-  );
-
-  const transferData = await transferRes.json();
-
-  CACHE.transfers = transferData.transfers;
-
-}
-    // =========================
-    // スケジュール取得
-    // =========================
-    if (!CACHE.schedules) {
-
-  const scheduleRes = await fetch(
-    GAS_URL +
-    "?action=getScheduleByLineId" +
-    "&lineUserId=" +
-    encodeURIComponent(profile.userId)
-  );
-
-  const scheduleData =
-    await scheduleRes.json();
-
-  CACHE.schedules =
-    scheduleData.schedules;
-
-}
-
-    renderHome(profile);
-
-  } finally {
-
-    unlockUI();
-
-  }
-
-}
-
-
-// =======================
-// 保護者登録
-// =======================
-async function registerParent(lineUserId) {
-
-  lockUI("登録中...");
-
-  try {
-
-    const name = document.getElementById("parentName").value;
-
-    await fetch(GAS_URL, {
-      method: "POST",
-      body: JSON.stringify({
-        action: "createParent",
-        lineUserId,
-        name
-      })
-    });
-
-    alert("登録完了");
-    CACHE.members = null;
-
-    await returnToHome(); // ★初期画面へ
-
-  } finally {
-    unlockUI();
-  }
-}
-
-
-// =======================
-// 会員追加（※未使用なら削除OK）
-// =======================
-async function addMember() {
-
-  lockUI("登録中...");
-
-  try {
-
-    const name = document.getElementById("memberName").value;
-    const course = document.getElementById("memberCourse").value;
-
-    const profile = await liff.getProfile();
-    const parentId = await getParentId(profile.userId);
-
-    await fetch(GAS_URL, {
-      method: "POST",
-      body: JSON.stringify({
+      const result = await apiPost({
         action: "addMember",
-        parentId,
-        name,
-        course
-      })
-    });
-
-    alert("登録完了");
-    CACHE.members = null;
-
-    await returnToHome(); // ★ここがポイント
-
-  } finally {
-    unlockUI();
-  }
-}
-
-
-// =======================
-// 欠席申請
-// =======================
-async function sendAbsence() {
-
-  const dateElement =
-    document.getElementById("absenceDate");
-
-  if (!dateElement) {
-    alert("日付入力欄が見つかりません");
-    return;
-  }
-
-  const date = dateElement.value;
-
-  if (selectedMembers.length === 0 && !date) {
-    alert("会員と日付を選択してください");
-    return;
-  }
-
-  if (selectedMembers.length === 0) {
-    alert("会員を選択してください");
-    return;
-  }
-
-  if (!date) {
-    alert("日付を選択してください");
-    return;
-  }
-
-  lockUI("申請中...");
-
-  try {
-
-    let messages = [];
-
-    for (const m of selectedMembers) {
-
-      const res = await fetch(GAS_URL, {
-        method: "POST",
-        body: JSON.stringify({
-          action: "absenceRequest",
-          memberId: m.id,
-          memberName: m.name,
-          absenceDate: date
-        })
+        parentId: parent.parentId,
+        ...child
       });
-
-      const result = await res.json();
 
       if (!result.success) {
 
-        messages.push(
-          m.name + "：" + result.message
-        );
-
-      } else {
-
-        messages.push(
-          m.name + "：申請完了"
+        throw new Error(
+          result.message ||
+          "会員登録に失敗しました"
         );
 
       }
 
     }
 
-    alert(messages.join("\n"));
+    alert("登録が完了しました");
 
-    selectedMembers = [];
-    CACHE.absences = null;
+    location.reload();
 
-    await returnToHome();
+  } catch (error) {
+
+    alert(error.message);
 
   } finally {
 
@@ -454,577 +476,147 @@ async function sendAbsence() {
   }
 
 }
-  
-// =======================
-// 会員選択
-// =======================
-function selectMember(id, name) {
-
-  const exists = selectedMembers.find(m => m.id === id);
-
-  if (exists) {
-    selectedMembers = selectedMembers.filter(m => m.id !== id);
-  } else {
-    selectedMembers.push({ id, name });
-  }
-}
 
 
 // =======================
-// API
+// ホーム画面の読み込み
 // =======================
-async function checkParent(lineUserId) {
+async function loadHome() {
 
-  const res = await fetch(
-    GAS_URL +
-    "?action=getParentByLineId&lineUserId=" +
-    encodeURIComponent(lineUserId)
-  );
+  lockUI("会員情報を取得中...");
 
-  return await res.json();
-}
+  try {
 
-// ======================
-// 描写関係
-// ======================
-function renderHome(profile) {
+    if (!CACHE.members) {
 
-  let html = "";
-
-  // =====================
-  // ヘッダー
-  // =====================
-  html += `
-    <h2>こんにちは ${profile.displayName} さま</h2>
-    <hr>
-  `;
-
-  // =====================
-  // 欠席エリア
-  // =====================
-  html += `<h3>欠席</h3>`;
-
-  if (!CACHE.absences || CACHE.absences.length === 0) {
-
-    html += `連絡済みの欠席はありません`;
-
-  } else {
-
-    const map = {};
-
-    for (const item of CACHE.absences) {
-
-      if (!map[item.memberId]) {
-        map[item.memberId] = [];
-      }
-
-      map[item.memberId].push(item);
-
-    }
-
-    for (const member of CACHE.members) {
-
-      const list = map[member.memberId];
-
-      if (!list || list.length === 0) continue;
-
-      const sortedList = [...list].sort(
-        (a, b) =>
-          new Date(a.rawDate) -
-          new Date(b.rawDate)
+      const data = await apiGet(
+        "getMembersByLineId",
+        {
+          lineUserId: CACHE.profile.userId
+        }
       );
 
-      html += `<b>${member.name}</b><br>`;
-
-      for (const item of sortedList) {
-
-        let cancelButton = "";
-
-        if (
-          item.status === "申請中" ||
-          item.status === "振替待ち"
-        ) {
-
-          cancelButton = `
-            <button onclick="
-              cancelAbsence(
-                '${item.memberId}',
-                '${item.rawDate}'
-              )
-            ">
-              取消
-            </button>
-          `;
-
-        }
-
-        html += `
-          ・${item.absenceDate}
-          （${item.status}）
-          ${cancelButton}
-          <br>
-        `;
-      }
-
-      html += `<br>`;
+      CACHE.members =
+        data.members || [];
 
     }
 
-  }
+    renderHome();
 
-  // =====================
-  // 振替エリア
-  // =====================
-  html += `<h3>振替</h3>`;
+  } finally {
 
-  if (!CACHE.transfers || CACHE.transfers.length === 0) {
-
-    html += `
-      現在表示できる振替情報はありません
-    `;
-
-  } else {
-
-    const map = {};
-
-    for (const item of CACHE.transfers) {
-
-      if (!map[item.memberId]) {
-        map[item.memberId] = [];
-      }
-
-      map[item.memberId].push(item);
-
-    }
-
-    for (const member of CACHE.members) {
-
-      const list = map[member.memberId];
-
-      if (!list || list.length === 0) continue;
-
-      const sortedList = [...list].sort(
-        (a, b) =>
-          new Date(a.rawTransferDate) -
-          new Date(b.rawTransferDate)
-      );
-
-const remainCount =
-  CACHE.absences.filter(
-    a =>
-      a.memberId === member.memberId &&
-      (
-        a.status === "申請中" ||
-        a.status === "振替待ち"
-      ) &&
-      a.consumeStatus !== "消費済"
-  ).length;
-
-      html += `
-        <b>
-          ${member.name}
-          （振替残数：${remainCount}）
-        </b><br>
-      `;
-
-      for (const item of sortedList) {
-
-        let cancelButton = "";
-
-        if (item.status === "申請中") {
-
-          cancelButton = `
-            <button onclick="
-              cancelTransfer(
-                '${item.memberId}',
-                '${item.rawAbsenceDate}'
-              )
-            ">
-              取消
-            </button>
-          `;
-
-        }
-
-        html += `
-          振替：${item.transferDate}<br>
-          （${item.status}）
-          ${cancelButton}
-          <br><br>
-        `;
-
-      }
-
-    }
+    unlockUI();
 
   }
 
-  html += `<hr>`;
+}
 
-  // =====================
-  // 操作ボタン
-  // =====================
-  html += `
-    <button onclick="showSchedule()">スケジュール</button><br>
-    <button onclick="showAbsenceForm()">欠席申請</button><br>
-    <button onclick="showTransferForm()">振替申請</button>
-    <hr>
+
+// =======================
+// ホーム画面
+// =======================
+function renderHome() {
+
+  const members =
+    CACHE.members.length
+      ? CACHE.members
+          .map(
+            member =>
+              `<li>${escapeHtml(member.name)}</li>`
+          )
+          .join("")
+      : "<li>登録会員はいません</li>";
+
+  document.getElementById("status").innerHTML = `
+    <section class="card">
+
+      <h2>
+        こんにちは
+        ${escapeHtml(CACHE.profile.displayName)}
+        さま
+      </h2>
+
+      <h3>登録会員</h3>
+
+      <ul>
+        ${members}
+      </ul>
+
+    </section>
+
+    <section class="card">
+
+      <h3>動作分析結果</h3>
+
+      <p class="muted">
+        現在、表示できる分析結果はありません
+      </p>
+
+    </section>
+
+    <section class="card">
+
+      <h3>スクールスケジュール</h3>
+
+      <button onclick="showSchedule()">
+        カレンダーを見る
+      </button>
+
+    </section>
   `;
 
-  document.getElementById("status").innerHTML = html;
-
-}
-
-function showAbsenceForm() {
-
-  let html = "";
-
-  html += "<h3>欠席申請</h3>";
-
-  html += "<p>対象会員を選択してください</p>";
-
-  for (const member of CACHE.members) {
-
-    const isSelected =
-      selectedMembers.some(m => m.id === member.memberId);
-
-    html += `
-      <div style="margin:6px 0;">
-        <button
-          onclick="selectMember('${member.memberId}','${member.name}')"
-          style="
-            background:${isSelected ? '#4CAF50' : '#ffffff'};
-            color:${isSelected ? '#ffffff' : '#000000'};
-          "
-        >
-          ${member.name}
-          ${isSelected ? " ✔" : ""}
-        </button>
-      </div>
-    `;
-  }
-
-  html += `
-    <br>
-    <input type="date" id="absenceDate">
-    <br><br>
-
-    <button onclick="sendAbsence()">
-      申請する
-    </button>
-
-    <br><br>
-
-    <button onclick="returnToHome()">
-      戻る
-    </button>
-  `;
-
-  document.getElementById("status").innerHTML = html;
 }
 
 
 // =======================
-// 振替画面
-// =======================
-async function showTransferForm() {
-
-  if (!CACHE.schedules) {
-    await loadSchedule();
-  }
-
-  let html = "<h3>振替申請</h3>";
-
-  html += "<p>対象会員を選択してください</p>";
-
-  for (const member of CACHE.members) {
-
-    const count =
-      CACHE.absences.filter(
-        a =>
-          a.memberId === member.memberId &&
-          (
-            a.status === "申請中" ||
-            a.status === "振替待ち"
-          ) &&
-          a.consumeStatus !== "消費済"
-      ).length;
-
-    const disabled = count === 0;
-
-    const checked =
-      selectedTransfer &&
-      selectedTransfer.memberId === member.memberId
-        ? "checked"
-        : "";
-
-    html += `
-      <div style="margin:8px 0;">
-        <label>
-          <input
-            type="radio"
-            name="transferMember"
-            value="${member.memberId}"
-            ${checked}
-            onchange="
-              selectTransferMember(
-                '${member.memberId}',
-                '${member.name}',
-                '${member.classId}'
-              )
-            "
-            ${disabled ? "disabled" : ""}
-          >
-          ${member.name}
-          （残${count}回）
-        </label>
-      </div>
-    `;
-  }
-
-  let transferDates = [];
-
-  if (selectedTransfer) {
-
-    transferDates =
-      CACHE.schedules
-        .filter(
-          s =>
-            s.type === "振替可" &&
-            s.classId === selectedTransfer.classId
-        )
-        .sort(
-          (a, b) =>
-            new Date(a.date) -
-            new Date(b.date)
-        );
-  }
-
-  html += `
-    <br>
-    <p>振替日を選択</p>
-
-    <select id="transferDate">
-      <option value="">
-        選択してください
-      </option>
-  `;
-
-  for (const item of transferDates) {
-
-    html += `
-      <option value="${item.date}">
-        ${item.date}
-        ${item.className}
-        (${item.startTime})
-      </option>
-    `;
-  }
-
-  html += `
-    </select>
-
-    <br><br>
-
-    <button onclick="sendTransfer()">
-      申請
-    </button>
-
-    <button onclick="returnToHome()">
-      戻る
-    </button>
-  `;
-
-  document.getElementById("status").innerHTML =
-    html;
-}
-
-  
-function selectTransferMember(
-  memberId,
-  memberName,
-  classId
-) {
-
-  selectedTransfer = {
-    memberId,
-    memberName,
-    classId
-  };
-
-  showTransferForm();
-
-}
-
-async function sendTransfer() {
-
-const date =
-  document.getElementById(
-    "transferDate"
-  ).value;
-
-  if (
-    !selectedTransfer ||
-    !date
-  ) {
-
-    alert("未選択です");
-    return;
-
-  }
-
-  // =====================
-  // 残振替回数チェック
-  // =====================
-
-const count =
-  CACHE.absences.filter(
-    a =>
-      a.memberId === selectedTransfer.memberId &&
-      (
-        a.status === "申請中" ||
-        a.status === "振替待ち"
-      ) &&
-      a.consumeStatus !== "消費済"
-  ).length;
-
-  if (count === 0) {
-
-    alert(
-      "利用可能な振替がありません"
-    );
-
-    return;
-
-  }
-
-  // =====================
-  // GAS送信
-  // =====================
-
-  const res = await fetch(
-    GAS_URL,
-    {
-      method: "POST",
-      body: JSON.stringify({
-
-        action: "transferRequest",
-
-        memberId:
-          selectedTransfer.memberId,
-
-        memberName:
-          selectedTransfer.memberName,
-
-        transferDate:
-          date
-
-      })
-    }
-  );
-
-  const result =
-    await res.json();
-
-  if (!result.success) {
-
-    alert(result.message);
-    return;
-
-  }
-
-  alert("振替申請を登録しました");
-
-  CACHE.absences = null;
-  CACHE.transfers = null;
-
-  selectedTransfer = null;
-
-  await returnToHome();
-
-}
-
-// =======================
-// 取り消し
-// =======================
-// 欠席
-async function cancelAbsence(memberId, absenceDate) {
-
-  if (!confirm("欠席を取り消しますか？")) {
-    return;
-  }
-
-  await fetch(GAS_URL, {
-    method: "POST",
-    body: JSON.stringify({
-      action: "changeRequestStatus",
-      memberId: memberId,
-      absenceDate: absenceDate,
-      status: "取消"
-    })
-  });
-
-  CACHE.absences = null;
-
-  await returnToHome();
-
-}
-//振替
-async function cancelTransfer(
-  memberId,
-  absenceDate
-) {
-
-  if (
-    !confirm("振替申請を取り消しますか？")
-  ) {
-    return;
-  }
-
-  await fetch(GAS_URL, {
-    method: "POST",
-    body: JSON.stringify({
-      action: "cancelTransfer",
-      memberId: memberId,
-      absenceDate: absenceDate
-    })
-  });
-
-  CACHE.absences = null;
-  CACHE.transfers = null;
-
-  await returnToHome();
-
-}
-
-// =======================
-// スケジュール管理
+// スケジュール取得
 // =======================
 async function loadSchedule() {
 
-  const res = await fetch(
-    GAS_URL +
-    "?action=getScheduleByLineId" +
-    "&lineUserId=" +
-    encodeURIComponent(
-      CACHE.profile.userId
-    )
+  if (CACHE.schedules) {
+    return;
+  }
+
+  const data = await apiGet(
+    "getScheduleByLineId",
+    {
+      lineUserId: CACHE.profile.userId
+    }
   );
 
-  const data = await res.json();
-
-  CACHE.schedules = data.schedules;
+  CACHE.schedules =
+    data.schedules || [];
 
 }
 
-// スケジュール管理
+
+// =======================
+// カレンダー表示
+// =======================
 async function showSchedule() {
 
-  await loadSchedule();
+  lockUI("スケジュールを取得中...");
 
-let html = "";
-  
-  const today = new Date();
+  try {
+
+    await loadSchedule();
+
+    renderSchedule();
+
+  } catch (error) {
+
+    alert(error.message);
+
+  } finally {
+
+    unlockUI();
+
+  }
+
+}
+
+
+function renderSchedule() {
 
   const year =
     currentCalendarDate.getFullYear();
@@ -1032,123 +624,72 @@ let html = "";
   const month =
     currentCalendarDate.getMonth();
 
-  html += `
-  <div style="
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:10px;
-  ">
-
-    <button onclick="prevMonth()">
-      ◀
-    </button>
-
-    <h3>
-      ${year}年${month + 1}月
-    </h3>
-
-    <button onclick="nextMonth()">
-      ▶
-    </button>
-
-  </div>
-`;
-
-  const firstDay =
-    new Date(year, month, 1);
-
-  const lastDay =
-    new Date(year, month + 1, 0);
-
   const startWeek =
-    firstDay.getDay();
+    new Date(year, month, 1).getDay();
 
   const totalDays =
-    lastDay.getDate();
+    new Date(year, month + 1, 0).getDate();
 
-  html += `
-    <table
-      border="1"
-      style="
-        width:100%;
-        border-collapse:collapse;
-        text-align:center;
-      "
-    >
-      <tr>
-        <th>日</th>
-        <th>月</th>
-        <th>火</th>
-        <th>水</th>
-        <th>木</th>
-        <th>金</th>
-        <th>土</th>
-      </tr>
-      <tr>
-  `;
-
+  let cells = "<tr>";
   let cellCount = 0;
 
-  for (let i = 0; i < startWeek; i++) {
+  for (
+    let i = 0;
+    i < startWeek;
+    i++, cellCount++
+  ) {
 
-    html += `<td></td>`;
-    cellCount++;
+    cells += "<td></td>";
 
   }
 
-  for (let day = 1; day <= totalDays; day++) {
+  for (
+    let day = 1;
+    day <= totalDays;
+    day++, cellCount++
+  ) {
 
-    const dateStr =
-      `${year}/${String(month + 1).padStart(2, "0")}/${String(day).padStart(2, "0")}`;
+    const date =
+      `${year}/` +
+      `${String(month + 1).padStart(2, "0")}/` +
+      `${String(day).padStart(2, "0")}`;
 
-const memberClassIds =
-  CACHE.members.map(
-    m => m.classId
-  );
+    const schedules =
+      CACHE.schedules.filter(
+        item => item.date === date
+      );
 
-const schedules =
-  CACHE.schedules.filter(
-    s =>
-      s.date === dateStr &&
-      memberClassIds.includes(
-        s.classId
-      )
-  );
+    const mark =
+      schedules.length
+        ? scheduleMark(schedules[0].type)
+        : "";
 
-    let mark = "";
+    const className =
+      schedules.length
+        ? "has-schedule"
+        : "";
 
-    if (schedules.length > 0) {
+    const click =
+      schedules.length
+        ? `onclick="showScheduleDetail('${date}')"`
+        : "";
 
-      const type =
-        schedules[0].type;
-
-      if (type === "通常") mark = "●";
-      else if (type === "振替可") mark = "★";
-      else if (type === "雨天") mark = "▲";
-      else if (type === "休講") mark = "■";
-
-    }
-
-    html += `
+    cells += `
       <td
-        style="
-          height:70px;
-          vertical-align:top;
-          cursor:pointer;
-        "
-        onclick="showScheduleDetail('${dateStr}')"
+        class="${className}"
+        ${click}
       >
         ${day}<br>
         ${mark}
       </td>
     `;
 
-    cellCount++;
+    if (
+      (cellCount + 1) % 7 === 0 &&
+      day !== totalDays
+    ) {
 
-    if (cellCount % 7 === 0) {
-
-      html += `</tr><tr>`;
+      cells += "</tr><tr>";
 
     }
 
@@ -1156,562 +697,190 @@ const schedules =
 
   while (cellCount % 7 !== 0) {
 
-    html += `<td></td>`;
+    cells += "<td></td>";
     cellCount++;
 
   }
 
-  html += `
-      </tr>
-    </table>
+  cells += "</tr>";
 
-    <br>
+  document.getElementById("status").innerHTML = `
+    <section class="card">
 
-    <button onclick="returnToHome()">
-      戻る
-    </button>
-  `;
+      <div class="calendar-head">
 
-  document.getElementById("status").innerHTML =
-    html;
-
-}
-
-function showScheduleDetail(dateStr) {
-
-const memberClassIds =
-  CACHE.members.map(
-    m => m.classId
-  );
-
-const schedules =
-  CACHE.schedules.filter(
-    s =>
-      s.date === dateStr &&
-      memberClassIds.includes(
-        s.classId
-      )
-  );
-
-  if (schedules.length === 0) {
-    return;
-  }
-
-  let html = `
-    <h3>${dateStr}</h3>
-  `;
-
-  for (const item of schedules) {
-
-    html += `
-
-      <hr>
-
-      <p>
-        <b>${item.className}</b>
-      </p>
-
-      <p>
-        ${item.startTime}
-        ～
-        ${item.endTime}
-      </p>
-
-      <p>
-        ${item.place}
-      </p>
-
-      <p>
-        ${item.type}
-      </p>
-
-    `;
-
-    // =====================
-    // ボタン表示
-    // =====================
-
-    if (
-      item.type === "通常"
-    ) {
-
-      html += `
-        <button
-          onclick="absenceFromSchedule('${item.date}')"
-        >
-          欠席
+        <button onclick="changeMonth(-1)">
+          ◀
         </button>
-      `;
 
-    }
+        <h2>
+          ${year}年${month + 1}月
+        </h2>
 
-    if (
-      item.type === "振替可" 
-    ) {
-
-      html += `
-        <button
-          onclick="transferFromSchedule('${item.date}')"
-        >
-          振替
+        <button onclick="changeMonth(1)">
+          ▶
         </button>
-      `;
 
-    }
+      </div>
 
+      <table>
+
+        <thead>
+          <tr>
+            <th>日</th>
+            <th>月</th>
+            <th>火</th>
+            <th>水</th>
+            <th>木</th>
+            <th>金</th>
+            <th>土</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          ${cells}
+        </tbody>
+
+      </table>
+
+      <p class="muted">
+        ● 通常　
+        ★ 振替可　
+        ▲ 雨天　
+        ■ 休講
+      </p>
+
+      <button
+        class="secondary"
+        onclick="renderHome()"
+      >
+        ホームへ戻る
+      </button>
+
+    </section>
+  `;
+
+}
+
+
+// =======================
+// スケジュール記号
+// =======================
+function scheduleMark(type) {
+
+  return {
+    "通常": "●",
+    "振替可": "★",
+    "雨天": "▲",
+    "休講": "■"
+  }[type] || "●";
+
+}
+
+
+// =======================
+// スケジュール詳細
+// =======================
+function showScheduleDetail(date) {
+
+  const schedules =
+    CACHE.schedules.filter(
+      item => item.date === date
+    );
+
+  if (!schedules.length) {
+    return;
   }
 
-  html += `
-    <br><br>
+  const details =
+    schedules
+      .map(item => `
+        <hr>
 
-    <button onclick="closeScheduleModal()">
-      閉じる
-    </button>
-  `;
+        <p>
+          <strong>
+            ${escapeHtml(item.className)}
+          </strong>
+        </p>
 
-  document.getElementById(
-    "scheduleModalContent"
-  ).innerHTML = html;
+        <p>
+          ${escapeHtml(item.startTime)}
+          ～
+          ${escapeHtml(item.endTime)}
+        </p>
 
-  document.getElementById(
-    "scheduleModal"
-  ).style.display = "block";
+        <p>
+          ${escapeHtml(item.place)}
+        </p>
 
-}
+        <p>
+          ${escapeHtml(item.type)}
+        </p>
+      `)
+      .join("");
 
-function closeScheduleModal() {
+  document
+    .getElementById("scheduleModalContent")
+    .innerHTML = `
+      <h3>${escapeHtml(date)}</h3>
 
-  document.getElementById(
-    "scheduleModal"
-  ).style.display = "none";
+      ${details}
 
-}
-
-// =====================
-// スケジュールからの欠席
-// =====================
-
-function absenceFromSchedule(dateStr) {
-
-  let html = `
-    <h3>欠席する会員を選択</h3>
-  `;
-
-  for (const member of CACHE.members) {
-
-    html += `
-      <p>
-        <label>
-          <input
-            type="checkbox"
-            name="absenceMember"
-            value="${member.memberId}"
-            data-name="${member.name}"
-          >
-          ${member.name}
-        </label>
-      </p>
+      <button
+        class="secondary"
+        onclick="closeScheduleModal()"
+      >
+        閉じる
+      </button>
     `;
 
-  }
-
-  html += `
-
-    <button
-      onclick="
-        confirmAbsenceMulti(
-          '${dateStr}'
-        )
-      "
-    >
-      欠席申請
-    </button>
-
-    <button
-      onclick="
-        showScheduleDetail(
-          '${dateStr}'
-        )
-      "
-    >
-      戻る
-    </button>
-
-  `;
-
-  document.getElementById(
-    "scheduleModalContent"
-  ).innerHTML = html;
+  document
+    .getElementById("scheduleModal")
+    .style.display = "block";
 
 }
-  
-function confirmAbsenceMulti(dateStr) {
 
-  const checked =
-    document.querySelectorAll(
-      'input[name="absenceMember"]:checked'
-    );
 
-  if (checked.length === 0) {
+// =======================
+// モーダルを閉じる
+// =======================
+function closeScheduleModal(event) {
 
-    alert(
-      "会員を選択してください"
-    );
-
+  if (
+    event &&
+    event.target.id !== "scheduleModal"
+  ) {
     return;
-
   }
 
-  const members = [];
-
-  checked.forEach(item => {
-
-    members.push({
-
-      memberId:
-        item.value,
-
-      memberName:
-        item.dataset.name
-
-    });
-
-  });
-
-  let html = `
-    <h3>欠席確認</h3>
-
-    <p>
-      ${dateStr}
-    </p>
-
-    <p>
-      以下の会員を欠席登録します
-    </p>
-  `;
-
-  members.forEach(member => {
-
-    html += `
-      <p>
-        ・${member.memberName}
-      </p>
-    `;
-
-  });
-
-  html += `
-    <button
-      onclick='submitAbsenceMulti(
-        ${JSON.stringify(members)},
-        "${dateStr}"
-      )'
-    >
-      はい
-    </button>
-
-    <button
-      onclick="
-        absenceFromSchedule(
-          '${dateStr}'
-        )
-      "
-    >
-      戻る
-    </button>
-  `;
-
-  document.getElementById(
-    "scheduleModalContent"
-  ).innerHTML = html;
+  document
+    .getElementById("scheduleModal")
+    .style.display = "none";
 
 }
 
-async function submitAbsenceMulti(
-  members,
-  dateStr
-) {
 
-  try {
+// =======================
+// 前月・翌月
+// =======================
+function changeMonth(amount) {
 
-    for (const member of members) {
-
-      await fetch(GAS_URL, {
-
-        method: "POST",
-
-        body: JSON.stringify({
-
-          action: "absenceRequest",
-
-          memberId:
-            member.memberId,
-
-          memberName:
-            member.memberName,
-
-          absenceDate:
-            dateStr.replaceAll("/", "-")
-
-        })
-
-      });
-
-    }
-
-    alert(
-      "欠席申請を登録しました"
-    );
-
-    closeScheduleModal();
-
-    CACHE.absences = null;
-
-    await returnToHome();
-
-  } catch (e) {
-
-    alert(
-      "登録に失敗しました"
-    );
-
-    console.error(e);
-
-  }
-
-}
-
-// =====================
-// スケジュールからの振り替え
-// =====================
-function transferFromSchedule(dateStr) {
-
-  let html = `
-    <h3>振替する会員を選択</h3>
-  `;
-
-  for (const member of CACHE.members) {
-
-    const count =
-      CACHE.absences.filter(
-        a =>
-          a.memberId === member.memberId &&
-          (
-            a.status === "申請中" ||
-            a.status === "振替待ち"
-          ) &&
-          a.consumeStatus !== "消費済"
-      ).length;
-
-    html += `
-      <p>
-        <label>
-          <input
-            type="radio"
-            name="transferMember"
-            value="${member.memberId}"
-            data-name="${member.name}"
-            ${count === 0 ? "disabled" : ""}
-          >
-          ${member.name}
-          （残${count}回）
-        </label>
-      </p>
-    `;
-  }
-
-  html += `
-    <button
-      onclick="
-        confirmTransferFromSchedule(
-          '${dateStr}'
-        )
-      "
-    >
-      振替申請
-    </button>
-
-    <button
-      onclick="
-        showScheduleDetail(
-          '${dateStr}'
-        )
-      "
-    >
-      戻る
-    </button>
-  `;
-
-  document.getElementById(
-    "scheduleModalContent"
-  ).innerHTML = html;
-}
-
-function confirmTransferFromSchedule(
-  dateStr
-) {
-
-  const selected =
-    document.querySelector(
-      'input[name="transferMember"]:checked'
-    );
-
-  if (!selected) {
-
-    alert("会員を選択してください");
-    return;
-
-  }
-
-  const memberId =
-    selected.value;
-
-  const memberName =
-    selected.dataset.name;
-
-  let html = `
-    <h3>振替確認</h3>
-
-    <p>
-      ${memberName}
-    </p>
-
-    <p>
-      振替日
-      ${dateStr}
-    </p>
-
-    <button
-      onclick="
-        submitTransferFromSchedule(
-          '${memberId}',
-          '${memberName}',
-          '${dateStr}'
-        )
-      "
-    >
-      はい
-    </button>
-
-    <button
-      onclick="
-        transferFromSchedule(
-          '${dateStr}'
-        )
-      "
-    >
-      戻る
-    </button>
-  `;
-
-  document.getElementById(
-    "scheduleModalContent"
-  ).innerHTML = html;
-}
-
-async function submitTransferFromSchedule(
-  memberId,
-  memberName,
-  dateStr
-) {
-
-  const res = await fetch(
-    GAS_URL,
-    {
-      method: "POST",
-      body: JSON.stringify({
-
-        action: "transferRequest",
-
-        memberId:
-          memberId,
-
-        memberName:
-          memberName,
-
-        transferDate:
-          dateStr.replaceAll("/", "-")
-
-      })
-    }
+  currentCalendarDate = new Date(
+    currentCalendarDate.getFullYear(),
+    currentCalendarDate.getMonth() + amount,
+    1
   );
 
-  const result =
-    await res.json();
-
-  if (!result.success) {
-
-    alert(result.message);
-    return;
-
-  }
-
-  alert(
-    "振替申請を登録しました"
-  );
-
-  closeScheduleModal();
-
-  CACHE.absences = null;
-  CACHE.transfers = null;
-
-  await returnToHome();
-}
-  
-// =====================
-// スケジュールの月遷移
-// =====================
-
-function prevMonth() {
-
-  currentCalendarDate.setMonth(
-    currentCalendarDate.getMonth() - 1
-  );
-
-  showSchedule();
+  renderSchedule();
 
 }
 
-function nextMonth() {
 
-  currentCalendarDate.setMonth(
-    currentCalendarDate.getMonth() + 1
-  );
-
-  showSchedule();
-
-}
-  
 // =======================
 // 起動
 // =======================
 main();
 </script>
-<div
-  id="scheduleModal"
-  style="
-    display:none;
-    position:fixed;
-    top:0;
-    left:0;
-    width:100%;
-    height:100%;
-    background:rgba(0,0,0,0.5);
-    z-index:999;
-  "
->
-  <div
-    id="scheduleModalContent"
-    style="
-      background:white;
-      width:80%;
-      max-width:400px;
-      margin:100px auto;
-      padding:20px;
-      border-radius:10px;
-    "
-  >
-  </div>
-</div>
+
 </body>
 </html>
