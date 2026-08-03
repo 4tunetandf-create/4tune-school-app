@@ -1567,10 +1567,9 @@
 
           this.stop();
 
-          this.frameIndex = Math.min(
-            this.frameIndex + 1,
-            this.frames.length - 1,
-          );
+          this.frameIndex =
+              (this.frameIndex + 1) %
+              this.frames.length;
 
           this.draw();
         }
@@ -1585,7 +1584,10 @@
 
           this.stop();
 
-          this.frameIndex = Math.max(this.frameIndex - 1, 0);
+          this.frameIndex =
+            (this.frameIndex -
+             1 + this.frames.length)%
+            this.frames.length;
 
           this.draw();
         }
