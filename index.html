@@ -778,6 +778,15 @@ function createAnalysisListHtml() {
                 file.fileName
               )}
             </div>
+            <button
+  style="
+    width:100%;
+    margin-top:10px;
+  "
+  onclick="testAnalysisData('${file.fileId}')"
+>
+  結果を見る
+</button>
 
           </div>
         `;
@@ -800,7 +809,67 @@ function createAnalysisListHtml() {
 
 }
 
+// =======================
+// 分析データ読み込みテスト
+// =======================
+async function testAnalysisData(fileId) {
 
+  lockUI("分析結果を読み込み中...");
+
+  try {
+
+    const data = await apiGet(
+      "getAnalysisData",
+      {
+        lineUserId: CACHE.profile.userId,
+        fileId: fileId
+      }
+    );
+
+    if (!data.success) {
+      throw new Error(
+        data.message ||
+        "分析結果を読み込めませんでした"
+      );
+    }
+
+    const coordinateCount =
+      data.rows &&
+      data.rows[0]
+        ? data.rows[0].length
+        : 0;
+
+    alert(
+      "読み込み成功\n\n" +
+      "ファイル：" + data.fileName + "\n" +
+      "会員：" + data.memberName + "\n" +
+      "fps：" + data.fps + "\n" +
+      "フレーム数：" + data.frameCount + "\n" +
+      "取得行数：" + data.rows.length + "\n" +
+      "1行の座標数：" + coordinateCount
+    );
+
+    renderHome();
+
+  } catch (error) {
+
+    console.error(error);
+
+    alert(
+      error.message ||
+      "分析結果を読み込めませんでした"
+    );
+
+    renderHome();
+
+  } finally {
+
+    unlockUI();
+
+  }
+
+}
+  
 // =======================
 // 分析結果一覧の再読み込み
 // =======================
