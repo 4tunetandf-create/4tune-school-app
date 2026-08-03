@@ -107,6 +107,63 @@
       border-radius: 12px;
       padding: 20px;
     }
+    .analysis-result-button {
+  width: 100%;
+  margin-top: 10px;
+}
+
+.stick-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.stick-header h2 {
+  margin: 0;
+  font-size: 19px;
+}
+
+.stick-canvas-wrap {
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid #d8dddb;
+  border-radius: 12px;
+  background: #fff;
+}
+
+#stickCanvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: #fff;
+  touch-action: none;
+}
+
+.stick-info {
+  margin: 12px 0;
+  text-align: center;
+  color: #555;
+  font-size: 14px;
+}
+
+.stick-controls {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr 1fr;
+  gap: 8px;
+}
+
+.stick-controls button {
+  min-height: 48px;
+  margin: 0;
+  padding: 8px 4px;
+  font-weight: bold;
+}
+
+.stick-controls .play-button {
+  background: #4f9c8a;
+  font-size: 16px;
+}
   </style>
 </head>
 
