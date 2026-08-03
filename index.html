@@ -517,10 +517,6 @@ async function loadHome() {
 // =====================
 if (!CACHE.analysisMembers) {
 
-  alert(
-    "分析ファイル一覧の取得を開始します"
-  );
-
   try {
 
     const analysisData =
@@ -531,18 +527,6 @@ if (!CACHE.analysisMembers) {
             CACHE.profile.userId
         }
       );
-
-    /*
-     * スマホでGASの返却内容を確認
-     */
-    alert(
-      "分析APIの返却結果\n\n" +
-      JSON.stringify(
-        analysisData,
-        null,
-        2
-      )
-    );
 
     if (
       analysisData.success
