@@ -163,6 +163,52 @@
         font-size: 12px;
       }
 
+      .analysis-tabs {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 4px;
+        margin-top: 6px;
+        padding: 3px;
+        border-radius: 9px;
+        background: #e9eeec;
+      }
+
+      .analysis-tab-button {
+        min-height: 34px;
+        margin: 0;
+        padding: 5px 2px;
+        border: 0;
+        border-radius: 7px;
+        background: transparent;
+        color: #4d5754;
+        font-size: 12px;
+        font-weight: bold;
+      }
+
+      .analysis-tab-button.is-active {
+        background: #4f9c8a;
+        color: #fff;
+      }
+
+      .analysis-tab-panel {
+        display: none;
+        padding-top: 6px;
+      }
+
+      .analysis-tab-panel.is-active {
+        display: block;
+      }
+
+      .analysis-tab-placeholder {
+        margin: 0;
+        padding: 18px 8px;
+        border-radius: 8px;
+        background: #f5f7f6;
+        color: #777;
+        text-align: center;
+        font-size: 12px;
+      }
+
       .stick-controls {
         display: grid;
         grid-template-columns: 1fr 1.15fr 1fr;
@@ -183,7 +229,7 @@
       }
 
       .stick-settings {
-        margin: 6px 0;
+        margin: 0 0 6px;
         padding: 7px 9px;
         border-radius: 8px;
         background: #f5f7f6;
@@ -880,104 +926,143 @@
           Frame 1 / 1｜0.00秒
         </div>
 
-<div class="stick-settings">
-
-  <div class="stick-slider-group">
-
-    <div class="stick-slider-head">
-
-      <span>表示サイズ</span>
-
-      <span id="stickZoomValue">
-        100%
-      </span>
-
-    </div>
-
-    <input
-      id="stickZoomSlider"
-      class="stick-slider"
-      type="range"
-      min="50"
-      max="200"
-      step="10"
-      value="100"
-      oninput="changeStickZoom(this.value)"
-    >
-
-  </div>
-
-  <div class="stick-slider-group">
-
-    <div class="stick-slider-head">
-
-      <span>再生速度</span>
-
-      <span id="stickSpeedValue">
-        1倍
-      </span>
-
-    </div>
-
-    <input
-      id="stickSpeedSlider"
-      class="stick-slider"
-      type="range"
-      min="0"
-      max="4"
-      step="1"
-      value="2"
-      oninput="changeStickSpeed(this.value)"
-    >
-
-    <div class="speed-scale">
-
-      <span>0.25</span>
-      <span>0.5</span>
-      <span>1</span>
-      <span>2</span>
-      <span>4</span>
-
-    </div>
-
-  </div>
-
-</div>
-
-        <div class="stick-controls">
-
+        <div class="analysis-tabs" role="tablist" aria-label="分析メニュー">
           <button
-            class="secondary"
-            onclick="previousStickFrame()"
+            id="analysisTabButton-controls"
+            class="analysis-tab-button is-active"
+            type="button"
+            role="tab"
+            aria-selected="true"
+            aria-controls="analysisTab-controls"
+            onclick="switchAnalysisTab('controls')"
           >
-            ◀ 1コマ
+            ボタン
           </button>
 
           <button
-            id="stickPlayButton"
-            class="play-button"
-            onclick="toggleStickPlayback()"
+            id="analysisTabButton-basic"
+            class="analysis-tab-button"
+            type="button"
+            role="tab"
+            aria-selected="false"
+            aria-controls="analysisTab-basic"
+            onclick="switchAnalysisTab('basic')"
           >
-            再生
+            基礎情報
           </button>
 
           <button
-            class="secondary"
-            onclick="nextStickFrame()"
+            id="analysisTabButton-graphs"
+            class="analysis-tab-button"
+            type="button"
+            role="tab"
+            aria-selected="false"
+            aria-controls="analysisTab-graphs"
+            onclick="switchAnalysisTab('graphs')"
           >
-            1コマ ▶
+            グラフ
           </button>
-
         </div>
 
-        <button
-          id="stickLoopButton"
-          class="stick-loop-button"
-          onclick="toggleStickLoop()"
-          aria-pressed="false"
+        <div
+          id="analysisTab-controls"
+          class="analysis-tab-panel is-active"
+          role="tabpanel"
+          aria-labelledby="analysisTabButton-controls"
         >
-          ループ再生：OFF
-        </button>
+          <div class="stick-settings">
+            <div class="stick-slider-group">
+              <div class="stick-slider-head">
+                <span>表示サイズ</span>
+                <span id="stickZoomValue">100%</span>
+              </div>
+
+              <input
+                id="stickZoomSlider"
+                class="stick-slider"
+                type="range"
+                min="50"
+                max="200"
+                step="10"
+                value="100"
+                oninput="changeStickZoom(this.value)"
+              >
+            </div>
+
+            <div class="stick-slider-group">
+              <div class="stick-slider-head">
+                <span>再生速度</span>
+                <span id="stickSpeedValue">1倍</span>
+              </div>
+
+              <input
+                id="stickSpeedSlider"
+                class="stick-slider"
+                type="range"
+                min="0"
+                max="4"
+                step="1"
+                value="2"
+                oninput="changeStickSpeed(this.value)"
+              >
+
+              <div class="speed-scale">
+                <span>0.25</span>
+                <span>0.5</span>
+                <span>1</span>
+                <span>2</span>
+                <span>4</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="stick-controls">
+            <button class="secondary" onclick="previousStickFrame()">
+              ◀ 1コマ
+            </button>
+
+            <button
+              id="stickPlayButton"
+              class="play-button"
+              onclick="toggleStickPlayback()"
+            >
+              再生
+            </button>
+
+            <button class="secondary" onclick="nextStickFrame()">
+              1コマ ▶
+            </button>
+          </div>
+
+          <button
+            id="stickLoopButton"
+            class="stick-loop-button"
+            onclick="toggleStickLoop()"
+            aria-pressed="false"
+          >
+            ループ再生：OFF
+          </button>
+        </div>
+
+        <div
+          id="analysisTab-basic"
+          class="analysis-tab-panel"
+          role="tabpanel"
+          aria-labelledby="analysisTabButton-basic"
+          hidden
+        >
+          <p class="analysis-tab-placeholder">基礎情報は後で追加します</p>
+        </div>
+
+        <div
+          id="analysisTab-graphs"
+          class="analysis-tab-panel"
+          role="tabpanel"
+          aria-labelledby="analysisTabButton-graphs"
+          hidden
+        >
+          <p class="analysis-tab-placeholder">グラフは後で追加します</p>
+        </div>
 
       </section>
     `;
@@ -1002,6 +1087,33 @@
         }
 
         renderHome();
+      }
+
+      // =======================
+      // 分析画面タブ切り替え
+      // =======================
+      function switchAnalysisTab(tabName) {
+        const tabNames = ["controls", "basic", "graphs"];
+
+        if (!tabNames.includes(tabName)) {
+          return;
+        }
+
+        for (const name of tabNames) {
+          const isActive = name === tabName;
+          const button = document.getElementById("analysisTabButton-" + name);
+          const panel = document.getElementById("analysisTab-" + name);
+
+          if (button) {
+            button.classList.toggle("is-active", isActive);
+            button.setAttribute("aria-selected", String(isActive));
+          }
+
+          if (panel) {
+            panel.classList.toggle("is-active", isActive);
+            panel.hidden = !isActive;
+          }
+        }
       }
 
       // =======================
@@ -1567,9 +1679,7 @@
 
           this.stop();
 
-          this.frameIndex =
-              (this.frameIndex + 1) %
-              this.frames.length;
+          this.frameIndex = (this.frameIndex + 1) % this.frames.length;
 
           this.draw();
         }
@@ -1585,9 +1695,7 @@
           this.stop();
 
           this.frameIndex =
-            (this.frameIndex -
-             1 + this.frames.length)%
-            this.frames.length;
+            (this.frameIndex - 1 + this.frames.length) % this.frames.length;
 
           this.draw();
         }
