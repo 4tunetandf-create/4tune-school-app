@@ -862,12 +862,9 @@ function createAnalysisListHtml() {
                 file.fileName
               )}
             </div>
-            <button
-  style="
-    width:100%;
-    margin-top:10px;
-  "
-  onclick="testAnalysisData('${file.fileId}')"
+<button
+  class="analysis-result-button"
+  onclick="openAnalysisResult('${file.fileId}')"
 >
   結果を見る
 </button>
@@ -949,6 +946,999 @@ async function testAnalysisData(fileId) {
   } finally {
 
     unlockUI();
+
+  }
+
+}
+
+// =======================
+// 分析結果を開く
+// =======================
+async function openAnalysisResult(
+  fileId
+) {
+
+  /*
+   * 前のビューアが動いていた場合は停止
+   */
+  if (stickViewer) {
+
+    stickViewer.destroy();
+    stickViewer = null;
+
+  }
+
+  lockUI("分析結果を読み込み中...");
+
+  try {
+
+    let data =
+      CACHE.analysisData[fileId];
+
+    /*
+     * 未取得の場合だけGASから読み込む
+     */
+    if (!data) {
+
+      data = await apiGet(
+        "getAnalysisData",
+        {
+          lineUserId:
+            CACHE.profile.userId,
+
+          fileId:
+            fileId
+        }
+      );
+
+      if (!data.success) {
+
+        throw new Error(
+          data.message ||
+          "分析結果を読み込めませんでした"
+        );
+
+      }
+
+      /*
+       * 同じ結果を再度開いた場合に
+       * 通信しないようキャッシュ
+       */
+      CACHE.analysisData[fileId] =
+        data;
+
+    }
+
+    renderStickViewer(data);
+
+  } catch (error) {
+
+    console.error(error);
+
+    alert(
+      error.message ||
+      "分析結果を読み込めませんでした"
+    );
+
+    renderHome();
+
+  } finally {
+
+    unlockUI();
+
+  }
+
+}
+
+
+// =======================
+// スティック画面表示
+// =======================
+function renderStickViewer(data) {
+
+  document
+    .getElementById("status")
+    .innerHTML = `
+
+      <section class="card">
+
+        <div class="stick-header">
+
+          <button
+            class="secondary"
+            onclick="closeAnalysisResult()"
+          >
+            戻る
+          </button>
+
+          <h2>
+            ${escapeHtml(
+              data.memberName
+            )}
+          </h2>
+
+        </div>
+
+        <div
+          class="muted"
+          style="
+            margin-bottom:12px;
+            font-size:14px;
+          "
+        >
+          ${escapeHtml(
+            data.fileName
+          )}
+        </div>
+
+        <div class="stick-canvas-wrap">
+
+          <canvas
+            id="stickCanvas"
+            width="720"
+            height="520"
+          ></canvas>
+
+        </div>
+
+        <div
+          id="stickFrameInfo"
+          class="stick-info"
+        >
+          Frame 1 / 1｜0.00秒
+        </div>
+
+        <div class="stick-controls">
+
+          <button
+            class="secondary"
+            onclick="previousStickFrame()"
+          >
+            ◀ 1コマ
+          </button>
+
+          <button
+            id="stickPlayButton"
+            class="play-button"
+            onclick="toggleStickPlayback()"
+          >
+            再生
+          </button>
+
+          <button
+            class="secondary"
+            onclick="nextStickFrame()"
+          >
+            1コマ ▶
+          </button>
+
+        </div>
+
+      </section>
+    `;
+
+  stickViewer =
+    new LightweightStickViewer(
+      document.getElementById(
+        "stickCanvas"
+      ),
+      document.getElementById(
+        "stickFrameInfo"
+      ),
+      document.getElementById(
+        "stickPlayButton"
+      )
+    );
+
+  stickViewer.setData(
+    data.rows,
+    data.fps
+  );
+
+}
+
+
+// =======================
+// 分析結果を閉じる
+// =======================
+function closeAnalysisResult() {
+
+  if (stickViewer) {
+
+    stickViewer.destroy();
+    stickViewer = null;
+
+  }
+
+  renderHome();
+
+}
+
+
+// =======================
+// 再生操作
+// =======================
+function toggleStickPlayback() {
+
+  if (stickViewer) {
+
+    stickViewer.togglePlay();
+
+  }
+
+}
+
+
+function nextStickFrame() {
+
+  if (stickViewer) {
+
+    stickViewer.nextFrame();
+
+  }
+
+}
+
+
+function previousStickFrame() {
+
+  if (stickViewer) {
+
+    stickViewer.previousFrame();
+
+  }
+
+}
+
+
+// =======================
+// 軽量スティックビューア
+// =======================
+class LightweightStickViewer {
+
+  constructor(
+    canvas,
+    infoElement,
+    playButton
+  ) {
+
+    this.canvas =
+      canvas;
+
+    this.context =
+      canvas.getContext("2d");
+
+    this.infoElement =
+      infoElement;
+
+    this.playButton =
+      playButton;
+
+    this.frames = [];
+
+    this.frameIndex = 0;
+
+    this.fps = 30;
+
+    this.isPlaying = false;
+
+    this.animationId = null;
+
+    this.lastTime = 0;
+
+    this.accumulatedTime = 0;
+
+    /*
+     * 将来のサイズ変更用
+     */
+    this.zoom = 1;
+
+    this.fitScale = 100;
+
+    this.centerX = 0;
+    this.centerY = 0;
+
+  }
+
+
+  // =====================
+  // データ設定
+  // =====================
+  setData(rows, fps) {
+
+    this.stop();
+
+    this.fps =
+      Number(fps) > 0
+        ? Number(fps)
+        : 30;
+
+    this.frames =
+      this.convertRowsToFrames(
+        rows || []
+      );
+
+    if (
+      this.frames.length === 0
+    ) {
+
+      throw new Error(
+        "表示できる座標データがありません"
+      );
+
+    }
+
+    this.frameIndex = 0;
+
+    this.calculateFit();
+
+    this.draw();
+
+  }
+
+
+  // =====================
+  // 46列の座標を23点へ変換
+  // =====================
+  convertRowsToFrames(rows) {
+
+    const frames = [];
+
+    for (const row of rows) {
+
+      if (
+        !Array.isArray(row) ||
+        row.length < 46
+      ) {
+
+        continue;
+
+      }
+
+      /*
+       * B:AUだけを取得しているため、
+       * 元のExcelコードから列番号を
+       * 1つずらしている
+       *
+       * 右大転子
+       * x = 26
+       * y = 27
+       *
+       * 左大転子
+       * x = 38
+       * y = 39
+       */
+      const rightHipX =
+        this.toNumber(row[26]);
+
+      const rightHipY =
+        this.toNumber(row[27]);
+
+      const leftHipX =
+        this.toNumber(row[38]);
+
+      const leftHipY =
+        this.toNumber(row[39]);
+
+      let centerX = 0;
+      let centerY = 0;
+
+      if (
+        rightHipX !== null &&
+        leftHipX !== null
+      ) {
+
+        centerX =
+          (
+            rightHipX +
+            leftHipX
+          ) / 2;
+
+      }
+
+      if (
+        rightHipY !== null &&
+        leftHipY !== null
+      ) {
+
+        centerY =
+          (
+            rightHipY +
+            leftHipY
+          ) / 2;
+
+      }
+
+      const joints = [];
+
+      /*
+       * 2列で1点
+       * x、yを23点分読み込む
+       */
+      for (
+        let column = 0;
+        column < 46;
+        column += 2
+      ) {
+
+        const x =
+          this.toNumber(
+            row[column]
+          );
+
+        const y =
+          this.toNumber(
+            row[column + 1]
+          );
+
+        if (
+          x === null ||
+          y === null
+        ) {
+
+          joints.push(null);
+
+        } else {
+
+          joints.push({
+            x: x - centerX,
+            y: y - centerY
+          });
+
+        }
+
+      }
+
+      if (
+        joints.some(
+          point => point !== null
+        )
+      ) {
+
+        frames.push(joints);
+
+      }
+
+    }
+
+    return frames;
+
+  }
+
+
+  // =====================
+  // 数値変換
+  // =====================
+  toNumber(value) {
+
+    if (
+      value === null ||
+      value === "" ||
+      value === undefined
+    ) {
+
+      return null;
+
+    }
+
+    const number =
+      Number(value);
+
+    return Number.isFinite(number)
+      ? number
+      : null;
+
+  }
+
+
+  // =====================
+  // 全フレームに合う表示倍率
+  // =====================
+  calculateFit() {
+
+    let minX = Infinity;
+    let maxX = -Infinity;
+
+    let minY = Infinity;
+    let maxY = -Infinity;
+
+    for (const frame of this.frames) {
+
+      for (const point of frame) {
+
+        if (!point) {
+          continue;
+        }
+
+        minX =
+          Math.min(
+            minX,
+            point.x
+          );
+
+        maxX =
+          Math.max(
+            maxX,
+            point.x
+          );
+
+        minY =
+          Math.min(
+            minY,
+            point.y
+          );
+
+        maxY =
+          Math.max(
+            maxY,
+            point.y
+          );
+
+      }
+
+    }
+
+    if (
+      !Number.isFinite(minX) ||
+      !Number.isFinite(maxX) ||
+      !Number.isFinite(minY) ||
+      !Number.isFinite(maxY)
+    ) {
+
+      this.fitScale = 100;
+      this.centerX = 0;
+      this.centerY = 0;
+
+      return;
+
+    }
+
+    const width =
+      Math.max(
+        maxX - minX,
+        0.01
+      );
+
+    const height =
+      Math.max(
+        maxY - minY,
+        0.01
+      );
+
+    const horizontalScale =
+      (
+        this.canvas.width - 70
+      ) / width;
+
+    const verticalScale =
+      (
+        this.canvas.height - 70
+      ) / height;
+
+    this.fitScale =
+      Math.min(
+        horizontalScale,
+        verticalScale
+      );
+
+    this.centerX =
+      (minX + maxX) / 2;
+
+    this.centerY =
+      (minY + maxY) / 2;
+
+  }
+
+
+  // =====================
+  // Canvas座標へ変換
+  // =====================
+  toCanvas(point) {
+
+    const scale =
+      this.fitScale *
+      this.zoom;
+
+    return {
+
+      x:
+        this.canvas.width / 2 +
+        (
+          point.x -
+          this.centerX
+        ) * scale,
+
+      y:
+        this.canvas.height / 2 -
+        (
+          point.y -
+          this.centerY
+        ) * scale
+
+    };
+
+  }
+
+
+  // =====================
+  // 描画
+  // =====================
+  draw() {
+
+    const context =
+      this.context;
+
+    context.fillStyle =
+      "#ffffff";
+
+    context.fillRect(
+      0,
+      0,
+      this.canvas.width,
+      this.canvas.height
+    );
+
+    const frame =
+      this.frames[
+        this.frameIndex
+      ];
+
+    if (!frame) {
+      return;
+    }
+
+    /*
+     * 骨格線
+     */
+    context.strokeStyle =
+      "#1f2926";
+
+    context.lineWidth = 3;
+
+    context.lineCap =
+      "round";
+
+    context.lineJoin =
+      "round";
+
+    for (
+      const bone of
+      STICK_BONES
+    ) {
+
+      const firstPoint =
+        frame[bone[0]];
+
+      const secondPoint =
+        frame[bone[1]];
+
+      if (
+        !firstPoint ||
+        !secondPoint
+      ) {
+
+        continue;
+
+      }
+
+      const start =
+        this.toCanvas(
+          firstPoint
+        );
+
+      const end =
+        this.toCanvas(
+          secondPoint
+        );
+
+      context.beginPath();
+
+      context.moveTo(
+        start.x,
+        start.y
+      );
+
+      context.lineTo(
+        end.x,
+        end.y
+      );
+
+      context.stroke();
+
+    }
+
+    /*
+     * 関節点
+     */
+    context.fillStyle =
+      "#ef5350";
+
+    for (const point of frame) {
+
+      if (!point) {
+        continue;
+      }
+
+      const position =
+        this.toCanvas(point);
+
+      context.beginPath();
+
+      context.arc(
+        position.x,
+        position.y,
+        4,
+        0,
+        Math.PI * 2
+      );
+
+      context.fill();
+
+    }
+
+    this.updateInformation();
+
+  }
+
+
+  // =====================
+  // フレーム・時間表示
+  // =====================
+  updateInformation() {
+
+    const seconds =
+      this.frameIndex /
+      this.fps;
+
+    this.infoElement.textContent =
+      "Frame " +
+      (
+        this.frameIndex + 1
+      ) +
+      " / " +
+      this.frames.length +
+      "｜" +
+      seconds.toFixed(2) +
+      "秒";
+
+  }
+
+
+  // =====================
+  // 再生
+  // =====================
+  play() {
+
+    if (
+      this.frames.length === 0 ||
+      this.isPlaying
+    ) {
+
+      return;
+
+    }
+
+    /*
+     * 最終フレームから再生した場合は
+     * 最初に戻す
+     */
+    if (
+      this.frameIndex >=
+      this.frames.length - 1
+    ) {
+
+      this.frameIndex = 0;
+      this.draw();
+
+    }
+
+    this.isPlaying = true;
+
+    this.lastTime =
+      performance.now();
+
+    this.accumulatedTime = 0;
+
+    this.updatePlayButton();
+
+    this.animationId =
+      requestAnimationFrame(
+        time =>
+          this.playLoop(time)
+      );
+
+  }
+
+
+  // =====================
+  // FPSに合わせた再生
+  // =====================
+  playLoop(currentTime) {
+
+    if (!this.isPlaying) {
+      return;
+    }
+
+    const elapsed =
+      currentTime -
+      this.lastTime;
+
+    this.lastTime =
+      currentTime;
+
+    this.accumulatedTime +=
+      elapsed;
+
+    const frameInterval =
+      1000 / this.fps;
+
+    /*
+     * 200fpsなど、画面更新速度より
+     * fpsが高い場合は必要な数だけ
+     * フレームを進める
+     */
+    const advanceCount =
+      Math.floor(
+        this.accumulatedTime /
+        frameInterval
+      );
+
+    if (advanceCount > 0) {
+
+      this.accumulatedTime -=
+        advanceCount *
+        frameInterval;
+
+      this.frameIndex +=
+        advanceCount;
+
+      if (
+        this.frameIndex >=
+        this.frames.length - 1
+      ) {
+
+        this.frameIndex =
+          this.frames.length - 1;
+
+        this.stop();
+        this.draw();
+
+        return;
+
+      }
+
+      this.draw();
+
+    }
+
+    this.animationId =
+      requestAnimationFrame(
+        time =>
+          this.playLoop(time)
+      );
+
+  }
+
+
+  // =====================
+  // 一時停止
+  // =====================
+  stop() {
+
+    this.isPlaying = false;
+
+    if (
+      this.animationId !== null
+    ) {
+
+      cancelAnimationFrame(
+        this.animationId
+      );
+
+      this.animationId = null;
+
+    }
+
+    this.updatePlayButton();
+
+  }
+
+
+  // =====================
+  // 再生切替
+  // =====================
+  togglePlay() {
+
+    if (this.isPlaying) {
+
+      this.stop();
+
+    } else {
+
+      this.play();
+
+    }
+
+  }
+
+
+  // =====================
+  // 1コマ進む
+  // =====================
+  nextFrame() {
+
+    if (
+      this.frames.length === 0
+    ) {
+
+      return;
+
+    }
+
+    this.stop();
+
+    this.frameIndex =
+      Math.min(
+        this.frameIndex + 1,
+        this.frames.length - 1
+      );
+
+    this.draw();
+
+  }
+
+
+  // =====================
+  // 1コマ戻る
+  // =====================
+  previousFrame() {
+
+    if (
+      this.frames.length === 0
+    ) {
+
+      return;
+
+    }
+
+    this.stop();
+
+    this.frameIndex =
+      Math.max(
+        this.frameIndex - 1,
+        0
+      );
+
+    this.draw();
+
+  }
+
+
+  // =====================
+  // ボタン表示更新
+  // =====================
+  updatePlayButton() {
+
+    if (!this.playButton) {
+      return;
+    }
+
+    this.playButton.textContent =
+      this.isPlaying
+        ? "一時停止"
+        : "再生";
+
+  }
+
+
+  // =====================
+  // ビューア終了
+  // =====================
+  destroy() {
+
+    this.stop();
+
+    this.frames = [];
 
   }
 
