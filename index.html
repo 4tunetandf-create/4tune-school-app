@@ -199,6 +199,17 @@
   color: #666;
   font-size: 11px;
 }
+
+.stick-loop-button {
+  width: 100%;
+  min-height: 44px;
+  margin: 10px 0 0;
+  background: #777;
+}
+
+.stick-loop-button.is-active {
+  background: #4f9c8a;
+}
   </style>
 </head>
 
@@ -1211,23 +1222,34 @@ function renderStickViewer(data) {
             1コマ ▶
           </button>
 
+          <button
+  id="stickLoopButton"
+  class="stick-loop-button"
+  onclick="toggleStickLoop()"
+  aria-pressed="false"
+>
+  ループ再生：OFF
+
         </div>
 
       </section>
     `;
 
-  stickViewer =
-    new LightweightStickViewer(
-      document.getElementById(
-        "stickCanvas"
-      ),
-      document.getElementById(
-        "stickFrameInfo"
-      ),
-      document.getElementById(
-        "stickPlayButton"
-      )
-    );
+stickViewer =
+  new LightweightStickViewer(
+    document.getElementById(
+      "stickCanvas"
+    ),
+    document.getElementById(
+      "stickFrameInfo"
+    ),
+    document.getElementById(
+      "stickPlayButton"
+    ),
+    document.getElementById(
+      "stickLoopButton"
+    )
+  );
 
   stickViewer.setData(
     data.rows,
@@ -1284,6 +1306,19 @@ function previousStickFrame() {
   if (stickViewer) {
 
     stickViewer.previousFrame();
+
+  }
+
+}
+
+// =======================
+// ループ再生切り替え
+// =======================
+function toggleStickLoop() {
+
+  if (stickViewer) {
+
+    stickViewer.toggleLoop();
 
   }
 
@@ -1369,7 +1404,8 @@ class LightweightStickViewer {
   constructor(
     canvas,
     infoElement,
-    playButton
+    playButton,
+    loopButton
   ) {
 
     this.canvas =
@@ -1384,6 +1420,9 @@ class LightweightStickViewer {
     this.playButton =
       playButton;
 
+    this.loopButton =
+      loopButton;
+
     this.frames = [];
 
     this.frameIndex = 0;
@@ -1393,6 +1432,8 @@ class LightweightStickViewer {
     this.playSpeed = 1;
 
     this.isPlaying = false;
+
+    this.loopEnabled = false;
 
     this.animationId = null;
 
@@ -2042,20 +2083,34 @@ const frameInterval =
 
       if (
         this.frameIndex >=
-        this.frames.length - 1
+        this.frames.length
       ) {
 
-        this.frameIndex =
-          this.frames.length - 1;
+        if (this.loopEnabled) {
 
-        this.stop();
+          this.frameIndex =
+            this.frameIndex %
+            this.frames.length;
+
+          this.draw();
+
+        } else {
+
+          this.frameIndex =
+            this.frames.length - 1;
+
+          this.stop();
+          this.draw();
+
+          return;
+
+        }
+
+      } else {
+
         this.draw();
 
-        return;
-
       }
-
-      this.draw();
 
     }
 
@@ -2104,6 +2159,61 @@ const frameInterval =
     } else {
 
       this.play();
+
+    }
+
+  }
+
+
+  // =====================
+  // ループ再生切り替え
+  // =====================
+  toggleLoop() {
+
+    this.loopEnabled =
+      !this.loopEnabled;
+
+    this.updateLoopButton();
+
+  }
+
+
+  // =====================
+  // ループボタン表示更新
+  // =====================
+  updateLoopButton() {
+
+    if (!this.loopButton) {
+      return;
+    }
+
+    if (this.loopEnabled) {
+
+      this.loopButton.textContent =
+        "ループ再生：ON";
+
+      this.loopButton.classList.add(
+        "is-active"
+      );
+
+      this.loopButton.setAttribute(
+        "aria-pressed",
+        "true"
+      );
+
+    } else {
+
+      this.loopButton.textContent =
+        "ループ再生：OFF";
+
+      this.loopButton.classList.remove(
+        "is-active"
+      );
+
+      this.loopButton.setAttribute(
+        "aria-pressed",
+        "false"
+      );
 
     }
 
