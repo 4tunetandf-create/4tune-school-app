@@ -1,420 +1,411 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>4TUNE School App</title>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>4TUNE School App</title>
 
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
-  <style>
-    body {
-      font-family: sans-serif;
-      margin: 0;
-      background: #f5f7f6;
-      color: #222;
-    }
-
-    main {
-      max-width: 560px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-
-    .card {
-      background: #fff;
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 14px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-    }
-
-    input,
-    button {
-      box-sizing: border-box;
-      font: inherit;
-    }
-
-    input {
-      width: 100%;
-      padding: 11px;
-      margin: 5px 0 10px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-    }
-
-    button {
-      padding: 10px 14px;
-      margin: 4px 2px;
-      border: 0;
-      border-radius: 8px;
-      background: #4f9c8a;
-      color: #fff;
-      cursor: pointer;
-    }
-
-    button.secondary {
-      background: #777;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      table-layout: fixed;
-      background: #fff;
-    }
-
-    th,
-    td {
-      border: 1px solid #ddd;
-      padding: 7px 2px;
-      text-align: center;
-    }
-
-    td {
-      height: 54px;
-      vertical-align: top;
-    }
-
-    td.has-schedule {
-      cursor: pointer;
-      background: #edf7f4;
-    }
-
-    .calendar-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .muted {
-      color: #666;
-    }
-
-    #scheduleModal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      padding: 20px;
-      background: rgba(0, 0, 0, 0.5);
-      z-index: 10;
-    }
-
-    #scheduleModalContent {
-      max-width: 420px;
-      margin: 80px auto;
-      background: #fff;
-      border-radius: 12px;
-      padding: 20px;
-    }
-    .analysis-result-button {
-  width: 100%;
-  margin-top: 10px;
-}
-
-.stick-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-
-.stick-header h2 {
-  margin: 0;
-  font-size: 19px;
-}
-
-.stick-canvas-wrap {
-  width: 100%;
-  overflow: hidden;
-  border: 1px solid #d8dddb;
-  border-radius: 12px;
-  background: #fff;
-}
-
-#stickCanvas {
-  display: block;
-  width: 100%;
-  height: auto;
-  background: #fff;
-  touch-action: none;
-}
-
-.stick-info {
-  margin: 12px 0;
-  text-align: center;
-  color: #555;
-  font-size: 14px;
-}
-
-.stick-controls {
-  display: grid;
-  grid-template-columns: 1fr 1.15fr 1fr;
-  gap: 8px;
-}
-
-.stick-controls button {
-  min-height: 48px;
-  margin: 0;
-  padding: 8px 4px;
-  font-weight: bold;
-}
-
-.stick-controls .play-button {
-  background: #4f9c8a;
-  font-size: 16px;
-}
-
-.stick-settings {
-  margin-top: 16px;
-  padding: 14px;
-  border-radius: 10px;
-  background: #f5f7f6;
-}
-
-.stick-slider-group + .stick-slider-group {
-  margin-top: 16px;
-}
-
-.stick-slider-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 6px;
-  font-size: 14px;
-  font-weight: bold;
-}
-
-.stick-slider {
-  width: 100%;
-  margin: 0;
-  padding: 0;
-  accent-color: #4f9c8a;
-}
-
-.speed-scale {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 4px;
-  color: #666;
-  font-size: 11px;
-}
-
-.stick-loop-button {
-  width: 100%;
-  min-height: 44px;
-  margin: 10px 0 0;
-  background: #777;
-}
-
-.stick-loop-button.is-active {
-  background: #4f9c8a;
-}
-  </style>
-</head>
-
-<body>
-
-  <main id="status">
-    読み込み中...
-  </main>
-
-  <div
-    id="scheduleModal"
-    onclick="closeScheduleModal(event)"
-  >
-    <div id="scheduleModalContent"></div>
-  </div>
-
-<script>
-const GAS_URL =
-  "https://script.google.com/macros/s/AKfycbzjPkLxYBJeBGk9yehLHfUUMhJmQUfxNiaVHyNqjd9MeAqkWOIINjIUBXsxIEpwqa78Mw/exec";
-
-const LIFF_ID = "2010350476-xCTsckal";
-
-const CACHE = {
-  profile: null,
-  members: null,
-  schedules: null,
-
-  // 分析ファイル一覧
-  analysisMembers: null,
-  analysisError: null,
-
-  // 読み込み済みの分析データ
-  analysisData: {}
-};
-
-let stickViewer = null;
-
-const STICK_BONES = [
-  [0, 1], [1, 2], [2, 3],
-  [4, 5], [5, 6], [6, 7],
-
-  [8, 9], [9, 10], [10, 11],
-  [11, 12], [12, 13],
-
-  [14, 15], [15, 16], [16, 17],
-  [17, 18], [18, 19],
-
-  [3, 7],
-  [3, 22],
-  [7, 22],
-
-  [13, 19],
-  [3, 13],
-  [7, 19],
-
-  [20, 21],
-  [21, 22]
-];
-
-let currentCalendarDate = new Date();
-let uiLockCount = 0;
-
-
-// =======================
-// 初期処理
-// =======================
-async function main() {
-
-  lockUI("読み込み中...");
-
-  try {
-
-    await liff.init({
-      liffId: LIFF_ID
-    });
-
-    if (!liff.isLoggedIn()) {
-      liff.login();
-      return;
-    }
-
-    CACHE.profile = await liff.getProfile();
-
-    const parent = await apiGet(
-      "getParentByLineId",
-      {
-        lineUserId: CACHE.profile.userId
+    <style>
+      body {
+        font-family: sans-serif;
+        margin: 0;
+        background: #f5f7f6;
+        color: #222;
       }
-    );
 
-    if (!parent.exists) {
-      showRegister(CACHE.profile.userId);
-      return;
-    }
+      main {
+        max-width: 560px;
+        margin: 0 auto;
+        padding: 20px;
+      }
 
-    await loadHome();
+      main.analysis-screen {
+        padding: 8px;
+      }
 
-  } catch (error) {
+      .card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 14px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      }
 
-    showError(error);
+      input,
+      button {
+        box-sizing: border-box;
+        font: inherit;
+      }
 
-  } finally {
+      input {
+        width: 100%;
+        padding: 11px;
+        margin: 5px 0 10px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+      }
 
-    unlockUI();
+      button {
+        padding: 10px 14px;
+        margin: 4px 2px;
+        border: 0;
+        border-radius: 8px;
+        background: #4f9c8a;
+        color: #fff;
+        cursor: pointer;
+      }
 
-  }
-}
+      button.secondary {
+        background: #777;
+      }
 
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+        background: #fff;
+      }
 
-// =======================
-// API通信
-// =======================
-async function apiGet(action, params = {}) {
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 7px 2px;
+        text-align: center;
+      }
 
-  const query = new URLSearchParams({
-    action,
-    ...params
-  });
+      td {
+        height: 54px;
+        vertical-align: top;
+      }
 
-  const response = await fetch(
-    `${GAS_URL}?${query.toString()}`
-  );
+      td.has-schedule {
+        cursor: pointer;
+        background: #edf7f4;
+      }
 
-  if (!response.ok) {
-    throw new Error("データの取得に失敗しました");
-  }
+      .calendar-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
 
-  return response.json();
-}
+      .muted {
+        color: #666;
+      }
 
+      #scheduleModal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        padding: 20px;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 10;
+      }
 
-async function apiPost(data) {
+      #scheduleModalContent {
+        max-width: 420px;
+        margin: 80px auto;
+        background: #fff;
+        border-radius: 12px;
+        padding: 20px;
+      }
+      .analysis-result-button {
+        width: 100%;
+        margin-top: 6px;
+      }
 
-  const response = await fetch(
-    GAS_URL,
-    {
-      method: "POST",
-      body: JSON.stringify(data)
-    }
-  );
+      .analysis-view-card {
+        padding: 10px;
+        margin-bottom: 0;
+      }
 
-  if (!response.ok) {
-    throw new Error("データの登録に失敗しました");
-  }
+      .stick-header {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin-bottom: 7px;
+      }
 
-  return response.json();
-}
+      .stick-header button {
+        min-height: 34px;
+        margin: 0;
+        padding: 6px 10px;
+        font-size: 13px;
+      }
 
+      .stick-header h2 {
+        margin: 0;
+        font-size: 17px;
+      }
 
-// =======================
-// UIロック
-// =======================
-function lockUI(text = "処理中...") {
+      .stick-canvas-wrap {
+        width: 100%;
+        overflow: hidden;
+        border: 1px solid #d8dddb;
+        border-radius: 12px;
+        background: #fff;
+      }
 
-  uiLockCount++;
+      #stickCanvas {
+        display: block;
+        width: 100%;
+        height: auto;
+        background: #fff;
+        touch-action: none;
+      }
 
-  document.body.style.pointerEvents = "none";
-  document.body.style.opacity = "0.65";
+      .stick-info {
+        margin: 6px 0;
+        text-align: center;
+        color: #555;
+        font-size: 12px;
+      }
 
-  const status =
-    document.getElementById("status");
+      .stick-controls {
+        display: grid;
+        grid-template-columns: 1fr 1.15fr 1fr;
+        gap: 5px;
+      }
 
-  if (status && text) {
-    status.textContent = text;
-  }
-}
+      .stick-controls button {
+        min-height: 38px;
+        margin: 0;
+        padding: 5px 2px;
+        font-size: 12px;
+        font-weight: bold;
+      }
 
+      .stick-controls .play-button {
+        background: #4f9c8a;
+        font-size: 14px;
+      }
 
-function unlockUI() {
+      .stick-settings {
+        margin: 6px 0;
+        padding: 7px 9px;
+        border-radius: 8px;
+        background: #f5f7f6;
+      }
 
-  uiLockCount =
-    Math.max(0, uiLockCount - 1);
+      .stick-slider-group + .stick-slider-group {
+        margin-top: 6px;
+      }
 
-  if (uiLockCount === 0) {
+      .stick-slider-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1px;
+        font-size: 12px;
+        font-weight: bold;
+      }
 
-    document.body.style.pointerEvents = "auto";
-    document.body.style.opacity = "1";
+      .stick-slider {
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        accent-color: #4f9c8a;
+      }
 
-  }
-}
+      .speed-scale {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 0;
+        color: #666;
+        font-size: 9px;
+        line-height: 1;
+      }
 
+      .stick-loop-button {
+        width: 100%;
+        min-height: 34px;
+        margin: 6px 0 0;
+        padding: 5px;
+        font-size: 12px;
+        background: #777;
+      }
 
-// =======================
-// HTMLエスケープ
-// =======================
-function escapeHtml(value) {
+      .stick-loop-button.is-active {
+        background: #4f9c8a;
+      }
+    </style>
+  </head>
 
-  return String(value ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+  <body>
+    <main id="status">読み込み中...</main>
 
-}
+    <div id="scheduleModal" onclick="closeScheduleModal(event)">
+      <div id="scheduleModalContent"></div>
+    </div>
 
+    <script>
+      const GAS_URL =
+        "https://script.google.com/macros/s/AKfycbzjPkLxYBJeBGk9yehLHfUUMhJmQUfxNiaVHyNqjd9MeAqkWOIINjIUBXsxIEpwqa78Mw/exec";
 
-// =======================
-// エラー画面
-// =======================
-function showError(error) {
+      const LIFF_ID = "2010350476-xCTsckal";
 
-  console.error(error);
+      const CACHE = {
+        profile: null,
+        members: null,
+        schedules: null,
 
-  document.getElementById("status").innerHTML = `
+        // 分析ファイル一覧
+        analysisMembers: null,
+        analysisError: null,
+
+        // 読み込み済みの分析データ
+        analysisData: {},
+      };
+
+      let stickViewer = null;
+
+      const STICK_BONES = [
+        [0, 1],
+        [1, 2],
+        [2, 3],
+        [4, 5],
+        [5, 6],
+        [6, 7],
+
+        [8, 9],
+        [9, 10],
+        [10, 11],
+        [11, 12],
+        [12, 13],
+
+        [14, 15],
+        [15, 16],
+        [16, 17],
+        [17, 18],
+        [18, 19],
+
+        [3, 7],
+        [3, 22],
+        [7, 22],
+
+        [13, 19],
+        [3, 13],
+        [7, 19],
+
+        [20, 21],
+        [21, 22],
+      ];
+
+      let currentCalendarDate = new Date();
+      let uiLockCount = 0;
+
+      // =======================
+      // 初期処理
+      // =======================
+      async function main() {
+        lockUI("読み込み中...");
+
+        try {
+          await liff.init({
+            liffId: LIFF_ID,
+          });
+
+          if (!liff.isLoggedIn()) {
+            liff.login();
+            return;
+          }
+
+          CACHE.profile = await liff.getProfile();
+
+          const parent = await apiGet("getParentByLineId", {
+            lineUserId: CACHE.profile.userId,
+          });
+
+          if (!parent.exists) {
+            showRegister(CACHE.profile.userId);
+            return;
+          }
+
+          await loadHome();
+        } catch (error) {
+          showError(error);
+        } finally {
+          unlockUI();
+        }
+      }
+
+      // =======================
+      // API通信
+      // =======================
+      async function apiGet(action, params = {}) {
+        const query = new URLSearchParams({
+          action,
+          ...params,
+        });
+
+        const response = await fetch(`${GAS_URL}?${query.toString()}`);
+
+        if (!response.ok) {
+          throw new Error("データの取得に失敗しました");
+        }
+
+        return response.json();
+      }
+
+      async function apiPost(data) {
+        const response = await fetch(GAS_URL, {
+          method: "POST",
+          body: JSON.stringify(data),
+        });
+
+        if (!response.ok) {
+          throw new Error("データの登録に失敗しました");
+        }
+
+        return response.json();
+      }
+
+      // =======================
+      // UIロック
+      // =======================
+      function lockUI(text = "処理中...") {
+        uiLockCount++;
+
+        document.body.style.pointerEvents = "none";
+        document.body.style.opacity = "0.65";
+
+        const status = document.getElementById("status");
+
+        if (status && text) {
+          status.textContent = text;
+        }
+      }
+
+      function unlockUI() {
+        uiLockCount = Math.max(0, uiLockCount - 1);
+
+        if (uiLockCount === 0) {
+          document.body.style.pointerEvents = "auto";
+          document.body.style.opacity = "1";
+        }
+      }
+
+      // =======================
+      // HTMLエスケープ
+      // =======================
+      function escapeHtml(value) {
+        return String(value ?? "")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      // =======================
+      // エラー画面
+      // =======================
+      function showError(error) {
+        console.error(error);
+
+        document.getElementById("status").innerHTML = `
     <section class="card">
 
       <h2>読み込みに失敗しました</h2>
@@ -429,16 +420,13 @@ function showError(error) {
 
     </section>
   `;
+      }
 
-}
-
-
-// =======================
-// 初回登録画面
-// =======================
-function showRegister(lineUserId) {
-
-  document.getElementById("status").innerHTML = `
+      // =======================
+      // 初回登録画面
+      // =======================
+      function showRegister(lineUserId) {
+        document.getElementById("status").innerHTML = `
     <section class="card">
 
       <h2>初回登録</h2>
@@ -487,21 +475,17 @@ function showRegister(lineUserId) {
 
     </section>
   `;
+      }
 
-}
+      // =======================
+      // 子どもの入力欄を追加
+      // =======================
+      function addChildRow() {
+        const row = document.createElement("div");
 
+        row.className = "childRow";
 
-// =======================
-// 子どもの入力欄を追加
-// =======================
-function addChildRow() {
-
-  const row =
-    document.createElement("div");
-
-  row.className = "childRow";
-
-  row.innerHTML = `
+        row.innerHTML = `
     <input
       class="childName"
       placeholder="子ども名"
@@ -513,246 +497,158 @@ function addChildRow() {
     >
   `;
 
-  document
-    .getElementById("childrenArea")
-    .appendChild(row);
-
-}
-
-
-// =======================
-// 保護者・子どもの登録
-// =======================
-async function registerAll(lineUserId) {
-
-  const parentName =
-    document
-      .getElementById("parentName")
-      .value
-      .trim();
-
-  const names = [
-    ...document.querySelectorAll(".childName")
-  ];
-
-  const courses = [
-    ...document.querySelectorAll(".childCourse")
-  ];
-
-  const children =
-    names
-      .map((input, index) => ({
-        name: input.value.trim(),
-        course: courses[index].value.trim()
-      }))
-      .filter(child => child.name);
-
-  if (!parentName) {
-    alert("保護者名を入力してください");
-    return;
-  }
-
-  if (children.length === 0) {
-    alert("お子さまの名前を入力してください");
-    return;
-  }
-
-  lockUI("登録中...");
-
-  try {
-
-    const parent = await apiPost({
-      action: "createParent",
-      lineUserId,
-      name: parentName
-    });
-
-    if (!parent.success) {
-
-      throw new Error(
-        parent.message ||
-        "保護者登録に失敗しました"
-      );
-
-    }
-
-    for (const child of children) {
-
-      const result = await apiPost({
-        action: "addMember",
-        parentId: parent.parentId,
-        ...child
-      });
-
-      if (!result.success) {
-
-        throw new Error(
-          result.message ||
-          "会員登録に失敗しました"
-        );
-
+        document.getElementById("childrenArea").appendChild(row);
       }
 
-    }
+      // =======================
+      // 保護者・子どもの登録
+      // =======================
+      async function registerAll(lineUserId) {
+        const parentName = document.getElementById("parentName").value.trim();
 
-    alert("登録が完了しました");
+        const names = [...document.querySelectorAll(".childName")];
 
-    location.reload();
+        const courses = [...document.querySelectorAll(".childCourse")];
 
-  } catch (error) {
+        const children = names
+          .map((input, index) => ({
+            name: input.value.trim(),
+            course: courses[index].value.trim(),
+          }))
+          .filter((child) => child.name);
 
-    alert(error.message);
-
-  } finally {
-
-    unlockUI();
-
-  }
-
-}
-
-
-// =======================
-// ホーム画面の読み込み
-// =======================
-async function loadHome() {
-
-  lockUI(
-    "会員情報を取得中..."
-  );
-
-  try {
-
-    // =====================
-    // 会員情報取得
-    // =====================
-    if (!CACHE.members) {
-
-      const memberData =
-        await apiGet(
-          "getMembersByLineId",
-          {
-            lineUserId:
-              CACHE.profile.userId
-          }
-        );
-
-      CACHE.members =
-        memberData.members || [];
-
-    }
-
-// =====================
-// 分析ファイル一覧取得
-// =====================
-if (!CACHE.analysisMembers) {
-
-  try {
-
-    const analysisData =
-      await apiGet(
-        "getAnalysisFileList",
-        {
-          lineUserId:
-            CACHE.profile.userId
+        if (!parentName) {
+          alert("保護者名を入力してください");
+          return;
         }
-      );
 
-    if (
-      analysisData.success
-    ) {
+        if (children.length === 0) {
+          alert("お子さまの名前を入力してください");
+          return;
+        }
 
-      CACHE.analysisMembers =
-        analysisData.members || [];
+        lockUI("登録中...");
 
-      CACHE.analysisError =
-        null;
+        try {
+          const parent = await apiPost({
+            action: "createParent",
+            lineUserId,
+            name: parentName,
+          });
 
-    } else {
+          if (!parent.success) {
+            throw new Error(parent.message || "保護者登録に失敗しました");
+          }
 
-      CACHE.analysisMembers = [];
+          for (const child of children) {
+            const result = await apiPost({
+              action: "addMember",
+              parentId: parent.parentId,
+              ...child,
+            });
 
-      CACHE.analysisError =
-        analysisData.message ||
-        "分析結果を取得できませんでした";
+            if (!result.success) {
+              throw new Error(result.message || "会員登録に失敗しました");
+            }
+          }
 
-      alert(
-        "分析ファイル取得失敗\n\n" +
-        CACHE.analysisError
-      );
+          alert("登録が完了しました");
 
-    }
+          location.reload();
+        } catch (error) {
+          alert(error.message);
+        } finally {
+          unlockUI();
+        }
+      }
 
-  } catch (error) {
+      // =======================
+      // ホーム画面の読み込み
+      // =======================
+      async function loadHome() {
+        lockUI("会員情報を取得中...");
 
-    console.error(
-      "分析結果一覧の取得エラー",
-      error
-    );
+        try {
+          // =====================
+          // 会員情報取得
+          // =====================
+          if (!CACHE.members) {
+            const memberData = await apiGet("getMembersByLineId", {
+              lineUserId: CACHE.profile.userId,
+            });
 
-    CACHE.analysisMembers = [];
+            CACHE.members = memberData.members || [];
+          }
 
-    CACHE.analysisError =
-      "分析結果を取得できませんでした";
+          // =====================
+          // 分析ファイル一覧取得
+          // =====================
+          if (!CACHE.analysisMembers) {
+            try {
+              const analysisData = await apiGet("getAnalysisFileList", {
+                lineUserId: CACHE.profile.userId,
+              });
 
-    alert(
-      "分析API通信エラー\n\n" +
-      error.message
-    );
+              if (analysisData.success) {
+                CACHE.analysisMembers = analysisData.members || [];
 
-  }
+                CACHE.analysisError = null;
+              } else {
+                CACHE.analysisMembers = [];
 
-}
+                CACHE.analysisError =
+                  analysisData.message || "分析結果を取得できませんでした";
 
-    renderHome();
+                alert("分析ファイル取得失敗\n\n" + CACHE.analysisError);
+              }
+            } catch (error) {
+              console.error("分析結果一覧の取得エラー", error);
 
-  } finally {
+              CACHE.analysisMembers = [];
 
-    unlockUI();
+              CACHE.analysisError = "分析結果を取得できませんでした";
 
-  }
+              alert("分析API通信エラー\n\n" + error.message);
+            }
+          }
 
-}
+          renderHome();
+        } finally {
+          unlockUI();
+        }
+      }
 
+      // =======================
+      // ホーム画面
+      // =======================
+      function renderHome() {
+        document.getElementById("status").classList.remove("analysis-screen");
 
-// =======================
-// ホーム画面
-// =======================
-function renderHome() {
-
-  const membersHtml =
-    CACHE.members.length
-      ? CACHE.members
-          .map(
-            member => `
+        const membersHtml = CACHE.members.length
+          ? CACHE.members
+              .map(
+                (member) => `
               <li>
-                ${escapeHtml(
-                  member.name
-                )}
+                ${escapeHtml(member.name)}
               </li>
-            `
-          )
-          .join("")
-      : `
+            `,
+              )
+              .join("")
+          : `
           <li>
             登録会員はいません
           </li>
         `;
 
-  const analysisHtml =
-    createAnalysisListHtml();
+        const analysisHtml = createAnalysisListHtml();
 
-  document
-    .getElementById("status")
-    .innerHTML = `
+        document.getElementById("status").innerHTML = `
 
       <section class="card">
 
         <h2>
           こんにちは
-          ${escapeHtml(
-            CACHE.profile.displayName
-          )}
+          ${escapeHtml(CACHE.profile.displayName)}
           さま
         </h2>
 
@@ -786,22 +682,16 @@ function renderHome() {
 
       </section>
     `;
+      }
 
-}
-
-
-// =======================
-// 動作分析結果一覧の作成
-// =======================
-function createAnalysisListHtml() {
-
-  if (CACHE.analysisError) {
-
-    return `
+      // =======================
+      // 動作分析結果一覧の作成
+      // =======================
+      function createAnalysisListHtml() {
+        if (CACHE.analysisError) {
+          return `
       <p class="muted">
-        ${escapeHtml(
-          CACHE.analysisError
-        )}
+        ${escapeHtml(CACHE.analysisError)}
       </p>
 
       <button
@@ -810,30 +700,20 @@ function createAnalysisListHtml() {
         再読み込み
       </button>
     `;
+        }
 
-  }
-
-  if (
-    !CACHE.analysisMembers ||
-    CACHE.analysisMembers.length === 0
-  ) {
-
-    return `
+        if (!CACHE.analysisMembers || CACHE.analysisMembers.length === 0) {
+          return `
       <p class="muted">
         現在、表示できる分析結果はありません
       </p>
     `;
+        }
 
-  }
+        let html = "";
 
-  let html = "";
-
-  for (
-    const member of
-    CACHE.analysisMembers
-  ) {
-
-    html += `
+        for (const member of CACHE.analysisMembers) {
+          html += `
       <div
         style="
           margin-top:16px;
@@ -843,26 +723,18 @@ function createAnalysisListHtml() {
       >
 
         <h4>
-          ${escapeHtml(
-            member.memberName
-          )}
+          ${escapeHtml(member.memberName)}
         </h4>
     `;
 
-    if (
-      !member.files ||
-      member.files.length === 0
-    ) {
-
-      html += `
+          if (!member.files || member.files.length === 0) {
+            html += `
         <p class="muted">
           分析結果はありません
         </p>
       `;
-
-    } else {
-
-      html += `
+          } else {
+            html += `
         <div
           style="
             display:flex;
@@ -872,12 +744,8 @@ function createAnalysisListHtml() {
         >
       `;
 
-      for (
-        const file of
-        member.files
-      ) {
-
-        html += `
+            for (const file of member.files) {
+              html += `
           <div
             style="
               padding:12px;
@@ -893,21 +761,9 @@ function createAnalysisListHtml() {
                 margin-bottom:4px;
               "
             >
-              ${escapeHtml(
-                file.displayDate
-              )}
+              ${escapeHtml(file.displayDate)}
             </div>
 
-            <div
-              class="muted"
-              style="
-                font-size:13px;
-              "
-            >
-              ${escapeHtml(
-                file.fileName
-              )}
-            </div>
 <button
   class="analysis-result-button"
   onclick="openAnalysisResult('${file.fileId}')"
@@ -917,176 +773,80 @@ function createAnalysisListHtml() {
 
           </div>
         `;
+            }
 
-      }
-
-      html += `
+            html += `
         </div>
       `;
+          }
 
-    }
-
-    html += `
+          html += `
       </div>
     `;
-
-  }
-
-  return html;
-
-}
-
-// =======================
-// 分析データ読み込みテスト
-// =======================
-async function testAnalysisData(fileId) {
-
-  lockUI("分析結果を読み込み中...");
-
-  try {
-
-    const data = await apiGet(
-      "getAnalysisData",
-      {
-        lineUserId: CACHE.profile.userId,
-        fileId: fileId
-      }
-    );
-
-    if (!data.success) {
-      throw new Error(
-        data.message ||
-        "分析結果を読み込めませんでした"
-      );
-    }
-
-    const coordinateCount =
-      data.rows &&
-      data.rows[0]
-        ? data.rows[0].length
-        : 0;
-
-    alert(
-      "読み込み成功\n\n" +
-      "ファイル：" + data.fileName + "\n" +
-      "会員：" + data.memberName + "\n" +
-      "fps：" + data.fps + "\n" +
-      "フレーム数：" + data.frameCount + "\n" +
-      "取得行数：" + data.rows.length + "\n" +
-      "1行の座標数：" + coordinateCount
-    );
-
-    renderHome();
-
-  } catch (error) {
-
-    console.error(error);
-
-    alert(
-      error.message ||
-      "分析結果を読み込めませんでした"
-    );
-
-    renderHome();
-
-  } finally {
-
-    unlockUI();
-
-  }
-
-}
-
-// =======================
-// 分析結果を開く
-// =======================
-async function openAnalysisResult(
-  fileId
-) {
-
-  /*
-   * 前のビューアが動いていた場合は停止
-   */
-  if (stickViewer) {
-
-    stickViewer.destroy();
-    stickViewer = null;
-
-  }
-
-  lockUI("分析結果を読み込み中...");
-
-  try {
-
-    let data =
-      CACHE.analysisData[fileId];
-
-    /*
-     * 未取得の場合だけGASから読み込む
-     */
-    if (!data) {
-
-      data = await apiGet(
-        "getAnalysisData",
-        {
-          lineUserId:
-            CACHE.profile.userId,
-
-          fileId:
-            fileId
         }
-      );
 
-      if (!data.success) {
-
-        throw new Error(
-          data.message ||
-          "分析結果を読み込めませんでした"
-        );
-
+        return html;
       }
 
-      /*
-       * 同じ結果を再度開いた場合に
-       * 通信しないようキャッシュ
-       */
-      CACHE.analysisData[fileId] =
-        data;
+      // =======================
+      // 分析結果を開く
+      // =======================
+      async function openAnalysisResult(fileId) {
+        /*
+         * 前のビューアが動いていた場合は停止
+         */
+        if (stickViewer) {
+          stickViewer.destroy();
+          stickViewer = null;
+        }
 
-    }
+        lockUI("分析結果を読み込み中...");
 
-    renderStickViewer(data);
+        try {
+          let data = CACHE.analysisData[fileId];
 
-  } catch (error) {
+          /*
+           * 未取得の場合だけGASから読み込む
+           */
+          if (!data) {
+            data = await apiGet("getAnalysisData", {
+              lineUserId: CACHE.profile.userId,
 
-    console.error(error);
+              fileId: fileId,
+            });
 
-    alert(
-      error.message ||
-      "分析結果を読み込めませんでした"
-    );
+            if (!data.success) {
+              throw new Error(data.message || "分析結果を読み込めませんでした");
+            }
 
-    renderHome();
+            /*
+             * 同じ結果を再度開いた場合に
+             * 通信しないようキャッシュ
+             */
+            CACHE.analysisData[fileId] = data;
+          }
 
-  } finally {
+          renderStickViewer(data);
+        } catch (error) {
+          console.error(error);
 
-    unlockUI();
+          alert(error.message || "分析結果を読み込めませんでした");
 
-  }
+          renderHome();
+        } finally {
+          unlockUI();
+        }
+      }
 
-}
+      // =======================
+      // スティック画面表示
+      // =======================
+      function renderStickViewer(data) {
+        document.getElementById("status").classList.add("analysis-screen");
 
+        document.getElementById("status").innerHTML = `
 
-// =======================
-// スティック画面表示
-// =======================
-function renderStickViewer(data) {
-
-  document
-    .getElementById("status")
-    .innerHTML = `
-
-      <section class="card">
+      <section class="card analysis-view-card">
 
         <div class="stick-header">
 
@@ -1098,23 +858,9 @@ function renderStickViewer(data) {
           </button>
 
           <h2>
-            ${escapeHtml(
-              data.memberName
-            )}
+            ${escapeHtml(data.memberName)}
           </h2>
 
-        </div>
-
-        <div
-          class="muted"
-          style="
-            margin-bottom:12px;
-            font-size:14px;
-          "
-        >
-          ${escapeHtml(
-            data.fileName
-          )}
         </div>
 
         <div class="stick-canvas-wrap">
@@ -1222,1206 +968,726 @@ function renderStickViewer(data) {
             1コマ ▶
           </button>
 
-          <button
-  id="stickLoopButton"
-  class="stick-loop-button"
-  onclick="toggleStickLoop()"
-  aria-pressed="false"
->
-  ループ再生：OFF
-
         </div>
+
+        <button
+          id="stickLoopButton"
+          class="stick-loop-button"
+          onclick="toggleStickLoop()"
+          aria-pressed="false"
+        >
+          ループ再生：OFF
+        </button>
 
       </section>
     `;
 
-stickViewer =
-  new LightweightStickViewer(
-    document.getElementById(
-      "stickCanvas"
-    ),
-    document.getElementById(
-      "stickFrameInfo"
-    ),
-    document.getElementById(
-      "stickPlayButton"
-    ),
-    document.getElementById(
-      "stickLoopButton"
-    )
-  );
-
-  stickViewer.setData(
-    data.rows,
-    data.fps
-  );
-
-}
-
-
-// =======================
-// 分析結果を閉じる
-// =======================
-function closeAnalysisResult() {
-
-  if (stickViewer) {
-
-    stickViewer.destroy();
-    stickViewer = null;
-
-  }
-
-  renderHome();
-
-}
-
-
-// =======================
-// 再生操作
-// =======================
-function toggleStickPlayback() {
-
-  if (stickViewer) {
-
-    stickViewer.togglePlay();
-
-  }
-
-}
-
-
-function nextStickFrame() {
-
-  if (stickViewer) {
-
-    stickViewer.nextFrame();
-
-  }
-
-}
-
-
-function previousStickFrame() {
-
-  if (stickViewer) {
-
-    stickViewer.previousFrame();
-
-  }
-
-}
-
-// =======================
-// ループ再生切り替え
-// =======================
-function toggleStickLoop() {
-
-  if (stickViewer) {
-
-    stickViewer.toggleLoop();
-
-  }
-
-}
-
-// =======================
-// 表示倍率変更
-// =======================
-function changeStickZoom(value) {
-
-  if (!stickViewer) {
-    return;
-  }
-
-  const percent =
-    Number(value);
-
-  stickViewer.setZoom(
-    percent
-  );
-
-  const display =
-    document.getElementById(
-      "stickZoomValue"
-    );
-
-  if (display) {
-
-    display.textContent =
-      percent + "%";
-
-  }
-
-}
-
-
-// =======================
-// 再生速度変更
-// =======================
-function changeStickSpeed(index) {
-
-  if (!stickViewer) {
-    return;
-  }
-
-  const speedList = [
-    0.25,
-    0.5,
-    1,
-    2,
-    4
-  ];
-
-  const selectedSpeed =
-    speedList[
-      Number(index)
-    ] || 1;
-
-  stickViewer.setPlaySpeed(
-    selectedSpeed
-  );
-
-  const display =
-    document.getElementById(
-      "stickSpeedValue"
-    );
-
-  if (display) {
-
-    display.textContent =
-      selectedSpeed + "倍";
-
-  }
-
-}
-
-
-// =======================
-// 軽量スティックビューア
-// =======================
-class LightweightStickViewer {
-
-  constructor(
-    canvas,
-    infoElement,
-    playButton,
-    loopButton
-  ) {
-
-    this.canvas =
-      canvas;
-
-    this.context =
-      canvas.getContext("2d");
-
-    this.infoElement =
-      infoElement;
-
-    this.playButton =
-      playButton;
-
-    this.loopButton =
-      loopButton;
-
-    this.frames = [];
-
-    this.frameIndex = 0;
-
-    this.fps = 30;
-
-    this.playSpeed = 1;
-
-    this.isPlaying = false;
-
-    this.loopEnabled = false;
-
-    this.animationId = null;
-
-    this.lastTime = 0;
-
-    this.accumulatedTime = 0;
-
-    /*
-     * 将来のサイズ変更用
-     */
-    this.zoom = 1;
-
-    this.fitScale = 100;
-
-    this.centerX = 0;
-    this.centerY = 0;
-
-  }
-
-
-  // =====================
-  // データ設定
-  // =====================
-  setData(rows, fps) {
-
-    this.stop();
-
-    this.fps =
-      Number(fps) > 0
-        ? Number(fps)
-        : 30;
-
-    this.frames =
-      this.convertRowsToFrames(
-        rows || []
-      );
-
-    if (
-      this.frames.length === 0
-    ) {
-
-      throw new Error(
-        "表示できる座標データがありません"
-      );
-
-    }
-
-    this.frameIndex = 0;
-
-    this.calculateFit();
-
-    this.draw();
-
-  }
-
-
-  // =====================
-  // 46列の座標を23点へ変換
-  // =====================
-  convertRowsToFrames(rows) {
-
-    const frames = [];
-
-    for (const row of rows) {
-
-      if (
-        !Array.isArray(row) ||
-        row.length < 46
-      ) {
-
-        continue;
-
-      }
-
-      /*
-       * B:AUだけを取得しているため、
-       * 元のExcelコードから列番号を
-       * 1つずらしている
-       *
-       * 右大転子
-       * x = 26
-       * y = 27
-       *
-       * 左大転子
-       * x = 38
-       * y = 39
-       */
-      const rightHipX =
-        this.toNumber(row[26]);
-
-      const rightHipY =
-        this.toNumber(row[27]);
-
-      const leftHipX =
-        this.toNumber(row[38]);
-
-      const leftHipY =
-        this.toNumber(row[39]);
-
-      let centerX = 0;
-      let centerY = 0;
-
-      if (
-        rightHipX !== null &&
-        leftHipX !== null
-      ) {
-
-        centerX =
-          (
-            rightHipX +
-            leftHipX
-          ) / 2;
-
-      }
-
-      if (
-        rightHipY !== null &&
-        leftHipY !== null
-      ) {
-
-        centerY =
-          (
-            rightHipY +
-            leftHipY
-          ) / 2;
-
-      }
-
-      const joints = [];
-
-      /*
-       * 2列で1点
-       * x、yを23点分読み込む
-       */
-      for (
-        let column = 0;
-        column < 46;
-        column += 2
-      ) {
-
-        const x =
-          this.toNumber(
-            row[column]
-          );
-
-        const y =
-          this.toNumber(
-            row[column + 1]
-          );
-
-        if (
-          x === null ||
-          y === null
-        ) {
-
-          joints.push(null);
-
-        } else {
-
-          joints.push({
-            x: x - centerX,
-            y: y - centerY
-          });
-
-        }
-
-      }
-
-      if (
-        joints.some(
-          point => point !== null
-        )
-      ) {
-
-        frames.push(joints);
-
-      }
-
-    }
-
-    return frames;
-
-  }
-
-
-  // =====================
-  // 数値変換
-  // =====================
-  toNumber(value) {
-
-    if (
-      value === null ||
-      value === "" ||
-      value === undefined
-    ) {
-
-      return null;
-
-    }
-
-    const number =
-      Number(value);
-
-    return Number.isFinite(number)
-      ? number
-      : null;
-
-  }
-
-
-  // =====================
-  // 全フレームに合う表示倍率
-  // =====================
-  calculateFit() {
-
-    let minX = Infinity;
-    let maxX = -Infinity;
-
-    let minY = Infinity;
-    let maxY = -Infinity;
-
-    for (const frame of this.frames) {
-
-      for (const point of frame) {
-
-        if (!point) {
-          continue;
-        }
-
-        minX =
-          Math.min(
-            minX,
-            point.x
-          );
-
-        maxX =
-          Math.max(
-            maxX,
-            point.x
-          );
-
-        minY =
-          Math.min(
-            minY,
-            point.y
-          );
-
-        maxY =
-          Math.max(
-            maxY,
-            point.y
-          );
-
-      }
-
-    }
-
-    if (
-      !Number.isFinite(minX) ||
-      !Number.isFinite(maxX) ||
-      !Number.isFinite(minY) ||
-      !Number.isFinite(maxY)
-    ) {
-
-      this.fitScale = 100;
-      this.centerX = 0;
-      this.centerY = 0;
-
-      return;
-
-    }
-
-    const width =
-      Math.max(
-        maxX - minX,
-        0.01
-      );
-
-    const height =
-      Math.max(
-        maxY - minY,
-        0.01
-      );
-
-    const horizontalScale =
-      (
-        this.canvas.width - 70
-      ) / width;
-
-    const verticalScale =
-      (
-        this.canvas.height - 70
-      ) / height;
-
-    this.fitScale =
-      Math.min(
-        horizontalScale,
-        verticalScale
-      );
-
-    this.centerX =
-      (minX + maxX) / 2;
-
-    this.centerY =
-      (minY + maxY) / 2;
-
-  }
-
-// =====================
-// 表示倍率変更
-// =====================
-setZoom(percent) {
-
-  const value =
-    Number(percent);
-
-  if (
-    !Number.isFinite(value)
-  ) {
-
-    return;
-
-  }
-
-  this.zoom =
-    Math.max(
-      0.5,
-      Math.min(
-        value / 100,
-        2
-      )
-    );
-
-  this.draw();
-
-}
-
-// =====================
-// 再生速度変更
-// =====================
-setPlaySpeed(speed) {
-
-  const allowedSpeeds = [
-    0.25,
-    0.5,
-    1,
-    2,
-    4
-  ];
-
-  const number =
-    Number(speed);
-
-  if (
-    !allowedSpeeds.includes(
-      number
-    )
-  ) {
-
-    return;
-
-  }
-
-  this.playSpeed =
-    number;
-
-  /*
-   * 再生中に速度を変えた際の
-   * 急なフレーム飛びを防止
-   */
-  if (this.isPlaying) {
-
-    this.lastTime =
-      performance.now();
-
-    this.accumulatedTime = 0;
-
-  }
-
-}
-  
-  // =====================
-  // Canvas座標へ変換
-  // =====================
-  toCanvas(point) {
-
-    const scale =
-      this.fitScale *
-      this.zoom;
-
-    return {
-
-      x:
-        this.canvas.width / 2 +
-        (
-          point.x -
-          this.centerX
-        ) * scale,
-
-      y:
-        this.canvas.height / 2 -
-        (
-          point.y -
-          this.centerY
-        ) * scale
-
-    };
-
-  }
-
-
-  // =====================
-  // 描画
-  // =====================
-  draw() {
-
-    const context =
-      this.context;
-
-    context.fillStyle =
-      "#ffffff";
-
-    context.fillRect(
-      0,
-      0,
-      this.canvas.width,
-      this.canvas.height
-    );
-
-    const frame =
-      this.frames[
-        this.frameIndex
-      ];
-
-    if (!frame) {
-      return;
-    }
-
-    /*
-     * 骨格線
-     */
-    context.strokeStyle =
-      "#1f2926";
-
-    context.lineWidth = 3;
-
-    context.lineCap =
-      "round";
-
-    context.lineJoin =
-      "round";
-
-    for (
-      const bone of
-      STICK_BONES
-    ) {
-
-      const firstPoint =
-        frame[bone[0]];
-
-      const secondPoint =
-        frame[bone[1]];
-
-      if (
-        !firstPoint ||
-        !secondPoint
-      ) {
-
-        continue;
-
-      }
-
-      const start =
-        this.toCanvas(
-          firstPoint
+        stickViewer = new LightweightStickViewer(
+          document.getElementById("stickCanvas"),
+          document.getElementById("stickFrameInfo"),
+          document.getElementById("stickPlayButton"),
+          document.getElementById("stickLoopButton"),
         );
 
-      const end =
-        this.toCanvas(
-          secondPoint
-        );
-
-      context.beginPath();
-
-      context.moveTo(
-        start.x,
-        start.y
-      );
-
-      context.lineTo(
-        end.x,
-        end.y
-      );
-
-      context.stroke();
-
-    }
-
-    /*
-     * 関節点
-     */
-    context.fillStyle =
-      "#ef5350";
-
-    for (const point of frame) {
-
-      if (!point) {
-        continue;
+        stickViewer.setData(data.rows, data.fps);
       }
 
-      const position =
-        this.toCanvas(point);
+      // =======================
+      // 分析結果を閉じる
+      // =======================
+      function closeAnalysisResult() {
+        if (stickViewer) {
+          stickViewer.destroy();
+          stickViewer = null;
+        }
 
-      context.beginPath();
+        renderHome();
+      }
 
-      context.arc(
-        position.x,
-        position.y,
-        4,
-        0,
-        Math.PI * 2
-      );
+      // =======================
+      // 再生操作
+      // =======================
+      function toggleStickPlayback() {
+        if (stickViewer) {
+          stickViewer.togglePlay();
+        }
+      }
 
-      context.fill();
+      function nextStickFrame() {
+        if (stickViewer) {
+          stickViewer.nextFrame();
+        }
+      }
 
-    }
+      function previousStickFrame() {
+        if (stickViewer) {
+          stickViewer.previousFrame();
+        }
+      }
 
-    this.updateInformation();
+      // =======================
+      // ループ再生切り替え
+      // =======================
+      function toggleStickLoop() {
+        if (stickViewer) {
+          stickViewer.toggleLoop();
+        }
+      }
 
-  }
+      // =======================
+      // 表示倍率変更
+      // =======================
+      function changeStickZoom(value) {
+        if (!stickViewer) {
+          return;
+        }
 
+        const percent = Number(value);
 
-  // =====================
-  // フレーム・時間表示
-  // =====================
-  updateInformation() {
+        stickViewer.setZoom(percent);
 
-    const seconds =
-      this.frameIndex /
-      this.fps;
+        const display = document.getElementById("stickZoomValue");
 
-    this.infoElement.textContent =
-      "Frame " +
-      (
-        this.frameIndex + 1
-      ) +
-      " / " +
-      this.frames.length +
-      "｜" +
-      seconds.toFixed(2) +
-      "秒";
+        if (display) {
+          display.textContent = percent + "%";
+        }
+      }
 
-  }
+      // =======================
+      // 再生速度変更
+      // =======================
+      function changeStickSpeed(index) {
+        if (!stickViewer) {
+          return;
+        }
 
+        const speedList = [0.25, 0.5, 1, 2, 4];
 
-  // =====================
-  // 再生
-  // =====================
-  play() {
+        const selectedSpeed = speedList[Number(index)] || 1;
 
-    if (
-      this.frames.length === 0 ||
-      this.isPlaying
-    ) {
+        stickViewer.setPlaySpeed(selectedSpeed);
 
-      return;
+        const display = document.getElementById("stickSpeedValue");
 
-    }
+        if (display) {
+          display.textContent = selectedSpeed + "倍";
+        }
+      }
 
-    /*
-     * 最終フレームから再生した場合は
-     * 最初に戻す
-     */
-    if (
-      this.frameIndex >=
-      this.frames.length - 1
-    ) {
+      // =======================
+      // 軽量スティックビューア
+      // =======================
+      class LightweightStickViewer {
+        constructor(canvas, infoElement, playButton, loopButton) {
+          this.canvas = canvas;
 
-      this.frameIndex = 0;
-      this.draw();
+          this.context = canvas.getContext("2d");
 
-    }
+          this.infoElement = infoElement;
 
-    this.isPlaying = true;
+          this.playButton = playButton;
 
-    this.lastTime =
-      performance.now();
+          this.loopButton = loopButton;
 
-    this.accumulatedTime = 0;
+          this.frames = [];
 
-    this.updatePlayButton();
+          this.frameIndex = 0;
 
-    this.animationId =
-      requestAnimationFrame(
-        time =>
-          this.playLoop(time)
-      );
+          this.fps = 30;
 
-  }
+          this.playSpeed = 1;
 
+          this.isPlaying = false;
 
-  // =====================
-  // FPSに合わせた再生
-  // =====================
-  playLoop(currentTime) {
+          this.loopEnabled = false;
 
-    if (!this.isPlaying) {
-      return;
-    }
+          this.animationId = null;
 
-    const elapsed =
-      currentTime -
-      this.lastTime;
+          this.lastTime = 0;
 
-    this.lastTime =
-      currentTime;
+          this.accumulatedTime = 0;
 
-    this.accumulatedTime +=
-      elapsed;
+          /*
+           * 将来のサイズ変更用
+           */
+          this.zoom = 1;
 
-const frameInterval =
-  1000 /
-  (
-    this.fps *
-    this.playSpeed
-  );
+          this.fitScale = 100;
 
-    /*
-     * 200fpsなど、画面更新速度より
-     * fpsが高い場合は必要な数だけ
-     * フレームを進める
-     */
-    const advanceCount =
-      Math.floor(
-        this.accumulatedTime /
-        frameInterval
-      );
+          this.centerX = 0;
+          this.centerY = 0;
+        }
 
-    if (advanceCount > 0) {
+        // =====================
+        // データ設定
+        // =====================
+        setData(rows, fps) {
+          this.stop();
 
-      this.accumulatedTime -=
-        advanceCount *
-        frameInterval;
+          this.fps = Number(fps) > 0 ? Number(fps) : 30;
 
-      this.frameIndex +=
-        advanceCount;
+          this.frames = this.convertRowsToFrames(rows || []);
 
-      if (
-        this.frameIndex >=
-        this.frames.length
-      ) {
+          if (this.frames.length === 0) {
+            throw new Error("表示できる座標データがありません");
+          }
 
-        if (this.loopEnabled) {
+          this.frameIndex = 0;
 
-          this.frameIndex =
-            this.frameIndex %
-            this.frames.length;
+          this.calculateFit();
 
           this.draw();
+        }
 
-        } else {
+        // =====================
+        // 46列の座標を23点へ変換
+        // =====================
+        convertRowsToFrames(rows) {
+          const frames = [];
 
-          this.frameIndex =
-            this.frames.length - 1;
+          for (const row of rows) {
+            if (!Array.isArray(row) || row.length < 46) {
+              continue;
+            }
+
+            /*
+             * B:AUだけを取得しているため、
+             * 元のExcelコードから列番号を
+             * 1つずらしている
+             *
+             * 右大転子
+             * x = 26
+             * y = 27
+             *
+             * 左大転子
+             * x = 38
+             * y = 39
+             */
+            const rightHipX = this.toNumber(row[26]);
+
+            const rightHipY = this.toNumber(row[27]);
+
+            const leftHipX = this.toNumber(row[38]);
+
+            const leftHipY = this.toNumber(row[39]);
+
+            let centerX = 0;
+            let centerY = 0;
+
+            if (rightHipX !== null && leftHipX !== null) {
+              centerX = (rightHipX + leftHipX) / 2;
+            }
+
+            if (rightHipY !== null && leftHipY !== null) {
+              centerY = (rightHipY + leftHipY) / 2;
+            }
+
+            const joints = [];
+
+            /*
+             * 2列で1点
+             * x、yを23点分読み込む
+             */
+            for (let column = 0; column < 46; column += 2) {
+              const x = this.toNumber(row[column]);
+
+              const y = this.toNumber(row[column + 1]);
+
+              if (x === null || y === null) {
+                joints.push(null);
+              } else {
+                joints.push({
+                  x: x - centerX,
+                  y: y - centerY,
+                });
+              }
+            }
+
+            if (joints.some((point) => point !== null)) {
+              frames.push(joints);
+            }
+          }
+
+          return frames;
+        }
+
+        // =====================
+        // 数値変換
+        // =====================
+        toNumber(value) {
+          if (value === null || value === "" || value === undefined) {
+            return null;
+          }
+
+          const number = Number(value);
+
+          return Number.isFinite(number) ? number : null;
+        }
+
+        // =====================
+        // 全フレームに合う表示倍率
+        // =====================
+        calculateFit() {
+          let minX = Infinity;
+          let maxX = -Infinity;
+
+          let minY = Infinity;
+          let maxY = -Infinity;
+
+          for (const frame of this.frames) {
+            for (const point of frame) {
+              if (!point) {
+                continue;
+              }
+
+              minX = Math.min(minX, point.x);
+
+              maxX = Math.max(maxX, point.x);
+
+              minY = Math.min(minY, point.y);
+
+              maxY = Math.max(maxY, point.y);
+            }
+          }
+
+          if (
+            !Number.isFinite(minX) ||
+            !Number.isFinite(maxX) ||
+            !Number.isFinite(minY) ||
+            !Number.isFinite(maxY)
+          ) {
+            this.fitScale = 100;
+            this.centerX = 0;
+            this.centerY = 0;
+
+            return;
+          }
+
+          const width = Math.max(maxX - minX, 0.01);
+
+          const height = Math.max(maxY - minY, 0.01);
+
+          const horizontalScale = (this.canvas.width - 70) / width;
+
+          const verticalScale = (this.canvas.height - 70) / height;
+
+          this.fitScale = Math.min(horizontalScale, verticalScale);
+
+          this.centerX = (minX + maxX) / 2;
+
+          this.centerY = (minY + maxY) / 2;
+        }
+
+        // =====================
+        // 表示倍率変更
+        // =====================
+        setZoom(percent) {
+          const value = Number(percent);
+
+          if (!Number.isFinite(value)) {
+            return;
+          }
+
+          this.zoom = Math.max(0.5, Math.min(value / 100, 2));
+
+          this.draw();
+        }
+
+        // =====================
+        // 再生速度変更
+        // =====================
+        setPlaySpeed(speed) {
+          const allowedSpeeds = [0.25, 0.5, 1, 2, 4];
+
+          const number = Number(speed);
+
+          if (!allowedSpeeds.includes(number)) {
+            return;
+          }
+
+          this.playSpeed = number;
+
+          /*
+           * 再生中に速度を変えた際の
+           * 急なフレーム飛びを防止
+           */
+          if (this.isPlaying) {
+            this.lastTime = performance.now();
+
+            this.accumulatedTime = 0;
+          }
+        }
+
+        // =====================
+        // Canvas座標へ変換
+        // =====================
+        toCanvas(point) {
+          const scale = this.fitScale * this.zoom;
+
+          return {
+            x: this.canvas.width / 2 + (point.x - this.centerX) * scale,
+
+            y: this.canvas.height / 2 - (point.y - this.centerY) * scale,
+          };
+        }
+
+        // =====================
+        // 描画
+        // =====================
+        draw() {
+          const context = this.context;
+
+          context.fillStyle = "#ffffff";
+
+          context.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+          const frame = this.frames[this.frameIndex];
+
+          if (!frame) {
+            return;
+          }
+
+          /*
+           * 骨格線
+           */
+          context.strokeStyle = "#1f2926";
+
+          context.lineWidth = 3;
+
+          context.lineCap = "round";
+
+          context.lineJoin = "round";
+
+          for (const bone of STICK_BONES) {
+            const firstPoint = frame[bone[0]];
+
+            const secondPoint = frame[bone[1]];
+
+            if (!firstPoint || !secondPoint) {
+              continue;
+            }
+
+            const start = this.toCanvas(firstPoint);
+
+            const end = this.toCanvas(secondPoint);
+
+            context.beginPath();
+
+            context.moveTo(start.x, start.y);
+
+            context.lineTo(end.x, end.y);
+
+            context.stroke();
+          }
+
+          /*
+           * 関節点
+           */
+          context.fillStyle = "#ef5350";
+
+          for (const point of frame) {
+            if (!point) {
+              continue;
+            }
+
+            const position = this.toCanvas(point);
+
+            context.beginPath();
+
+            context.arc(position.x, position.y, 4, 0, Math.PI * 2);
+
+            context.fill();
+          }
+
+          this.updateInformation();
+        }
+
+        // =====================
+        // フレーム・時間表示
+        // =====================
+        updateInformation() {
+          const seconds = this.frameIndex / this.fps;
+
+          this.infoElement.textContent =
+            "Frame " +
+            (this.frameIndex + 1) +
+            " / " +
+            this.frames.length +
+            "｜" +
+            seconds.toFixed(2) +
+            "秒";
+        }
+
+        // =====================
+        // 再生
+        // =====================
+        play() {
+          if (this.frames.length === 0 || this.isPlaying) {
+            return;
+          }
+
+          /*
+           * 最終フレームから再生した場合は
+           * 最初に戻す
+           */
+          if (this.frameIndex >= this.frames.length - 1) {
+            this.frameIndex = 0;
+            this.draw();
+          }
+
+          this.isPlaying = true;
+
+          this.lastTime = performance.now();
+
+          this.accumulatedTime = 0;
+
+          this.updatePlayButton();
+
+          this.animationId = requestAnimationFrame((time) =>
+            this.playLoop(time),
+          );
+        }
+
+        // =====================
+        // FPSに合わせた再生
+        // =====================
+        playLoop(currentTime) {
+          if (!this.isPlaying) {
+            return;
+          }
+
+          const elapsed = currentTime - this.lastTime;
+
+          this.lastTime = currentTime;
+
+          this.accumulatedTime += elapsed;
+
+          const frameInterval = 1000 / (this.fps * this.playSpeed);
+
+          /*
+           * 200fpsなど、画面更新速度より
+           * fpsが高い場合は必要な数だけ
+           * フレームを進める
+           */
+          const advanceCount = Math.floor(this.accumulatedTime / frameInterval);
+
+          if (advanceCount > 0) {
+            this.accumulatedTime -= advanceCount * frameInterval;
+
+            this.frameIndex += advanceCount;
+
+            if (this.frameIndex >= this.frames.length) {
+              if (this.loopEnabled) {
+                this.frameIndex = this.frameIndex % this.frames.length;
+
+                this.draw();
+              } else {
+                this.frameIndex = this.frames.length - 1;
+
+                this.stop();
+                this.draw();
+
+                return;
+              }
+            } else {
+              this.draw();
+            }
+          }
+
+          this.animationId = requestAnimationFrame((time) =>
+            this.playLoop(time),
+          );
+        }
+
+        // =====================
+        // 一時停止
+        // =====================
+        stop() {
+          this.isPlaying = false;
+
+          if (this.animationId !== null) {
+            cancelAnimationFrame(this.animationId);
+
+            this.animationId = null;
+          }
+
+          this.updatePlayButton();
+        }
+
+        // =====================
+        // 再生切替
+        // =====================
+        togglePlay() {
+          if (this.isPlaying) {
+            this.stop();
+          } else {
+            this.play();
+          }
+        }
+
+        // =====================
+        // ループ再生切り替え
+        // =====================
+        toggleLoop() {
+          this.loopEnabled = !this.loopEnabled;
+
+          this.updateLoopButton();
+        }
+
+        // =====================
+        // ループボタン表示更新
+        // =====================
+        updateLoopButton() {
+          if (!this.loopButton) {
+            return;
+          }
+
+          if (this.loopEnabled) {
+            this.loopButton.textContent = "ループ再生：ON";
+
+            this.loopButton.classList.add("is-active");
+
+            this.loopButton.setAttribute("aria-pressed", "true");
+          } else {
+            this.loopButton.textContent = "ループ再生：OFF";
+
+            this.loopButton.classList.remove("is-active");
+
+            this.loopButton.setAttribute("aria-pressed", "false");
+          }
+        }
+
+        // =====================
+        // 1コマ進む
+        // =====================
+        nextFrame() {
+          if (this.frames.length === 0) {
+            return;
+          }
 
           this.stop();
+
+          this.frameIndex = Math.min(
+            this.frameIndex + 1,
+            this.frames.length - 1,
+          );
+
           this.draw();
-
-          return;
-
         }
 
-      } else {
+        // =====================
+        // 1コマ戻る
+        // =====================
+        previousFrame() {
+          if (this.frames.length === 0) {
+            return;
+          }
 
-        this.draw();
+          this.stop();
 
+          this.frameIndex = Math.max(this.frameIndex - 1, 0);
+
+          this.draw();
+        }
+
+        // =====================
+        // ボタン表示更新
+        // =====================
+        updatePlayButton() {
+          if (!this.playButton) {
+            return;
+          }
+
+          this.playButton.textContent = this.isPlaying ? "一時停止" : "再生";
+        }
+
+        // =====================
+        // ビューア終了
+        // =====================
+        destroy() {
+          this.stop();
+
+          this.frames = [];
+        }
       }
 
-    }
-
-    this.animationId =
-      requestAnimationFrame(
-        time =>
-          this.playLoop(time)
-      );
-
-  }
-
-
-  // =====================
-  // 一時停止
-  // =====================
-  stop() {
-
-    this.isPlaying = false;
-
-    if (
-      this.animationId !== null
-    ) {
-
-      cancelAnimationFrame(
-        this.animationId
-      );
-
-      this.animationId = null;
-
-    }
-
-    this.updatePlayButton();
-
-  }
-
-
-  // =====================
-  // 再生切替
-  // =====================
-  togglePlay() {
-
-    if (this.isPlaying) {
-
-      this.stop();
-
-    } else {
-
-      this.play();
-
-    }
-
-  }
-
-
-  // =====================
-  // ループ再生切り替え
-  // =====================
-  toggleLoop() {
-
-    this.loopEnabled =
-      !this.loopEnabled;
-
-    this.updateLoopButton();
-
-  }
-
-
-  // =====================
-  // ループボタン表示更新
-  // =====================
-  updateLoopButton() {
-
-    if (!this.loopButton) {
-      return;
-    }
-
-    if (this.loopEnabled) {
-
-      this.loopButton.textContent =
-        "ループ再生：ON";
-
-      this.loopButton.classList.add(
-        "is-active"
-      );
-
-      this.loopButton.setAttribute(
-        "aria-pressed",
-        "true"
-      );
-
-    } else {
-
-      this.loopButton.textContent =
-        "ループ再生：OFF";
-
-      this.loopButton.classList.remove(
-        "is-active"
-      );
-
-      this.loopButton.setAttribute(
-        "aria-pressed",
-        "false"
-      );
-
-    }
-
-  }
-
-
-  // =====================
-  // 1コマ進む
-  // =====================
-  nextFrame() {
-
-    if (
-      this.frames.length === 0
-    ) {
-
-      return;
-
-    }
-
-    this.stop();
-
-    this.frameIndex =
-      Math.min(
-        this.frameIndex + 1,
-        this.frames.length - 1
-      );
-
-    this.draw();
-
-  }
-
-
-  // =====================
-  // 1コマ戻る
-  // =====================
-  previousFrame() {
-
-    if (
-      this.frames.length === 0
-    ) {
-
-      return;
-
-    }
-
-    this.stop();
-
-    this.frameIndex =
-      Math.max(
-        this.frameIndex - 1,
-        0
-      );
-
-    this.draw();
-
-  }
-
-
-  // =====================
-  // ボタン表示更新
-  // =====================
-  updatePlayButton() {
-
-    if (!this.playButton) {
-      return;
-    }
-
-    this.playButton.textContent =
-      this.isPlaying
-        ? "一時停止"
-        : "再生";
-
-  }
-
-
-  // =====================
-  // ビューア終了
-  // =====================
-  destroy() {
-
-    this.stop();
-
-    this.frames = [];
-
-  }
-
-}
-  
-// =======================
-// 分析結果一覧の再読み込み
-// =======================
-async function reloadAnalysisList() {
-
-  CACHE.analysisMembers = null;
-  CACHE.analysisError = null;
-
-  await loadHome();
-
-}
-
-
-// =======================
-// スケジュール取得
-// =======================
-async function loadSchedule() {
-
-  if (CACHE.schedules) {
-    return;
-  }
-
-  const data = await apiGet(
-    "getScheduleByLineId",
-    {
-      lineUserId: CACHE.profile.userId
-    }
-  );
-
-  CACHE.schedules =
-    data.schedules || [];
-
-}
-
-
-// =======================
-// カレンダー表示
-// =======================
-async function showSchedule() {
-
-  lockUI("スケジュールを取得中...");
-
-  try {
-
-    await loadSchedule();
-
-    renderSchedule();
-
-  } catch (error) {
-
-    alert(error.message);
-
-  } finally {
-
-    unlockUI();
-
-  }
-
-}
-
-
-function renderSchedule() {
-
-  const year =
-    currentCalendarDate.getFullYear();
-
-  const month =
-    currentCalendarDate.getMonth();
-
-  const startWeek =
-    new Date(year, month, 1).getDay();
-
-  const totalDays =
-    new Date(year, month + 1, 0).getDate();
-
-  let cells = "<tr>";
-  let cellCount = 0;
-
-  for (
-    let i = 0;
-    i < startWeek;
-    i++, cellCount++
-  ) {
-
-    cells += "<td></td>";
-
-  }
-
-  for (
-    let day = 1;
-    day <= totalDays;
-    day++, cellCount++
-  ) {
-
-    const date =
-      `${year}/` +
-      `${String(month + 1).padStart(2, "0")}/` +
-      `${String(day).padStart(2, "0")}`;
-
-    const schedules =
-      CACHE.schedules.filter(
-        item => item.date === date
-      );
-
-    const mark =
-      schedules.length
-        ? scheduleMark(schedules[0].type)
-        : "";
-
-    const className =
-      schedules.length
-        ? "has-schedule"
-        : "";
-
-    const click =
-      schedules.length
-        ? `onclick="showScheduleDetail('${date}')"`
-        : "";
-
-    cells += `
+      // =======================
+      // 分析結果一覧の再読み込み
+      // =======================
+      async function reloadAnalysisList() {
+        CACHE.analysisMembers = null;
+        CACHE.analysisError = null;
+
+        await loadHome();
+      }
+
+      // =======================
+      // スケジュール取得
+      // =======================
+      async function loadSchedule() {
+        if (CACHE.schedules) {
+          return;
+        }
+
+        const data = await apiGet("getScheduleByLineId", {
+          lineUserId: CACHE.profile.userId,
+        });
+
+        CACHE.schedules = data.schedules || [];
+      }
+
+      // =======================
+      // カレンダー表示
+      // =======================
+      async function showSchedule() {
+        lockUI("スケジュールを取得中...");
+
+        try {
+          await loadSchedule();
+
+          renderSchedule();
+        } catch (error) {
+          alert(error.message);
+        } finally {
+          unlockUI();
+        }
+      }
+
+      function renderSchedule() {
+        const year = currentCalendarDate.getFullYear();
+
+        const month = currentCalendarDate.getMonth();
+
+        const startWeek = new Date(year, month, 1).getDay();
+
+        const totalDays = new Date(year, month + 1, 0).getDate();
+
+        let cells = "<tr>";
+        let cellCount = 0;
+
+        for (let i = 0; i < startWeek; i++, cellCount++) {
+          cells += "<td></td>";
+        }
+
+        for (let day = 1; day <= totalDays; day++, cellCount++) {
+          const date =
+            `${year}/` +
+            `${String(month + 1).padStart(2, "0")}/` +
+            `${String(day).padStart(2, "0")}`;
+
+          const schedules = CACHE.schedules.filter(
+            (item) => item.date === date,
+          );
+
+          const mark = schedules.length ? scheduleMark(schedules[0].type) : "";
+
+          const className = schedules.length ? "has-schedule" : "";
+
+          const click = schedules.length
+            ? `onclick="showScheduleDetail('${date}')"`
+            : "";
+
+          cells += `
       <td
         class="${className}"
         ${click}
@@ -2431,27 +1697,19 @@ function renderSchedule() {
       </td>
     `;
 
-    if (
-      (cellCount + 1) % 7 === 0 &&
-      day !== totalDays
-    ) {
+          if ((cellCount + 1) % 7 === 0 && day !== totalDays) {
+            cells += "</tr><tr>";
+          }
+        }
 
-      cells += "</tr><tr>";
+        while (cellCount % 7 !== 0) {
+          cells += "<td></td>";
+          cellCount++;
+        }
 
-    }
+        cells += "</tr>";
 
-  }
-
-  while (cellCount % 7 !== 0) {
-
-    cells += "<td></td>";
-    cellCount++;
-
-  }
-
-  cells += "</tr>";
-
-  document.getElementById("status").innerHTML = `
+        document.getElementById("status").innerHTML = `
     <section class="card">
 
       <div class="calendar-head">
@@ -2506,42 +1764,35 @@ function renderSchedule() {
 
     </section>
   `;
+      }
 
-}
+      // =======================
+      // スケジュール記号
+      // =======================
+      function scheduleMark(type) {
+        return (
+          {
+            通常: "●",
+            振替可: "★",
+            雨天: "▲",
+            休講: "■",
+          }[type] || "●"
+        );
+      }
 
+      // =======================
+      // スケジュール詳細
+      // =======================
+      function showScheduleDetail(date) {
+        const schedules = CACHE.schedules.filter((item) => item.date === date);
 
-// =======================
-// スケジュール記号
-// =======================
-function scheduleMark(type) {
+        if (!schedules.length) {
+          return;
+        }
 
-  return {
-    "通常": "●",
-    "振替可": "★",
-    "雨天": "▲",
-    "休講": "■"
-  }[type] || "●";
-
-}
-
-
-// =======================
-// スケジュール詳細
-// =======================
-function showScheduleDetail(date) {
-
-  const schedules =
-    CACHE.schedules.filter(
-      item => item.date === date
-    );
-
-  if (!schedules.length) {
-    return;
-  }
-
-  const details =
-    schedules
-      .map(item => `
+        const details = schedules
+          .map(
+            (item) => `
         <hr>
 
         <p>
@@ -2563,12 +1814,11 @@ function showScheduleDetail(date) {
         <p>
           ${escapeHtml(item.type)}
         </p>
-      `)
-      .join("");
+      `,
+          )
+          .join("");
 
-  document
-    .getElementById("scheduleModalContent")
-    .innerHTML = `
+        document.getElementById("scheduleModalContent").innerHTML = `
       <h3>${escapeHtml(date)}</h3>
 
       ${details}
@@ -2581,53 +1831,37 @@ function showScheduleDetail(date) {
       </button>
     `;
 
-  document
-    .getElementById("scheduleModal")
-    .style.display = "block";
+        document.getElementById("scheduleModal").style.display = "block";
+      }
 
-}
+      // =======================
+      // モーダルを閉じる
+      // =======================
+      function closeScheduleModal(event) {
+        if (event && event.target.id !== "scheduleModal") {
+          return;
+        }
 
+        document.getElementById("scheduleModal").style.display = "none";
+      }
 
-// =======================
-// モーダルを閉じる
-// =======================
-function closeScheduleModal(event) {
+      // =======================
+      // 前月・翌月
+      // =======================
+      function changeMonth(amount) {
+        currentCalendarDate = new Date(
+          currentCalendarDate.getFullYear(),
+          currentCalendarDate.getMonth() + amount,
+          1,
+        );
 
-  if (
-    event &&
-    event.target.id !== "scheduleModal"
-  ) {
-    return;
-  }
+        renderSchedule();
+      }
 
-  document
-    .getElementById("scheduleModal")
-    .style.display = "none";
-
-}
-
-
-// =======================
-// 前月・翌月
-// =======================
-function changeMonth(amount) {
-
-  currentCalendarDate = new Date(
-    currentCalendarDate.getFullYear(),
-    currentCalendarDate.getMonth() + amount,
-    1
-  );
-
-  renderSchedule();
-
-}
-
-
-// =======================
-// 起動
-// =======================
-main();
-</script>
-
-</body>
+      // =======================
+      // 起動
+      // =======================
+      main();
+    </script>
+  </body>
 </html>
