@@ -197,25 +197,30 @@
         font-size: 12px;
       }
 
-      .stick-controls {
-        display: grid;
-        grid-template-columns: 1fr 1.15fr 1fr;
-        gap: 5px;
-        margin-top: 4px;
-      }
+.stick-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+}
 
-      .stick-controls button {
-        min-height: 38px;
-        margin: 0;
-        padding: 5px 2px;
-        font-size: 12px;
-        font-weight: bold;
-      }
+.stick-controls button {
+  flex: none;
+  width: 70px;
+  min-height: 32px;
+  margin: 0;
+  padding: 3px 4px;
+  font-size: 11px;
+  font-weight: bold;
+  border-radius: 6px;
+}
 
-      .stick-controls .play-button {
-        background: #4f9c8a;
-        font-size: 14px;
-      }
+.stick-controls .play-button {
+  width: 82px;
+  background: #4f9c8a;
+  font-size: 12px;
+}
 
       .stick-settings {
         margin: 0 0 6px;
