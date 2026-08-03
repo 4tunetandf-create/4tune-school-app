@@ -124,20 +124,15 @@
       .stick-header {
         display: flex;
         align-items: center;
-        gap: 7px;
-        margin-bottom: 7px;
+        margin-bottom: 4px;
       }
 
       .stick-header button {
-        min-height: 34px;
+        min-height: 26px;
         margin: 0;
-        padding: 6px 10px;
-        font-size: 13px;
-      }
-
-      .stick-header h2 {
-        margin: 0;
-        font-size: 17px;
+        padding: 3px 8px;
+        border-radius: 6px;
+        font-size: 11px;
       }
 
       .stick-canvas-wrap {
@@ -156,32 +151,25 @@
         touch-action: none;
       }
 
-      .stick-info {
-        margin: 6px 0;
-        text-align: center;
-        color: #555;
-        font-size: 12px;
-      }
-
       .analysis-tabs {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 4px;
-        margin-top: 6px;
-        padding: 3px;
-        border-radius: 9px;
+        gap: 2px;
+        margin-top: 4px;
+        padding: 2px;
+        border-radius: 7px;
         background: #e9eeec;
       }
 
       .analysis-tab-button {
-        min-height: 34px;
+        min-height: 26px;
         margin: 0;
-        padding: 5px 2px;
+        padding: 2px;
         border: 0;
-        border-radius: 7px;
+        border-radius: 5px;
         background: transparent;
         color: #4d5754;
-        font-size: 12px;
+        font-size: 11px;
         font-weight: bold;
       }
 
@@ -192,7 +180,7 @@
 
       .analysis-tab-panel {
         display: none;
-        padding-top: 6px;
+        padding-top: 4px;
       }
 
       .analysis-tab-panel.is-active {
@@ -213,6 +201,7 @@
         display: grid;
         grid-template-columns: 1fr 1.15fr 1fr;
         gap: 5px;
+        margin-top: 4px;
       }
 
       .stick-controls button {
@@ -895,18 +884,12 @@
       <section class="card analysis-view-card">
 
         <div class="stick-header">
-
           <button
             class="secondary"
             onclick="closeAnalysisResult()"
           >
             戻る
           </button>
-
-          <h2>
-            ${escapeHtml(data.memberName)}
-          </h2>
-
         </div>
 
         <div class="stick-canvas-wrap">
@@ -919,11 +902,22 @@
 
         </div>
 
-        <div
-          id="stickFrameInfo"
-          class="stick-info"
-        >
-          Frame 1 / 1｜0.00秒
+        <div class="stick-controls">
+          <button class="secondary" onclick="previousStickFrame()">
+            ◀ 1コマ
+          </button>
+
+          <button
+            id="stickPlayButton"
+            class="play-button"
+            onclick="toggleStickPlayback()"
+          >
+            再生
+          </button>
+
+          <button class="secondary" onclick="nextStickFrame()">
+            1コマ ▶
+          </button>
         </div>
 
         <div class="analysis-tabs" role="tablist" aria-label="分析メニュー">
@@ -1016,24 +1010,6 @@
             </div>
           </div>
 
-          <div class="stick-controls">
-            <button class="secondary" onclick="previousStickFrame()">
-              ◀ 1コマ
-            </button>
-
-            <button
-              id="stickPlayButton"
-              class="play-button"
-              onclick="toggleStickPlayback()"
-            >
-              再生
-            </button>
-
-            <button class="secondary" onclick="nextStickFrame()">
-              1コマ ▶
-            </button>
-          </div>
-
           <button
             id="stickLoopButton"
             class="stick-loop-button"
@@ -1069,9 +1045,9 @@
 
         stickViewer = new LightweightStickViewer(
           document.getElementById("stickCanvas"),
-          document.getElementById("stickFrameInfo"),
           document.getElementById("stickPlayButton"),
           document.getElementById("stickLoopButton"),
+          data.memberName,
         );
 
         stickViewer.setData(data.rows, data.fps);
@@ -1190,16 +1166,16 @@
       // 軽量スティックビューア
       // =======================
       class LightweightStickViewer {
-        constructor(canvas, infoElement, playButton, loopButton) {
+        constructor(canvas, playButton, loopButton, memberName) {
           this.canvas = canvas;
 
           this.context = canvas.getContext("2d");
 
-          this.infoElement = infoElement;
-
           this.playButton = playButton;
 
           this.loopButton = loopButton;
+
+          this.memberName = String(memberName || "");
 
           this.frames = [];
 
@@ -1511,23 +1487,52 @@
             context.fill();
           }
 
-          this.updateInformation();
+          this.drawInformationOverlay();
         }
 
         // =====================
-        // フレーム・時間表示
+        // 会員名・フレーム・時間表示
         // =====================
-        updateInformation() {
+        drawInformationOverlay() {
+          const context = this.context;
           const seconds = this.frameIndex / this.fps;
+          const right = this.canvas.width - 14;
+          const top = 14;
+          const padding = 12;
+          const lineHeight = 23;
+          const lines = [
+            this.memberName,
+            "Frame " + (this.frameIndex + 1) + " / " + this.frames.length,
+            "Time " + seconds.toFixed(2) + "秒",
+          ];
 
-          this.infoElement.textContent =
-            "Frame " +
-            (this.frameIndex + 1) +
-            " / " +
-            this.frames.length +
-            "｜" +
-            seconds.toFixed(2) +
-            "秒";
+          context.save();
+
+          context.font = "bold 20px sans-serif";
+
+          const textWidth = Math.max(
+            ...lines.map((line) => context.measureText(line).width),
+          );
+
+          const boxWidth = textWidth + padding * 2;
+          const boxHeight = lineHeight * lines.length + padding;
+          const boxLeft = right - boxWidth + padding;
+
+          context.fillStyle = "rgba(255, 255, 255, 0.72)";
+          context.fillRect(boxLeft, top, boxWidth, boxHeight);
+
+          context.fillStyle = "#27312e";
+          context.textAlign = "right";
+          context.textBaseline = "top";
+
+          lines.forEach((line, index) => {
+            context.font =
+              index === 0 ? "bold 20px sans-serif" : "17px sans-serif";
+
+            context.fillText(line, right, top + 7 + index * lineHeight);
+          });
+
+          context.restore();
         }
 
         // =====================
