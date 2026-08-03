@@ -132,7 +132,11 @@ const LIFF_ID = "2010350476-xCTsckal";
 const CACHE = {
   profile: null,
   members: null,
-  schedules: null
+  schedules: null,
+
+  // 動作分析ファイル一覧
+  analysisMembers: null,
+  analysisError: null
 };
 
 let currentCalendarDate = new Date();
@@ -483,21 +487,84 @@ async function registerAll(lineUserId) {
 // =======================
 async function loadHome() {
 
-  lockUI("会員情報を取得中...");
+  lockUI(
+    "会員情報を取得中..."
+  );
 
   try {
 
+    // =====================
+    // 会員情報取得
+    // =====================
     if (!CACHE.members) {
 
-      const data = await apiGet(
-        "getMembersByLineId",
-        {
-          lineUserId: CACHE.profile.userId
-        }
-      );
+      const memberData =
+        await apiGet(
+          "getMembersByLineId",
+          {
+            lineUserId:
+              CACHE.profile.userId
+          }
+        );
 
       CACHE.members =
-        data.members || [];
+        memberData.members || [];
+
+    }
+
+    // =====================
+    // 分析ファイル一覧取得
+    // =====================
+    if (!CACHE.analysisMembers) {
+
+      try {
+
+        const analysisData =
+          await apiGet(
+            "getAnalysisFileList",
+            {
+              lineUserId:
+                CACHE.profile.userId
+            }
+          );
+
+        if (
+          analysisData.success
+        ) {
+
+          CACHE.analysisMembers =
+            analysisData.members || [];
+
+          CACHE.analysisError =
+            null;
+
+        } else {
+
+          CACHE.analysisMembers = [];
+
+          CACHE.analysisError =
+            analysisData.message ||
+            "分析結果を取得できませんでした";
+
+        }
+
+      } catch (error) {
+
+        console.error(
+          "分析結果一覧の取得エラー",
+          error
+        );
+
+        /*
+         * 分析結果の取得に失敗しても、
+         * ホーム画面とカレンダーは表示する
+         */
+        CACHE.analysisMembers = [];
+
+        CACHE.analysisError =
+          "分析結果を取得できませんでした";
+
+      }
 
     }
 
@@ -517,53 +584,226 @@ async function loadHome() {
 // =======================
 function renderHome() {
 
-  const members =
+  const membersHtml =
     CACHE.members.length
       ? CACHE.members
           .map(
-            member =>
-              `<li>${escapeHtml(member.name)}</li>`
+            member => `
+              <li>
+                ${escapeHtml(
+                  member.name
+                )}
+              </li>
+            `
           )
           .join("")
-      : "<li>登録会員はいません</li>";
+      : `
+          <li>
+            登録会員はいません
+          </li>
+        `;
 
-  document.getElementById("status").innerHTML = `
-    <section class="card">
+  const analysisHtml =
+    createAnalysisListHtml();
 
-      <h2>
-        こんにちは
-        ${escapeHtml(CACHE.profile.displayName)}
-        さま
-      </h2>
+  document
+    .getElementById("status")
+    .innerHTML = `
 
-      <h3>登録会員</h3>
+      <section class="card">
 
-      <ul>
-        ${members}
-      </ul>
+        <h2>
+          こんにちは
+          ${escapeHtml(
+            CACHE.profile.displayName
+          )}
+          さま
+        </h2>
 
-    </section>
+        <h3>登録会員</h3>
 
-    <section class="card">
+        <ul>
+          ${membersHtml}
+        </ul>
 
-      <h3>動作分析結果</h3>
+      </section>
 
+      <section class="card">
+
+        <h3>動作分析結果</h3>
+
+        ${analysisHtml}
+
+      </section>
+
+      <section class="card">
+
+        <h3>
+          スクールスケジュール
+        </h3>
+
+        <button
+          onclick="showSchedule()"
+        >
+          カレンダーを見る
+        </button>
+
+      </section>
+    `;
+
+}
+
+
+// =======================
+// 動作分析結果一覧の作成
+// =======================
+function createAnalysisListHtml() {
+
+  if (CACHE.analysisError) {
+
+    return `
+      <p class="muted">
+        ${escapeHtml(
+          CACHE.analysisError
+        )}
+      </p>
+
+      <button
+        onclick="reloadAnalysisList()"
+      >
+        再読み込み
+      </button>
+    `;
+
+  }
+
+  if (
+    !CACHE.analysisMembers ||
+    CACHE.analysisMembers.length === 0
+  ) {
+
+    return `
       <p class="muted">
         現在、表示できる分析結果はありません
       </p>
+    `;
 
-    </section>
+  }
 
-    <section class="card">
+  let html = "";
 
-      <h3>スクールスケジュール</h3>
+  for (
+    const member of
+    CACHE.analysisMembers
+  ) {
 
-      <button onclick="showSchedule()">
-        カレンダーを見る
-      </button>
+    html += `
+      <div
+        style="
+          margin-top:16px;
+          padding-top:12px;
+          border-top:1px solid #ddd;
+        "
+      >
 
-    </section>
-  `;
+        <h4>
+          ${escapeHtml(
+            member.memberName
+          )}
+        </h4>
+    `;
+
+    if (
+      !member.files ||
+      member.files.length === 0
+    ) {
+
+      html += `
+        <p class="muted">
+          分析結果はありません
+        </p>
+      `;
+
+    } else {
+
+      html += `
+        <div
+          style="
+            display:flex;
+            flex-direction:column;
+            gap:8px;
+          "
+        >
+      `;
+
+      for (
+        const file of
+        member.files
+      ) {
+
+        html += `
+          <div
+            style="
+              padding:12px;
+              border:1px solid #ddd;
+              border-radius:8px;
+              background:#fafafa;
+            "
+          >
+
+            <div
+              style="
+                font-weight:bold;
+                margin-bottom:4px;
+              "
+            >
+              ${escapeHtml(
+                file.displayDate
+              )}
+            </div>
+
+            <div
+              class="muted"
+              style="
+                font-size:13px;
+              "
+            >
+              ${escapeHtml(
+                file.fileName
+              )}
+            </div>
+
+          </div>
+        `;
+
+      }
+
+      html += `
+        </div>
+      `;
+
+    }
+
+    html += `
+      </div>
+    `;
+
+  }
+
+  return html;
+
+}
+
+
+// =======================
+// 分析結果一覧の再読み込み
+// =======================
+async function reloadAnalysisList() {
+
+  CACHE.analysisMembers = null;
+  CACHE.analysisError = null;
+
+  await loadHome();
 
 }
 
