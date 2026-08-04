@@ -244,6 +244,53 @@
         background: #fff;
       }
 
+      .graph-selector-row {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 7px;
+        margin: 0 0 6px;
+      }
+
+      .graph-selector-label {
+        color: #65706c;
+        font-size: 10px;
+        font-weight: bold;
+        white-space: nowrap;
+      }
+
+      .graph-selector {
+        width: 150px;
+        height: 32px;
+        margin: 0;
+        padding: 2px 28px 2px 9px;
+        border: 1px solid #bdc9c5;
+        border-radius: 6px;
+        background: #fff;
+        color: #27312e;
+        font-size: 12px;
+        font-weight: bold;
+      }
+
+      .graph-content-panel {
+        display: none;
+      }
+
+      .graph-content-panel.is-active {
+        display: block;
+      }
+
+      .graph-coming-soon {
+        margin: 0;
+        padding: 54px 8px;
+        border: 1px solid #dfe7e4;
+        border-radius: 9px;
+        background: #f5f7f6;
+        color: #777;
+        text-align: center;
+        font-size: 12px;
+      }
+
       .analysis-graph-header {
         display: flex;
         align-items: baseline;
@@ -1171,18 +1218,55 @@
           aria-labelledby="analysisTabButton-graphs"
           hidden
         >
-          <div class="analysis-graph-card">
-            <div class="analysis-graph-header">
-              <span class="analysis-graph-title">重心高</span>
-              <span id="centerOfMassCurrent" class="analysis-graph-current">- m</span>
-            </div>
+          <div class="graph-selector-row">
+            <label class="graph-selector-label" for="analysisGraphSelect">
+              表示グラフ
+            </label>
 
-            <canvas
-              id="centerOfMassGraph"
-              width="720"
-              height="360"
-              aria-label="重心高のグラフ"
-            ></canvas>
+            <select
+              id="analysisGraphSelect"
+              class="graph-selector"
+              onchange="switchAnalysisGraph(this.value)"
+            >
+              <option value="centerOfMass">重心高</option>
+              <option value="jointAngle">関節角度</option>
+              <option value="jointAngularVelocity">関節角速度</option>
+            </select>
+          </div>
+
+          <div
+            id="analysisGraph-centerOfMass"
+            class="graph-content-panel is-active"
+          >
+            <div class="analysis-graph-card">
+              <div class="analysis-graph-header">
+                <span class="analysis-graph-title">重心高</span>
+                <span id="centerOfMassCurrent" class="analysis-graph-current">- m</span>
+              </div>
+
+              <canvas
+                id="centerOfMassGraph"
+                width="720"
+                height="360"
+                aria-label="重心高のグラフ"
+              ></canvas>
+            </div>
+          </div>
+
+          <div
+            id="analysisGraph-jointAngle"
+            class="graph-content-panel"
+            hidden
+          >
+            <p class="graph-coming-soon">関節角度グラフは次に追加します</p>
+          </div>
+
+          <div
+            id="analysisGraph-jointAngularVelocity"
+            class="graph-content-panel"
+            hidden
+          >
+            <p class="graph-coming-soon">関節角速度グラフは後で追加します</p>
           </div>
         </div>
 
@@ -1251,6 +1335,37 @@
         }
 
         if (tabName === "graphs" && centerOfMassGraph) {
+          requestAnimationFrame(function() {
+            centerOfMassGraph.draw();
+          });
+        }
+      }
+
+      // =======================
+      // 表示グラフ切り替え
+      // =======================
+      function switchAnalysisGraph(graphName) {
+        const graphNames = [
+          "centerOfMass",
+          "jointAngle",
+          "jointAngularVelocity",
+        ];
+
+        if (!graphNames.includes(graphName)) {
+          return;
+        }
+
+        for (const name of graphNames) {
+          const panel = document.getElementById("analysisGraph-" + name);
+          const isActive = name === graphName;
+
+          if (panel) {
+            panel.classList.toggle("is-active", isActive);
+            panel.hidden = !isActive;
+          }
+        }
+
+        if (graphName === "centerOfMass" && centerOfMassGraph) {
           requestAnimationFrame(function() {
             centerOfMassGraph.draw();
           });
