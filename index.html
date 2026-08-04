@@ -140,60 +140,16 @@
 
       .d-analysis-scroll {
         width: 100%;
-        overflow-x: auto;
-        padding: 2px 0 8px;
-        -webkit-overflow-scrolling: touch;
+        overflow: hidden;
+        padding: 2px 0 4px;
       }
 
-      .d-step-grid {
-        display: flex;
-        gap: 8px;
-        width: max-content;
-        min-width: 100%;
-      }
-
-      .d-step-card {
-        flex: 0 0 auto;
-        width: 344px;
-        padding: 8px;
+      .d-overview-canvas {
+        display: block;
+        width: 100%;
+        height: auto;
         border: 1px solid #d8dddb;
         border-radius: 10px;
-        background: #fff;
-      }
-
-      .d-step-card.is-single {
-        width: 174px;
-      }
-
-      .d-step-title {
-        margin: 0 0 5px;
-        color: #263238;
-        text-align: center;
-        font-size: 18px;
-      }
-
-      .d-pose-row {
-        display: flex;
-        gap: 6px;
-      }
-
-      .d-pose-item {
-        width: 160px;
-      }
-
-      .d-pose-label {
-        margin-bottom: 3px;
-        color: #52605c;
-        text-align: center;
-        font-size: 12px;
-        font-weight: bold;
-      }
-
-      .d-stick-canvas {
-        display: block;
-        width: 160px;
-        height: 300px;
-        border: 1px solid #edf0ef;
         background: #fff;
       }
 
@@ -1932,43 +1888,6 @@
         jointContractionVelocityGraph = null;
         currentAnalysisData = data;
 
-        const stepOrder = [3, 2, 1];
-        const stepCards = stepOrder
-          .map(function (stepNumber) {
-            const poses = (data.poses || []).filter(function (pose) {
-              return Number(pose.stepNumber) === stepNumber;
-            });
-
-            const poseItems = poses
-              .map(function (pose, poseIndex) {
-                const canvasId = "dStick-" + stepNumber + "-" + poseIndex;
-
-                return `
-                  <div class="d-pose-item">
-                    <div class="d-pose-label">
-                      ${escapeHtml(pose.phase)}
-                    </div>
-                    <canvas
-                      id="${canvasId}"
-                      class="d-stick-canvas"
-                      width="260"
-                      height="440"
-                      aria-label="${stepNumber}歩目${escapeHtml(pose.phase)}"
-                    ></canvas>
-                  </div>
-                `;
-              })
-              .join("");
-
-            return `
-              <section class="d-step-card${poses.length === 1 ? " is-single" : ""}">
-                <h3 class="d-step-title">${stepNumber}歩目</h3>
-                <div class="d-pose-row">${poseItems}</div>
-              </section>
-            `;
-          })
-          .join("");
-
         document.getElementById("status").classList.add("analysis-screen");
         document.getElementById("status").innerHTML = `
           <section class="card analysis-view-card">
@@ -1991,28 +1910,89 @@
             </div>
 
             <div class="d-analysis-scroll">
-              <div class="d-step-grid">${stepCards}</div>
+              <canvas
+                id="dOverviewCanvas"
+                class="d-overview-canvas"
+                width="1250"
+                height="500"
+                aria-label="1歩目から3歩目までの接地・離地スティック"
+              ></canvas>
             </div>
           </section>
         `;
 
-        for (const pose of data.poses || []) {
-          const sameStepPoses = (data.poses || []).filter(function (item) {
-            return Number(item.stepNumber) === Number(pose.stepNumber);
-          });
-          const poseIndex = sameStepPoses.indexOf(pose);
-          const canvas = document.getElementById(
-            "dStick-" + pose.stepNumber + "-" + poseIndex,
-          );
+        const canvas = document.getElementById("dOverviewCanvas");
 
-          if (canvas) {
-            drawDStickPose(canvas, pose.row);
-          }
+        if (canvas) {
+          drawDStickOverview(canvas, data.poses || []);
         }
       }
 
-      function drawDStickPose(canvas, row) {
+      function drawDStickOverview(canvas, poses) {
         const context = canvas.getContext("2d");
+        context.fillStyle = "#ffffff";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+
+        const orderedDefinitions = [
+          { stepNumber: 3, phase: "接地" },
+          { stepNumber: 2, phase: "接地" },
+          { stepNumber: 2, phase: "離地" },
+          { stepNumber: 1, phase: "接地" },
+          { stepNumber: 1, phase: "離地" },
+        ];
+        const slotWidth = canvas.width / orderedDefinitions.length;
+        const groundY = canvas.height - 34;
+
+        context.textAlign = "center";
+        context.textBaseline = "middle";
+        context.fillStyle = "#111111";
+        context.font = "bold 30px sans-serif";
+        context.fillText("3歩目", slotWidth * 0.5, 31);
+        context.fillText("2歩目", slotWidth * 2, 31);
+        context.fillText("1歩目", slotWidth * 4, 31);
+
+        orderedDefinitions.forEach(function (definition, slotIndex) {
+          const pose = poses.find(function (item) {
+            return Number(item.stepNumber) === definition.stepNumber &&
+              String(item.phase) === definition.phase;
+          });
+
+          context.fillStyle = "#52605c";
+          context.font = "bold 20px sans-serif";
+          context.fillText(
+            definition.phase,
+            slotWidth * (slotIndex + 0.5),
+            64,
+          );
+
+          if (pose) {
+            drawDStickPoseInSlot(
+              context,
+              pose.row,
+              slotWidth * slotIndex,
+              slotWidth,
+              82,
+              groundY,
+            );
+          }
+        });
+
+        context.beginPath();
+        context.moveTo(8, groundY + 1);
+        context.lineTo(canvas.width - 8, groundY + 1);
+        context.lineWidth = 3;
+        context.strokeStyle = "#111111";
+        context.stroke();
+      }
+
+      function drawDStickPoseInSlot(
+        context,
+        row,
+        slotLeft,
+        slotWidth,
+        topY,
+        groundY,
+      ) {
         const joints = [];
 
         for (let column = 0; column < 46; column += 2) {
@@ -2032,31 +2012,27 @@
 
         const validPoints = joints.filter(Boolean);
 
-        context.fillStyle = "#ffffff";
-        context.fillRect(0, 0, canvas.width, canvas.height);
-
         if (validPoints.length === 0) {
           return;
         }
 
-        const minX = Math.min(...validPoints.map(function (point) { return point.x; }));
-        const maxX = Math.max(...validPoints.map(function (point) { return point.x; }));
-        const minY = Math.min(...validPoints.map(function (point) { return point.y; }));
-        const maxY = Math.max(...validPoints.map(function (point) { return point.y; }));
-        const groundY = canvas.height - 34;
-        const topPadding = 24;
-        const sidePadding = 22;
+        const xValues = validPoints.map(function (point) { return point.x; });
+        const yValues = validPoints.map(function (point) { return point.y; });
+        const minX = Math.min(...xValues);
+        const maxX = Math.max(...xValues);
+        const minY = Math.min(...yValues);
+        const maxY = Math.max(...yValues);
         const width = Math.max(maxX - minX, 0.01);
         const height = Math.max(maxY - minY, 0.01);
         const scale = Math.min(
-          (canvas.width - sidePadding * 2) / width,
-          (groundY - topPadding) / height,
+          (slotWidth - 34) / width,
+          (groundY - topY) / height,
         );
         const centerX = (minX + maxX) / 2;
 
         function toCanvas(point) {
           return {
-            x: canvas.width / 2 + (point.x - centerX) * scale,
+            x: slotLeft + slotWidth / 2 + (point.x - centerX) * scale,
             y: groundY - (point.y - minY) * scale,
           };
         }
@@ -2091,13 +2067,6 @@
           context.fillStyle = "#ff5252";
           context.fill();
         }
-
-        context.beginPath();
-        context.moveTo(10, groundY + 1);
-        context.lineTo(canvas.width - 10, groundY + 1);
-        context.lineWidth = 2;
-        context.strokeStyle = "#111111";
-        context.stroke();
       }
 
       // =======================
