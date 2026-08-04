@@ -170,14 +170,35 @@
 
       .schedule-calendar td.has-schedule {
         position: relative;
-        background: #e4f3ef;
         color: #234b42;
         font-weight: bold;
         touch-action: manipulation;
       }
 
+      .schedule-calendar td.schedule-normal {
+        background: #e4f3ef;
+      }
+
+      .schedule-calendar td.schedule-transfer {
+        background: #fff0d9;
+        color: #76501c;
+      }
+
+      .schedule-calendar td.schedule-closed {
+        background: #e6f2fa;
+        color: #285a73;
+      }
+
       .schedule-calendar td.has-schedule:active {
         background: #c9e7df;
+      }
+
+      .schedule-calendar td.schedule-transfer:active {
+        background: #f7ddb6;
+      }
+
+      .schedule-calendar td.schedule-closed:active {
+        background: #cde5f4;
       }
 
       .schedule-legend {
@@ -189,6 +210,18 @@
         color: #5c6865;
         font-size: 11px;
         line-height: 1.25;
+      }
+
+      .schedule-legend-normal {
+        color: #356d60;
+      }
+
+      .schedule-legend-transfer {
+        color: #8a5b17;
+      }
+
+      .schedule-legend-closed {
+        color: #326c8a;
       }
 
       .schedule-home-button {
@@ -3825,7 +3858,9 @@
 
           const mark = schedules.length ? scheduleMark(schedules[0].type) : "";
 
-          const className = schedules.length ? "has-schedule" : "";
+          const className = schedules.length
+            ? `has-schedule ${scheduleCellClass(schedules[0].type)}`
+            : "";
 
           const click = schedules.length
             ? `onclick="showScheduleDetail('${date}')"`
@@ -3901,10 +3936,9 @@
       </table>
 
       <p class="schedule-legend">
-        <span>● 通常</span>
-        <span>★ 振替可</span>
-        <span>▲ 雨天</span>
-        <span>■ 休講</span>
+        <span class="schedule-legend-normal">● 通常</span>
+        <span class="schedule-legend-transfer">★ 振替可</span>
+        <span class="schedule-legend-closed">× 雨天・休講</span>
       </p>
 
       <button
@@ -3926,10 +3960,16 @@
           {
             通常: "●",
             振替可: "★",
-            雨天: "▲",
-            休講: "■",
+            雨天: "×",
+            休講: "×",
           }[type] || "●"
         );
+      }
+
+      function scheduleCellClass(type) {
+        if (type === "振替可") return "schedule-transfer";
+        if (type === "雨天" || type === "休講") return "schedule-closed";
+        return "schedule-normal";
       }
 
       // =======================
