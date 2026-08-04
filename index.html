@@ -339,30 +339,30 @@
         background: #fff;
       }
 
-.stick-controls {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 4px;
-  margin-top: 4px;
-}
+      .stick-controls {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 4px;
+        margin-top: 4px;
+      }
 
-.stick-controls button {
-  flex: none;
-  width: 70px;
-  min-height: 32px;
-  margin: 0;
-  padding: 3px 4px;
-  font-size: 11px;
-  font-weight: bold;
-  border-radius: 6px;
-}
+      .stick-controls button {
+        flex: none;
+        width: 70px;
+        min-height: 32px;
+        margin: 0;
+        padding: 3px 4px;
+        font-size: 11px;
+        font-weight: bold;
+        border-radius: 6px;
+      }
 
-.stick-controls .play-button {
-  width: 82px;
-  background: #4f9c8a;
-  font-size: 12px;
-}
+      .stick-controls .play-button {
+        width: 82px;
+        background: #4f9c8a;
+        font-size: 12px;
+      }
 
       .stick-settings {
         margin: 0 0 6px;
@@ -460,6 +460,18 @@
         leftKnee: [19, 18, 17],
         leftAnkle: [18, 17, 15],
       };
+
+      const STICK_COLORS = {
+        right: "#1565c0",
+        left: "#e53935",
+        center: "#263238",
+        forwardLean: "#ffffff",
+        forwardLeanBorder: "#78909c",
+      };
+
+      const RIGHT_JOINTS = new Set([0, 1, 2, 3, 8, 9, 10, 11, 12, 13]);
+
+      const LEFT_JOINTS = new Set([4, 5, 6, 7, 14, 15, 16, 17, 18, 19]);
 
       const STICK_BONES = [
         [0, 1],
@@ -1054,7 +1066,7 @@
 
         return numberValue.toFixed(2);
       }
-      
+
       function renderStickViewer(data) {
         currentAnalysisData = data;
 
@@ -1396,10 +1408,7 @@
           document.getElementById("analysisGraphPartSelect")?.value ||
           "rightElbow";
 
-        jointAngleGraph.setData(
-          data.jointAngles?.[selectedPart],
-          data.fps,
-        );
+        jointAngleGraph.setData(data.jointAngles?.[selectedPart], data.fps);
 
         jointContractionVelocityGraph = new LightweightLineGraph(
           document.getElementById("jointContractionVelocityGraph"),
@@ -1416,18 +1425,18 @@
           data.fps,
         );
 
-        stickViewer.onFrameChange = function(frameIndex) {
+        stickViewer.onFrameChange = function (frameIndex) {
           centerOfMassGraph?.setCurrentFrame(frameIndex);
           jointAngleGraph?.setCurrentFrame(frameIndex);
           jointContractionVelocityGraph?.setCurrentFrame(frameIndex);
         };
 
-stickViewer.setData(
-  data.rows,
-  data.fps,
-  data.centerOfMassPoints,
-  data.movementDirection,
-);
+        stickViewer.setData(
+          data.rows,
+          data.fps,
+          data.centerOfMassPoints,
+          data.movementDirection,
+        );
 
         updateStickGraphOverlay();
       }
@@ -1478,7 +1487,7 @@ stickViewer.setData(
         updateStickGraphOverlay();
 
         if (tabName === "graphs" && centerOfMassGraph) {
-          requestAnimationFrame(function() {
+          requestAnimationFrame(function () {
             centerOfMassGraph.draw();
           });
         }
@@ -1498,9 +1507,7 @@ stickViewer.setData(
           return;
         }
 
-        const partSelect = document.getElementById(
-          "analysisGraphPartSelect",
-        );
+        const partSelect = document.getElementById("analysisGraphPartSelect");
 
         if (partSelect) {
           partSelect.hidden = graphName === "centerOfMass";
@@ -1519,13 +1526,13 @@ stickViewer.setData(
         }
 
         if (graphName === "centerOfMass" && centerOfMassGraph) {
-          requestAnimationFrame(function() {
+          requestAnimationFrame(function () {
             centerOfMassGraph.draw();
           });
         }
 
         if (graphName === "jointAngle" && jointAngleGraph) {
-          requestAnimationFrame(function() {
+          requestAnimationFrame(function () {
             jointAngleGraph.draw();
           });
         }
@@ -1534,15 +1541,16 @@ stickViewer.setData(
           graphName === "jointAngularVelocity" &&
           jointContractionVelocityGraph
         ) {
-          requestAnimationFrame(function() {
+          requestAnimationFrame(function () {
             jointContractionVelocityGraph.draw();
           });
         }
       }
 
       function switchAnalysisGraphPart(partName) {
-        const selectedGraph =
-          document.getElementById("analysisGraphSelect")?.value;
+        const selectedGraph = document.getElementById(
+          "analysisGraphSelect",
+        )?.value;
 
         if (
           selectedGraph === "jointAngle" &&
@@ -1575,7 +1583,6 @@ stickViewer.setData(
             );
           }
         }
-
 
         updateStickGraphOverlay();
       }
@@ -1710,7 +1717,7 @@ stickViewer.setData(
 
         setData(values, fps) {
           this.values = Array.isArray(values)
-            ? values.map(function(value) {
+            ? values.map(function (value) {
                 const numberValue = Number(value);
 
                 return value !== null &&
@@ -1738,7 +1745,7 @@ stickViewer.setData(
         }
 
         getValidValues() {
-          return this.values.filter(function(value) {
+          return this.values.filter(function (value) {
             return typeof value === "number" && Number.isFinite(value);
           });
         }
@@ -1755,7 +1762,8 @@ stickViewer.setData(
 
           const minimum = Math.min(...validValues);
           const maximum = Math.max(...validValues);
-          const span = maximum - minimum || Math.max(Math.abs(maximum), 1) * 0.1;
+          const span =
+            maximum - minimum || Math.max(Math.abs(maximum), 1) * 0.1;
 
           let min = minimum - span * 0.1;
           let max = maximum + span * 0.1;
@@ -1866,7 +1874,11 @@ stickViewer.setData(
           context.font = "12px sans-serif";
           context.textAlign = "center";
           context.textBaseline = "bottom";
-          context.fillText("時間（秒）", (plotLeft + plotRight) / 2, this.canvas.height - 3);
+          context.fillText(
+            "時間（秒）",
+            (plotLeft + plotRight) / 2,
+            this.canvas.height - 3,
+          );
 
           context.save();
           context.translate(13, (plotTop + plotBottom) / 2);
@@ -2002,28 +2014,25 @@ stickViewer.setData(
         // =====================
         // データ設定
         // =====================
-setData(rows, fps, centerOfMassPoints, movementDirection) {
+        setData(rows, fps, centerOfMassPoints, movementDirection) {
           this.stop();
 
-this.movementDirection =
-  String(movementDirection || "右").trim();
-  
+          this.movementDirection = String(movementDirection || "右").trim();
+
           this.fps = Number(fps) > 0 ? Number(fps) : 30;
 
           this.frames = this.convertRowsToFrames(rows || []);
 
-          this.centerOfMassPoints = (centerOfMassPoints || []).map(
-            (point) => {
-              if (!point) {
-                return null;
-              }
+          this.centerOfMassPoints = (centerOfMassPoints || []).map((point) => {
+            if (!point) {
+              return null;
+            }
 
-              const x = this.toNumber(point.x);
-              const y = this.toNumber(point.y);
+            const x = this.toNumber(point.x);
+            const y = this.toNumber(point.y);
 
-              return x === null || y === null ? null : { x: x, y: y };
-            },
-          );
+            return x === null || y === null ? null : { x: x, y: y };
+          });
 
           if (this.frames.length === 0) {
             throw new Error("表示できる座標データがありません");
@@ -2038,12 +2047,8 @@ this.movementDirection =
 
         setGraphOverlay(options) {
           this.graphOverlayVisible = Boolean(options?.visible);
-          this.graphOverlayName = String(
-            options?.graphName || "centerOfMass",
-          );
-          this.graphOverlayPart = String(
-            options?.partName || "rightElbow",
-          );
+          this.graphOverlayName = String(options?.graphName || "centerOfMass");
+          this.graphOverlayPart = String(options?.partName || "rightElbow");
           this.draw();
         }
 
@@ -2258,8 +2263,6 @@ this.movementDirection =
           /*
            * 骨格線
            */
-          context.strokeStyle = "#1f2926";
-
           context.lineWidth = 3;
 
           context.lineCap = "round";
@@ -2279,6 +2282,8 @@ this.movementDirection =
 
             const end = this.toCanvas(secondPoint);
 
+            context.strokeStyle = this.getBoneColor(bone);
+
             context.beginPath();
 
             context.moveTo(start.x, start.y);
@@ -2293,11 +2298,9 @@ this.movementDirection =
           /*
            * 関節点
            */
-          context.fillStyle = "#ef5350";
-
-          for (const point of frame) {
+          frame.forEach((point, jointIndex) => {
             if (!point) {
-              continue;
+              return;
             }
 
             const position = this.toCanvas(point);
@@ -2306,14 +2309,46 @@ this.movementDirection =
 
             context.arc(position.x, position.y, 4, 0, Math.PI * 2);
 
+            context.fillStyle = this.getJointColor(jointIndex);
             context.fill();
-          }
+
+            context.lineWidth = 1;
+            context.strokeStyle = "rgba(255, 255, 255, 0.9)";
+            context.stroke();
+          });
 
           this.drawInformationOverlay();
 
           if (typeof this.onFrameChange === "function") {
             this.onFrameChange(this.frameIndex);
           }
+        }
+
+        getJointColor(jointIndex) {
+          if (RIGHT_JOINTS.has(jointIndex)) {
+            return STICK_COLORS.right;
+          }
+
+          if (LEFT_JOINTS.has(jointIndex)) {
+            return STICK_COLORS.left;
+          }
+
+          return STICK_COLORS.center;
+        }
+
+        getBoneColor(bone) {
+          const firstIndex = bone[0];
+          const secondIndex = bone[1];
+
+          if (RIGHT_JOINTS.has(firstIndex) && RIGHT_JOINTS.has(secondIndex)) {
+            return STICK_COLORS.right;
+          }
+
+          if (LEFT_JOINTS.has(firstIndex) && LEFT_JOINTS.has(secondIndex)) {
+            return STICK_COLORS.left;
+          }
+
+          return STICK_COLORS.center;
         }
 
         // =====================
@@ -2378,107 +2413,100 @@ this.movementDirection =
             return;
           }
 
+          const colors = this.getAngleColors(this.graphOverlayPart);
+
           this.drawAngleSector(
             this.toCanvas(first),
             this.toCanvas(vertex),
             this.toCanvas(second),
+            colors,
           );
         }
 
-drawForwardLeanAngle(frame) {
-  const rightHip = frame[13];
-  const leftHip = frame[19];
-  const headTop = frame[20];
+        getAngleColors(partName) {
+          if (String(partName).startsWith("right")) {
+            return {
+              fill: "rgba(21, 101, 192, 0.28)",
+              stroke: STICK_COLORS.right,
+            };
+          }
 
-  if (!rightHip || !leftHip || !headTop) {
-    return;
-  }
+          if (String(partName).startsWith("left")) {
+            return {
+              fill: "rgba(229, 57, 53, 0.28)",
+              stroke: STICK_COLORS.left,
+            };
+          }
 
-  const hipCenter = {
-    x: (rightHip.x + leftHip.x) / 2,
-    y: (rightHip.y + leftHip.y) / 2,
-  };
+          return {
+            fill: "rgba(255, 255, 255, 0.55)",
+            stroke: STICK_COLORS.forwardLeanBorder,
+          };
+        }
 
-  /*
-   * スティックの座標は変更せず、
-   * 前傾角度の水平基準だけを切り替える
-   */
-  const horizontalPoint = {
-    x:
-      hipCenter.x +
-      (this.movementDirection === "左" ? -1 : 1),
-    y: hipCenter.y,
-  };
+        drawForwardLeanAngle(frame) {
+          const rightHip = frame[13];
+          const leftHip = frame[19];
+          const headTop = frame[20];
 
-  const canvasHipCenter =
-    this.toCanvas(hipCenter);
+          if (!rightHip || !leftHip || !headTop) {
+            return;
+          }
 
-  const canvasHorizontalPoint =
-    this.toCanvas(horizontalPoint);
+          const hipCenter = {
+            x: (rightHip.x + leftHip.x) / 2,
+            y: (rightHip.y + leftHip.y) / 2,
+          };
 
-  const canvasHeadTop =
-    this.toCanvas(headTop);
+          /*
+           * 動作方向は基礎情報B9だけで決める。
+           * 各フレームの座標値では切り替えないため、
+           * 再生途中で基準方向が反転しない。
+           */
+          const movesLeft = this.movementDirection.includes("左");
+          const horizontalPoint = {
+            x: hipCenter.x + (movesLeft ? -1 : 1),
+            y: hipCenter.y,
+          };
 
-  const context = this.context;
-
-  context.save();
-
-  /*
-   * 地面と平行な補助線
-   */
-  context.beginPath();
-  context.moveTo(
-    canvasHipCenter.x - 120,
-    canvasHipCenter.y,
-  );
-  context.lineTo(
-    canvasHipCenter.x + 120,
-    canvasHipCenter.y,
-  );
-
-  context.strokeStyle =
-    "rgba(79, 156, 138, 0.35)";
-  context.lineWidth = 1.5;
-  context.setLineDash([5, 4]);
-  context.stroke();
-
-  /*
-   * 大転子中点から頭頂までの補助線
-   */
-  context.beginPath();
-  context.moveTo(
-    canvasHipCenter.x,
-    canvasHipCenter.y,
-  );
-  context.lineTo(
-    canvasHeadTop.x,
-    canvasHeadTop.y,
-  );
-
-  context.strokeStyle =
-    "rgba(255, 152, 0, 0.4)";
-  context.lineWidth = 1.5;
-  context.setLineDash([]);
-  context.stroke();
-
-  context.restore();
-
-  /*
-   * 前傾角度の扇形
-   */
-  this.drawAngleSector(
-    canvasHorizontalPoint,
-    canvasHipCenter,
-    canvasHeadTop,
-  );
-}
-
-        drawAngleSector(first, vertex, second) {
+          const canvasHipCenter = this.toCanvas(hipCenter);
+          const canvasHorizontalPoint = this.toCanvas(horizontalPoint);
+          const canvasHeadTop = this.toCanvas(headTop);
           const context = this.context;
-          const firstAngle = Math.atan2(
-            first.y - vertex.y,
-            first.x - vertex.x,
+
+          context.save();
+
+          // 地面と平行な補助線
+          context.beginPath();
+          context.moveTo(canvasHipCenter.x - 120, canvasHipCenter.y);
+          context.lineTo(canvasHipCenter.x + 120, canvasHipCenter.y);
+          context.strokeStyle = "rgba(38, 50, 56, 0.28)";
+          context.lineWidth = 1.5;
+          context.setLineDash([5, 4]);
+          context.stroke();
+
+          // 左右大転子中点から頭頂までの補助線
+          context.beginPath();
+          context.moveTo(canvasHipCenter.x, canvasHipCenter.y);
+          context.lineTo(canvasHeadTop.x, canvasHeadTop.y);
+          context.strokeStyle = "rgba(38, 50, 56, 0.35)";
+          context.lineWidth = 1.5;
+          context.setLineDash([]);
+          context.stroke();
+
+          context.restore();
+
+          this.drawAngleSector(
+            canvasHorizontalPoint,
+            canvasHipCenter,
+            canvasHeadTop,
+            this.getAngleColors("forwardLeanAngle"),
           );
+        }
+
+        drawAngleSector(first, vertex, second, colors) {
+          const context = this.context;
+          const firstAngle = Math.atan2(first.y - vertex.y, first.x - vertex.x);
           const secondAngle = Math.atan2(
             second.y - vertex.y,
             second.x - vertex.x,
@@ -2508,10 +2536,10 @@ drawForwardLeanAngle(frame) {
             anticlockwise,
           );
           context.closePath();
-          context.fillStyle = "rgba(255, 152, 0, 0.28)";
+          context.fillStyle = colors?.fill || "rgba(38, 50, 56, 0.2)";
           context.fill();
           context.lineWidth = 2;
-          context.strokeStyle = "#ff9800";
+          context.strokeStyle = colors?.stroke || STICK_COLORS.center;
           context.stroke();
           context.restore();
         }
