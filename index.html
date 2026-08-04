@@ -124,15 +124,41 @@
       .stick-header {
         display: flex;
         align-items: center;
+        gap: 6px;
         margin-bottom: 4px;
       }
 
       .stick-header button {
+        flex: 0 0 auto;
         min-height: 26px;
         margin: 0;
         padding: 3px 8px;
         border-radius: 6px;
         font-size: 11px;
+      }
+
+      .analysis-date-tabs {
+        display: flex;
+        flex: 1 1 auto;
+        gap: 4px;
+        min-width: 0;
+        overflow-x: auto;
+        padding: 1px 0 3px;
+        scrollbar-width: thin;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .stick-header .analysis-date-tab {
+        border: 1px solid #cdd9d5;
+        background: #f4f7f6;
+        color: #52605c;
+        white-space: nowrap;
+      }
+
+      .stick-header .analysis-date-tab.is-active {
+        border-color: #4f9c8a;
+        background: #4f9c8a;
+        color: #fff;
       }
 
       .stick-canvas-wrap {
@@ -1067,6 +1093,55 @@
         return numberValue.toFixed(2);
       }
 
+      // =======================
+      // 表示中の会員の日付タブ
+      // =======================
+      function createAnalysisDateTabsHtml(data) {
+        const member = (CACHE.analysisMembers || []).find(function (item) {
+          if (data.memberId && item.memberId === data.memberId) {
+            return true;
+          }
+
+          return (item.files || []).some(function (file) {
+            return file.fileId === data.fileId;
+          });
+        });
+
+        if (!member || !member.files || member.files.length === 0) {
+          return "";
+        }
+
+        return member.files
+          .map(function (file) {
+            const isActive = file.fileId === data.fileId;
+
+            return `
+              <button
+                class="analysis-date-tab${isActive ? " is-active" : ""}"
+                type="button"
+                role="tab"
+                aria-selected="${String(isActive)}"
+                title="${escapeHtml(file.fileName)}"
+                onclick="switchAnalysisDate('${file.fileId}')"
+              >
+                ${escapeHtml(file.displayDate)}
+              </button>
+            `;
+          })
+          .join("");
+      }
+
+      async function switchAnalysisDate(fileId) {
+        if (!fileId || fileId === currentAnalysisData?.fileId) {
+          return;
+        }
+
+        // 日付変更時は対象スプレッドシートの最新内容を読み直す
+        delete CACHE.analysisData[fileId];
+
+        await openAnalysisResult(fileId);
+      }
+
       function renderStickViewer(data) {
         currentAnalysisData = data;
 
@@ -1083,6 +1158,14 @@
           >
             戻る
           </button>
+
+          <div
+            class="analysis-date-tabs"
+            role="tablist"
+            aria-label="分析年月日"
+          >
+            ${createAnalysisDateTabsHtml(data)}
+          </div>
         </div>
 
         <div class="stick-canvas-wrap">
@@ -1281,32 +1364,24 @@
               <option value="jointAngularVelocity">関節の収縮速度</option>
             </select>
 
-<select
-  id="analysisGraphPartSelect"
-  class="graph-selector graph-part-selector is-right"
-  onchange="switchAnalysisGraphPart(this.value)"
-  hidden
->
-  <optgroup label="右側">
-    <option value="rightShoulder">右｜肩関節</option>
-    <option value="rightElbow">右｜肘関節</option>
-    <option value="rightHip">右｜股関節</option>
-    <option value="rightKnee">右｜膝関節</option>
-    <option value="rightAnkle">右｜足関節</option>
-  </optgroup>
-
-  <optgroup label="左側">
-    <option value="leftShoulder">左｜肩関節</option>
-    <option value="leftElbow">左｜肘関節</option>
-    <option value="leftHip">左｜股関節</option>
-    <option value="leftKnee">左｜膝関節</option>
-    <option value="leftAnkle">左｜足関節</option>
-  </optgroup>
-
-  <optgroup label="その他">
-    <option value="forwardLeanAngle">前傾角度</option>
-  </optgroup>
-</select>
+            <select
+              id="analysisGraphPartSelect"
+              class="graph-selector graph-part-selector"
+              onchange="switchAnalysisGraphPart(this.value)"
+              hidden
+            >
+              <option value="rightElbow">肘関節（右）</option>
+              <option value="rightShoulder">肩関節（右）</option>
+              <option value="leftElbow">肘関節（左）</option>
+              <option value="leftShoulder">肩関節（左）</option>
+              <option value="rightHip">股関節（右）</option>
+              <option value="rightKnee">膝関節（右）</option>
+              <option value="rightAnkle">足関節（右）</option>
+              <option value="leftHip">股関節（左）</option>
+              <option value="leftKnee">膝関節（左）</option>
+              <option value="leftAnkle">足関節（左）</option>
+              <option value="forwardLeanAngle">前傾角度</option>
+            </select>
 
             <button
               id="graphOverlayToggle"
@@ -1382,6 +1457,16 @@
 
       </section>
     `;
+
+        requestAnimationFrame(function () {
+          document
+            .querySelector(".analysis-date-tab.is-active")
+            ?.scrollIntoView({
+              behavior: "auto",
+              block: "nearest",
+              inline: "center",
+            });
+        });
 
         stickViewer = new LightweightStickViewer(
           document.getElementById("stickCanvas"),
