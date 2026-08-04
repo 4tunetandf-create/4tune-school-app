@@ -438,6 +438,19 @@
       .stick-loop-button.is-active {
         background: #4f9c8a;
       }
+
+      .stick-trajectory-button {
+        width: 100%;
+        min-height: 34px;
+        margin: 6px 0 0;
+        padding: 5px;
+        font-size: 12px;
+        background: #777;
+      }
+
+      .stick-trajectory-button.is-active {
+        background: #4f9c8a;
+      }
     </style>
   </head>
 
@@ -1294,6 +1307,15 @@
           >
             ループ再生：OFF
           </button>
+
+          <button
+            id="stickTrajectoryButton"
+            class="stick-trajectory-button"
+            onclick="toggleStickTrajectory()"
+            aria-pressed="false"
+          >
+            足の軌道：OFF
+          </button>
         </div>
 
         <div
@@ -1472,6 +1494,7 @@
           document.getElementById("stickCanvas"),
           document.getElementById("stickPlayButton"),
           document.getElementById("stickLoopButton"),
+          document.getElementById("stickTrajectoryButton"),
           data.memberName,
         );
 
@@ -1529,6 +1552,7 @@
           data.fps,
           data.centerOfMassPoints,
           data.movementDirection,
+          data.firstStepFoot,
         );
 
         updateStickGraphOverlay();
@@ -1741,6 +1765,15 @@
       function toggleStickLoop() {
         if (stickViewer) {
           stickViewer.toggleLoop();
+        }
+      }
+
+      // =======================
+      // つま先軌道表示切り替え
+      // =======================
+      function toggleStickTrajectory() {
+        if (stickViewer) {
+          stickViewer.toggleFootTrajectory();
         }
       }
 
@@ -2056,7 +2089,13 @@
       // 軽量スティックビューア
       // =======================
       class LightweightStickViewer {
-        constructor(canvas, playButton, loopButton, memberName) {
+        constructor(
+          canvas,
+          playButton,
+          loopButton,
+          trajectoryButton,
+          memberName,
+        ) {
           this.canvas = canvas;
 
           this.context = canvas.getContext("2d");
@@ -2064,6 +2103,8 @@
           this.playButton = playButton;
 
           this.loopButton = loopButton;
+
+          this.trajectoryButton = trajectoryButton;
 
           this.memberName = String(memberName || "");
 
@@ -2087,6 +2128,12 @@
 
           this.loopEnabled = false;
 
+          this.footTrajectoryEnabled = false;
+
+          this.firstStepFoot = "";
+
+          this.trajectoryJointIndex = null;
+
           this.animationId = null;
 
           this.lastTime = 0;
@@ -2107,10 +2154,30 @@
         // =====================
         // データ設定
         // =====================
-        setData(rows, fps, centerOfMassPoints, movementDirection) {
+        setData(
+          rows,
+          fps,
+          centerOfMassPoints,
+          movementDirection,
+          firstStepFoot,
+        ) {
           this.stop();
 
           this.movementDirection = String(movementDirection || "右").trim();
+
+          this.firstStepFoot = String(firstStepFoot || "").trim();
+
+          if (this.firstStepFoot.includes("左")) {
+            this.trajectoryJointIndex = 14;
+          } else if (this.firstStepFoot.includes("右")) {
+            this.trajectoryJointIndex = 8;
+          } else {
+            this.trajectoryJointIndex = null;
+          }
+
+          this.footTrajectoryEnabled = false;
+
+          this.updateTrajectoryButton();
 
           this.fps = Number(fps) > 0 ? Number(fps) : 30;
 
@@ -2143,6 +2210,81 @@
           this.graphOverlayName = String(options?.graphName || "centerOfMass");
           this.graphOverlayPart = String(options?.partName || "rightElbow");
           this.draw();
+        }
+
+        toggleFootTrajectory() {
+          if (this.trajectoryJointIndex === null) {
+            return;
+          }
+
+          this.footTrajectoryEnabled = !this.footTrajectoryEnabled;
+
+          this.updateTrajectoryButton();
+
+          this.draw();
+        }
+
+        updateTrajectoryButton() {
+          if (!this.trajectoryButton) {
+            return;
+          }
+
+          const hasFootData = this.trajectoryJointIndex !== null;
+
+          this.trajectoryButton.disabled = !hasFootData;
+          this.trajectoryButton.classList.toggle(
+            "is-active",
+            hasFootData && this.footTrajectoryEnabled,
+          );
+          this.trajectoryButton.setAttribute(
+            "aria-pressed",
+            String(hasFootData && this.footTrajectoryEnabled),
+          );
+          this.trajectoryButton.textContent = hasFootData
+            ? "足の軌道：" + (this.footTrajectoryEnabled ? "ON" : "OFF")
+            : "足の軌道：データなし";
+        }
+
+        drawFootTrajectory() {
+          if (
+            !this.footTrajectoryEnabled ||
+            this.trajectoryJointIndex === null
+          ) {
+            return;
+          }
+
+          const context = this.context;
+          let pathStarted = false;
+
+          context.save();
+          context.lineWidth = 2;
+          context.lineCap = "round";
+          context.lineJoin = "round";
+          context.strokeStyle = this.trajectoryJointIndex === 8
+            ? "rgba(21, 101, 192, 0.28)"
+            : "rgba(229, 57, 53, 0.28)";
+          context.beginPath();
+
+          for (const trajectoryFrame of this.frames) {
+            const toePoint = trajectoryFrame[this.trajectoryJointIndex];
+
+            if (!toePoint) {
+              pathStarted = false;
+              continue;
+            }
+
+            const position = this.toCanvas(toePoint);
+
+            if (!pathStarted) {
+              context.moveTo(position.x, position.y);
+              pathStarted = true;
+            } else {
+              context.lineTo(position.x, position.y);
+            }
+          }
+
+          context.stroke();
+          context.restore();
         }
 
         // =====================
@@ -2352,6 +2494,12 @@
           if (!frame) {
             return;
           }
+
+          /*
+           * 1歩目の足のつま先軌道を
+           * 全フレーム分、骨格の背面に表示
+           */
+          this.drawFootTrajectory();
 
           /*
            * 骨格線
