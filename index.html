@@ -25,6 +25,18 @@
         padding: 8px;
       }
 
+      main.home-screen {
+        box-sizing: border-box;
+        display: grid;
+        grid-template-rows: 1fr 2fr 1fr;
+        gap: 8px;
+        width: 100%;
+        height: 100vh;
+        height: 100dvh;
+        padding: 8px;
+        overflow: hidden;
+      }
+
       .card {
         background: #fff;
         border-radius: 12px;
@@ -494,6 +506,138 @@
         background: #4f9c8a;
       }
 
+      .home-card {
+        min-height: 0;
+        margin: 0;
+        padding: 12px 14px;
+        overflow: hidden;
+      }
+
+      .home-card h2,
+      .home-card h3,
+      .home-card h4,
+      .home-card p {
+        margin-top: 0;
+      }
+
+      .home-greeting {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .home-greeting h2 {
+        margin-bottom: 8px;
+        color: #2f4f47;
+        font-size: clamp(19px, 5vw, 24px);
+      }
+
+      .home-member-list {
+        display: flex;
+        gap: 6px;
+        margin: 0;
+        padding: 0;
+        overflow-x: auto;
+        list-style: none;
+        scrollbar-width: none;
+      }
+
+      .home-member-list::-webkit-scrollbar,
+      .analysis-member-carousel::-webkit-scrollbar {
+        display: none;
+      }
+
+      .home-member-chip {
+        flex: 0 0 auto;
+        padding: 4px 9px;
+        border-radius: 999px;
+        background: #edf7f4;
+        color: #3f5d55;
+        font-size: 12px;
+        font-weight: bold;
+      }
+
+      .home-analysis {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .home-section-title {
+        flex: 0 0 auto;
+        margin-bottom: 8px;
+        color: #3f5d55;
+        font-size: 16px;
+      }
+
+      .analysis-member-carousel {
+        display: flex;
+        flex: 1 1 auto;
+        min-height: 0;
+        gap: 10px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scroll-snap-type: x mandatory;
+        overscroll-behavior-x: contain;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }
+
+      .analysis-member-slide {
+        box-sizing: border-box;
+        display: flex;
+        flex: 0 0 calc(100% - 20px);
+        flex-direction: column;
+        justify-content: center;
+        min-width: 0;
+        padding: 10px;
+        border: 1px solid #dfe7e4;
+        border-radius: 10px;
+        background: #f8fbfa;
+        scroll-snap-align: start;
+      }
+
+      .analysis-member-slide h4 {
+        margin-bottom: 7px;
+        color: #2f4f47;
+        font-size: 15px;
+      }
+
+      .analysis-latest-result {
+        padding: 9px;
+        border-radius: 8px;
+        background: #fff;
+      }
+
+      .analysis-result-date {
+        margin-bottom: 5px;
+        font-size: 13px;
+        font-weight: bold;
+      }
+
+      .analysis-result-button {
+        min-height: 34px;
+        margin: 0;
+        padding: 7px 10px;
+      }
+
+      .home-schedule {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .home-schedule h3 {
+        margin: 0;
+        color: #3f5d55;
+        font-size: 16px;
+      }
+
+      .home-schedule button {
+        flex: 0 0 auto;
+        margin: 0;
+      }
+
       /* 軽量な全画面ローディング表示 */
       .loading-overlay {
         position: fixed;
@@ -501,7 +645,7 @@
         z-index: 1000;
         display: grid;
         place-items: center;
-        padding: 24px;
+        padding: 0;
         background: rgba(245, 247, 246, 0.96);
         opacity: 0;
         visibility: hidden;
@@ -516,28 +660,29 @@
       }
 
       .loading-panel {
-        width: min(86vw, 360px);
-        padding: 22px 20px 18px;
-        border: 1px solid rgba(79, 156, 138, 0.16);
-        border-radius: 20px;
+        box-sizing: border-box;
+        width: 100%;
+        padding: 20px 24px 16px;
+        border-top: 1px solid rgba(79, 156, 138, 0.16);
+        border-bottom: 1px solid rgba(79, 156, 138, 0.16);
         background: #fff;
-        box-shadow: 0 14px 36px rgba(32, 76, 66, 0.12);
+        box-shadow: 0 10px 28px rgba(32, 76, 66, 0.1);
         text-align: center;
       }
 
       .loading-logo {
         display: block;
-        width: 100%;
+        width: min(82vw, 360px);
         height: auto;
-        position: relative;
-        left: -6px;
+        margin: 0 auto;
         animation: loading-float 1.8s ease-in-out infinite;
         will-change: transform;
       }
 
       .loading-progress {
+        width: min(74vw, 320px);
         height: 3px;
-        margin: 18px 12px 13px;
+        margin: 14px auto 11px;
         overflow: hidden;
         border-radius: 999px;
         background: #dcebe7;
@@ -813,6 +958,8 @@
       function showError(error) {
         console.error(error);
 
+        document.getElementById("status").classList.remove("home-screen", "analysis-screen");
+
         document.getElementById("status").innerHTML = `
     <section class="card">
 
@@ -834,6 +981,8 @@
       // 初回登録画面
       // =======================
       function showRegister(lineUserId) {
+        document.getElementById("status").classList.remove("home-screen", "analysis-screen");
+
         document.getElementById("status").innerHTML = `
     <section class="card">
 
@@ -1031,19 +1180,20 @@
       // =======================
       function renderHome() {
         document.getElementById("status").classList.remove("analysis-screen");
+        document.getElementById("status").classList.add("home-screen");
 
         const membersHtml = CACHE.members.length
           ? CACHE.members
               .map(
                 (member) => `
-              <li>
+              <li class="home-member-chip">
                 ${escapeHtml(member.name)}
               </li>
             `,
               )
               .join("")
           : `
-          <li>
+          <li class="home-member-chip">
             登録会員はいません
           </li>
         `;
@@ -1052,7 +1202,7 @@
 
         document.getElementById("status").innerHTML = `
 
-      <section class="card">
+      <section class="card home-card home-greeting">
 
         <h2>
           こんにちは
@@ -1060,23 +1210,21 @@
           さま
         </h2>
 
-        <h3>登録会員</h3>
-
-        <ul>
+        <ul class="home-member-list" aria-label="登録会員">
           ${membersHtml}
         </ul>
 
       </section>
 
-      <section class="card">
+      <section class="card home-card home-analysis">
 
-        <h3>最新の動作分析結果</h3>
+        <h3 class="home-section-title">最新の動作分析結果</h3>
 
         ${analysisHtml}
 
       </section>
 
-      <section class="card">
+      <section class="card home-card home-schedule">
 
         <h3>
           スクールスケジュール
@@ -1098,41 +1246,31 @@
       function createAnalysisListHtml() {
         if (CACHE.analysisError) {
           return `
-      <p class="muted">
-        ${escapeHtml(CACHE.analysisError)}
-      </p>
-
-      <button
-        onclick="reloadAnalysisList()"
-      >
-        再読み込み
-      </button>
+      <div class="analysis-member-carousel">
+        <div class="analysis-member-slide">
+          <p class="muted">${escapeHtml(CACHE.analysisError)}</p>
+          <button onclick="reloadAnalysisList()">再読み込み</button>
+        </div>
+      </div>
     `;
         }
 
         if (!CACHE.analysisMembers || CACHE.analysisMembers.length === 0) {
           return `
-      <p class="muted">
-        現在、表示できる分析結果はありません
-      </p>
+      <div class="analysis-member-carousel">
+        <div class="analysis-member-slide">
+          <p class="muted">現在、表示できる分析結果はありません</p>
+        </div>
+      </div>
     `;
         }
 
-        let html = "";
+        let html = '<div class="analysis-member-carousel" aria-label="会員別の分析結果">';
 
         for (const member of CACHE.analysisMembers) {
           html += `
-      <div
-        style="
-          margin-top:16px;
-          padding-top:12px;
-          border-top:1px solid #ddd;
-        "
-      >
-
-        <h4>
-          ${escapeHtml(member.memberName)}
-        </h4>
+      <article class="analysis-member-slide">
+        <h4>${escapeHtml(member.memberName)}</h4>
     `;
 
           if (!member.files || member.files.length === 0) {
@@ -1143,32 +1281,13 @@
       `;
           } else {
             html += `
-        <div
-          style="
-            display:flex;
-            flex-direction:column;
-            gap:8px;
-          "
-        >
+        <div>
       `;
 
             for (const file of member.files.slice(0, 1)) {
               html += `
-          <div
-            style="
-              padding:12px;
-              border:1px solid #ddd;
-              border-radius:8px;
-              background:#fafafa;
-            "
-          >
-
-            <div
-              style="
-                font-weight:bold;
-                margin-bottom:4px;
-              "
-            >
+          <div class="analysis-latest-result">
+            <div class="analysis-result-date">
               ${escapeHtml(file.displayDate)}
             </div>
 
@@ -1189,9 +1308,11 @@
           }
 
           html += `
-      </div>
+      </article>
     `;
         }
+
+        html += "</div>";
 
         return html;
       }
@@ -1354,6 +1475,7 @@
       function renderStickViewer(data) {
         currentAnalysisData = data;
 
+        document.getElementById("status").classList.remove("home-screen");
         document.getElementById("status").classList.add("analysis-screen");
 
         document.getElementById("status").innerHTML = `
@@ -2007,6 +2129,7 @@
         jointContractionVelocityGraph = null;
         currentAnalysisData = data;
 
+        document.getElementById("status").classList.remove("home-screen");
         document.getElementById("status").classList.add("analysis-screen");
         document.getElementById("status").innerHTML = `
           <section class="card analysis-view-card">
@@ -3546,6 +3669,8 @@
       }
 
       function renderSchedule() {
+        document.getElementById("status").classList.remove("home-screen", "analysis-screen");
+
         const year = currentCalendarDate.getFullYear();
 
         const month = currentCalendarDate.getMonth();
