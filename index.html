@@ -253,7 +253,7 @@
       }
 
       .graph-selector {
-        width: 132px;
+        width: 145px;
         height: 32px;
         margin: 0;
         padding: 2px 28px 2px 9px;
@@ -266,7 +266,7 @@
       }
 
       .graph-part-selector {
-        width: 142px;
+        width: 150px;
       }
 
       .graph-content-panel {
@@ -308,14 +308,15 @@
         font-weight: bold;
       }
 
-#centerOfMassGraph,
-#jointAngleGraph {
-  display: block;
-  width: 100%;
-  max-width: 100%;
-  height: auto;
-  background: #fff;
-}
+      #centerOfMassGraph,
+      #jointAngleGraph,
+      #jointContractionVelocityGraph {
+        display: block;
+        width: 100%;
+        max-width: 100%;
+        height: auto;
+        background: #fff;
+      }
 
 .stick-controls {
   display: flex;
@@ -422,6 +423,7 @@
       let stickViewer = null;
       let centerOfMassGraph = null;
       let jointAngleGraph = null;
+      let jointContractionVelocityGraph = null;
       let currentAnalysisData = null;
 
       const STICK_BONES = [
@@ -907,7 +909,7 @@
         >
       `;
 
-            for (const file of member.files.slice(0,1)) {
+            for (const file of member.files.slice(0, 1)) {
               html += `
           <div
             style="
@@ -1229,7 +1231,7 @@
             >
               <option value="centerOfMass">重心高</option>
               <option value="jointAngle">関節角度</option>
-              <option value="jointAngularVelocity">関節角速度</option>
+              <option value="jointAngularVelocity">関節の収縮速度</option>
             </select>
 
             <select
@@ -1238,17 +1240,17 @@
               onchange="switchAnalysisGraphPart(this.value)"
               hidden
             >
-<option value="rightElbow">肘関節（右）</option>
-<option value="rightShoulder">肩関節（右）</option>
-<option value="leftElbow">肘関節（左）</option>
-<option value="leftShoulder">肩関節（左）</option>
-<option value="rightHip">股関節（右）</option>
-<option value="rightKnee">膝関節（右）</option>
-<option value="rightAnkle">足関節（右）</option>
-<option value="leftHip">股関節（左）</option>
-<option value="leftKnee">膝関節（左）</option>
-<option value="leftAnkle">足関節（左）</option>
-<option value="forwardLeanAngle">前傾角度</option>
+              <option value="rightElbow">肘関節（右）</option>
+              <option value="rightShoulder">肩関節（右）</option>
+              <option value="leftElbow">肘関節（左）</option>
+              <option value="leftShoulder">肩関節（左）</option>
+              <option value="rightHip">股関節（右）</option>
+              <option value="rightKnee">膝関節（右）</option>
+              <option value="rightAnkle">足関節（右）</option>
+              <option value="leftHip">股関節（左）</option>
+              <option value="leftKnee">膝関節（左）</option>
+              <option value="leftAnkle">足関節（左）</option>
+              <option value="forwardLeanAngle">前傾角度</option>
             </select>
           </div>
 
@@ -1296,7 +1298,22 @@
             class="graph-content-panel"
             hidden
           >
-            <p class="graph-coming-soon">関節角速度グラフは後で追加します</p>
+            <div class="analysis-graph-card">
+              <div class="analysis-graph-header">
+                <span class="analysis-graph-title">関節の収縮速度</span>
+                <span
+                  id="jointContractionVelocityCurrent"
+                  class="analysis-graph-current"
+                >-°/s</span>
+              </div>
+
+              <canvas
+                id="jointContractionVelocityGraph"
+                width="720"
+                height="360"
+                aria-label="関節の収縮速度のグラフ"
+              ></canvas>
+            </div>
           </div>
         </div>
 
@@ -1334,16 +1351,32 @@
 
         const selectedPart =
           document.getElementById("analysisGraphPartSelect")?.value ||
-          "rightAnkle";
+          "rightElbow";
 
         jointAngleGraph.setData(
           data.jointAngles?.[selectedPart],
           data.fps,
         );
 
+        jointContractionVelocityGraph = new LightweightLineGraph(
+          document.getElementById("jointContractionVelocityGraph"),
+          document.getElementById("jointContractionVelocityCurrent"),
+          {
+            yAxisLabel: "関節の収縮速度（°/s）",
+            unit: "°/s",
+            precision: 1,
+          },
+        );
+
+        jointContractionVelocityGraph.setData(
+          data.jointAngularVelocities?.[selectedPart],
+          data.fps,
+        );
+
         stickViewer.onFrameChange = function(frameIndex) {
           centerOfMassGraph?.setCurrentFrame(frameIndex);
           jointAngleGraph?.setCurrentFrame(frameIndex);
+          jointContractionVelocityGraph?.setCurrentFrame(frameIndex);
         };
 
         stickViewer.setData(data.rows, data.fps);
@@ -1360,6 +1393,7 @@
 
         centerOfMassGraph = null;
         jointAngleGraph = null;
+        jointContractionVelocityGraph = null;
         currentAnalysisData = null;
 
         renderHome();
@@ -1441,6 +1475,15 @@
             jointAngleGraph.draw();
           });
         }
+
+        if (
+          graphName === "jointAngularVelocity" &&
+          jointContractionVelocityGraph
+        ) {
+          requestAnimationFrame(function() {
+            jointContractionVelocityGraph.draw();
+          });
+        }
       }
 
       function switchAnalysisGraphPart(partName) {
@@ -1459,6 +1502,23 @@
 
           if (stickViewer) {
             jointAngleGraph.setCurrentFrame(stickViewer.frameIndex);
+          }
+        }
+
+        if (
+          selectedGraph === "jointAngularVelocity" &&
+          jointContractionVelocityGraph &&
+          currentAnalysisData
+        ) {
+          jointContractionVelocityGraph.setData(
+            currentAnalysisData.jointAngularVelocities?.[partName],
+            currentAnalysisData.fps,
+          );
+
+          if (stickViewer) {
+            jointContractionVelocityGraph.setCurrentFrame(
+              stickViewer.frameIndex,
+            );
           }
         }
       }
