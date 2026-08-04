@@ -308,12 +308,14 @@
         font-weight: bold;
       }
 
-      #centerOfMassGraph {
-        display: block;
-        width: 100%;
-        height: auto;
-        background: #fff;
-      }
+#centerOfMassGraph,
+#jointAngleGraph {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  background: #fff;
+}
 
 .stick-controls {
   display: flex;
@@ -905,7 +907,7 @@
         >
       `;
 
-            for (const file of member.files) {
+            for (const file of member.files.slice(0,1)) {
               html += `
           <div
             style="
