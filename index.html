@@ -1422,11 +1422,12 @@
           jointContractionVelocityGraph?.setCurrentFrame(frameIndex);
         };
 
-        stickViewer.setData(
-          data.rows,
-          data.fps,
-          data.centerOfMassPoints,
-        );
+stickViewer.setData(
+  data.rows,
+  data.fps,
+  data.centerOfMassPoints,
+  data.movementDirection,
+);
 
         updateStickGraphOverlay();
       }
@@ -2001,9 +2002,12 @@
         // =====================
         // データ設定
         // =====================
-        setData(rows, fps, centerOfMassPoints) {
+setData(rows, fps, centerOfMassPoints, movementDirection) {
           this.stop();
 
+this.movementDirection =
+  String(movementDirection || "右").trim();
+  
           this.fps = Number(fps) > 0 ? Number(fps) : 30;
 
           this.frames = this.convertRowsToFrames(rows || []);
@@ -2381,35 +2385,95 @@
           );
         }
 
-        drawForwardLeanAngle(frame) {
-          const rightHip = frame[13];
-          const leftHip = frame[19];
-          const rightShoulder = frame[3];
-          const leftShoulder = frame[7];
+drawForwardLeanAngle(frame) {
+  const rightHip = frame[13];
+  const leftHip = frame[19];
+  const headTop = frame[20];
 
-          if (!rightHip || !leftHip || !rightShoulder || !leftShoulder) {
-            return;
-          }
+  if (!rightHip || !leftHip || !headTop) {
+    return;
+  }
 
-          const hipCenter = {
-            x: (rightHip.x + leftHip.x) / 2,
-            y: (rightHip.y + leftHip.y) / 2,
-          };
-          const shoulderCenter = {
-            x: (rightShoulder.x + leftShoulder.x) / 2,
-            y: (rightShoulder.y + leftShoulder.y) / 2,
-          };
-const horizontalPoint = {
-  x: hipCenter.x + 1,
-  y: hipCenter.y,
-};
+  const hipCenter = {
+    x: (rightHip.x + leftHip.x) / 2,
+    y: (rightHip.y + leftHip.y) / 2,
+  };
 
-this.drawAngleSector(
-  this.toCanvas(horizontalPoint),
-  this.toCanvas(hipCenter),
-  this.toCanvas(shoulderCenter),
-);
-        }
+  /*
+   * 基礎情報B9が「右」なら右方向、
+   * 「左」なら左方向を水平基準とする
+   */
+  const directionSign =
+    this.movementDirection === "左" ? -1 : 1;
+
+  const horizontalPoint = {
+    x: hipCenter.x + directionSign,
+    y: hipCenter.y,
+  };
+
+  const canvasHipCenter =
+    this.toCanvas(hipCenter);
+
+  const canvasHorizontalPoint =
+    this.toCanvas(horizontalPoint);
+
+  const canvasHeadTop =
+    this.toCanvas(headTop);
+
+  const context = this.context;
+
+  /*
+   * 薄い水平基準線
+   */
+  context.save();
+
+  context.beginPath();
+  context.moveTo(
+    canvasHipCenter.x - 120,
+    canvasHipCenter.y,
+  );
+  context.lineTo(
+    canvasHipCenter.x + 120,
+    canvasHipCenter.y,
+  );
+
+  context.strokeStyle =
+    "rgba(79, 156, 138, 0.4)";
+  context.lineWidth = 1.5;
+  context.setLineDash([5, 4]);
+  context.stroke();
+
+  /*
+   * 大転子中点から頭頂までの補助線
+   */
+  context.beginPath();
+  context.moveTo(
+    canvasHipCenter.x,
+    canvasHipCenter.y,
+  );
+  context.lineTo(
+    canvasHeadTop.x,
+    canvasHeadTop.y,
+  );
+
+  context.strokeStyle =
+    "rgba(255, 152, 0, 0.45)";
+  context.lineWidth = 1.5;
+  context.setLineDash([]);
+  context.stroke();
+
+  context.restore();
+
+  /*
+   * 進行方向の水平線と
+   * 大転子中点－頭頂線の間に扇形を表示
+   */
+  this.drawAngleSector(
+    canvasHorizontalPoint,
+    canvasHipCenter,
+    canvasHeadTop,
+  );
+}
 
         drawAngleSector(first, vertex, second) {
           const context = this.context;
