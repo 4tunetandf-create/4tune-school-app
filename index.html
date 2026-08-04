@@ -197,6 +197,46 @@
         font-size: 12px;
       }
 
+      .basic-info-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        padding-top: 4px;
+      }
+
+      .basic-info-item {
+        padding: 12px 6px;
+        border: 1px solid #dfe7e4;
+        border-radius: 9px;
+        background: #f5f7f6;
+        text-align: center;
+      }
+
+      .basic-info-item:last-child {
+        grid-column: 1 / -1;
+      }
+
+      .basic-info-label {
+        margin-bottom: 5px;
+        color: #56615e;
+        font-size: 11px;
+        font-weight: bold;
+      }
+
+      .basic-info-value {
+        color: #222;
+        font-size: 20px;
+        font-weight: bold;
+        line-height: 1.2;
+      }
+
+      .basic-info-unit {
+        margin-left: 2px;
+        color: #69736f;
+        font-size: 10px;
+        font-weight: normal;
+      }
+
 .stick-controls {
   display: flex;
   justify-content: center;
@@ -881,6 +921,20 @@
       // =======================
       // スティック画面表示
       // =======================
+      function formatBasicAnalysisValue(value) {
+        if (value === null || value === undefined || value === "") {
+          return "-";
+        }
+
+        const numberValue = Number(value);
+
+        if (!Number.isFinite(numberValue)) {
+          return "-";
+        }
+
+        return numberValue.toFixed(2);
+      }
+      
       function renderStickViewer(data) {
         document.getElementById("status").classList.add("analysis-screen");
 
@@ -1032,7 +1086,47 @@
           aria-labelledby="analysisTabButton-basic"
           hidden
         >
-          <p class="analysis-tab-placeholder">基礎情報は後で追加します</p>
+          <div class="basic-info-grid">
+            <div class="basic-info-item">
+              <div class="basic-info-label">ピッチ</div>
+              <div class="basic-info-value">
+                ${formatBasicAnalysisValue(data.basicInfo?.pitch)}
+                <span class="basic-info-unit">歩/秒</span>
+              </div>
+            </div>
+
+            <div class="basic-info-item">
+              <div class="basic-info-label">ストライド</div>
+              <div class="basic-info-value">
+                ${formatBasicAnalysisValue(data.basicInfo?.stride)}
+                <span class="basic-info-unit">m</span>
+              </div>
+            </div>
+
+            <div class="basic-info-item">
+              <div class="basic-info-label">疾走速度</div>
+              <div class="basic-info-value">
+                ${formatBasicAnalysisValue(data.basicInfo?.speedKmh)}
+                <span class="basic-info-unit">km/h</span>
+              </div>
+            </div>
+
+            <div class="basic-info-item">
+              <div class="basic-info-label">接地時間</div>
+              <div class="basic-info-value">
+                ${formatBasicAnalysisValue(data.basicInfo?.contactTime)}
+                <span class="basic-info-unit">秒</span>
+              </div>
+            </div>
+
+            <div class="basic-info-item">
+              <div class="basic-info-label">滞空時間</div>
+              <div class="basic-info-value">
+                ${formatBasicAnalysisValue(data.basicInfo?.flightTime)}
+                <span class="basic-info-unit">秒</span>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div
