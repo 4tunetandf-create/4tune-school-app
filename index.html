@@ -566,13 +566,16 @@
 
       .home-member-chip {
         flex: 0 0 auto;
-        padding: 4px 9px;
-        border-radius: 999px;
-        border: 1px solid #bfddd5;
-        background: #ffffff;
+        padding: 0;
         color: #31584f;
-        font-size: 12px;
+        font-size: 13px;
         font-weight: bold;
+      }
+
+      .home-member-chip + .home-member-chip::before {
+        content: "・";
+        margin-right: 6px;
+        color: #7a9991;
       }
 
       .home-analysis {
@@ -642,9 +645,10 @@
 
       .home-schedule {
         display: flex;
+        flex-direction: column;
         align-items: center;
-        justify-content: space-between;
-        gap: 12px;
+        justify-content: center;
+        gap: 9px;
         border-left: 5px solid #c68b2c;
         background: #fff8e8;
       }
@@ -653,10 +657,11 @@
         margin: 0;
         color: #75541f;
         font-size: 16px;
+        white-space: nowrap;
       }
 
       .home-schedule button {
-        flex: 0 0 auto;
+        width: min(100%, 260px);
         margin: 0;
         background: #a66d17;
       }
