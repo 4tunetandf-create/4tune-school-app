@@ -1851,7 +1851,7 @@
           stickViewer = null;
         }
 
-        lockUI("Dコース分析結果を読み込み中...");
+        lockUI("分析結果を読み込み中...");
 
         try {
           let data = CACHE.dAnalysisData[analysisContext.file.fileId];
@@ -1918,28 +1918,78 @@
                 aria-label="1歩目から3歩目までの接地・離地スティック"
               ></canvas>
             </div>
+
+            <div class="basic-info-grid">
+              <div class="basic-info-item">
+                <div class="basic-info-label">ピッチ</div>
+                <div class="basic-info-value">
+                  ${formatBasicAnalysisValue(data.basicInfo?.pitch)}
+                  <span class="basic-info-unit">歩/秒</span>
+                </div>
+              </div>
+
+              <div class="basic-info-item">
+                <div class="basic-info-label">ストライド</div>
+                <div class="basic-info-value">
+                  ${formatBasicAnalysisValue(data.basicInfo?.stride)}
+                  <span class="basic-info-unit">m</span>
+                </div>
+              </div>
+
+              <div class="basic-info-item">
+                <div class="basic-info-label">疾走速度</div>
+                <div class="basic-info-value">
+                  ${formatBasicAnalysisValue(data.basicInfo?.speedKmh)}
+                  <span class="basic-info-unit">km/h</span>
+                </div>
+              </div>
+
+              <div class="basic-info-item">
+                <div class="basic-info-label">接地時間</div>
+                <div class="basic-info-value">
+                  ${formatBasicAnalysisValue(data.basicInfo?.contactTime)}
+                  <span class="basic-info-unit">秒</span>
+                </div>
+              </div>
+
+              <div class="basic-info-item">
+                <div class="basic-info-label">滞空時間</div>
+                <div class="basic-info-value">
+                  ${formatBasicAnalysisValue(data.basicInfo?.flightTime)}
+                  <span class="basic-info-unit">秒</span>
+                </div>
+              </div>
+            </div>
           </section>
         `;
 
         const canvas = document.getElementById("dOverviewCanvas");
 
         if (canvas) {
-          drawDStickOverview(canvas, data.poses || []);
+          drawDStickOverview(
+            canvas,
+            data.poses || [],
+            data.movementDirection,
+          );
         }
       }
 
-      function drawDStickOverview(canvas, poses) {
+      function drawDStickOverview(canvas, poses, movementDirection) {
         const context = canvas.getContext("2d");
         context.fillStyle = "#ffffff";
         context.fillRect(0, 0, canvas.width, canvas.height);
 
-        const orderedDefinitions = [
-          { stepNumber: 3, phase: "接地" },
-          { stepNumber: 2, phase: "接地" },
-          { stepNumber: 2, phase: "離地" },
+        const chronologicalDefinitions = [
           { stepNumber: 1, phase: "接地" },
           { stepNumber: 1, phase: "離地" },
+          { stepNumber: 2, phase: "接地" },
+          { stepNumber: 2, phase: "離地" },
+          { stepNumber: 3, phase: "接地" },
         ];
+        const movesLeft = String(movementDirection || "").includes("左");
+        const orderedDefinitions = movesLeft
+          ? chronologicalDefinitions.slice().reverse()
+          : chronologicalDefinitions;
         const slotWidth = canvas.width / orderedDefinitions.length;
         const groundY = canvas.height - 34;
 
@@ -1947,9 +1997,24 @@
         context.textBaseline = "middle";
         context.fillStyle = "#111111";
         context.font = "bold 30px sans-serif";
-        context.fillText("3歩目", slotWidth * 0.5, 31);
-        context.fillText("2歩目", slotWidth * 2, 31);
-        context.fillText("1歩目", slotWidth * 4, 31);
+
+        [1, 2, 3].forEach(function (stepNumber) {
+          const matchingSlots = [];
+
+          orderedDefinitions.forEach(function (definition, slotIndex) {
+            if (definition.stepNumber === stepNumber) {
+              matchingSlots.push(slotIndex + 0.5);
+            }
+          });
+
+          if (matchingSlots.length > 0) {
+            const centerSlot = matchingSlots.reduce(function (sum, value) {
+              return sum + value;
+            }, 0) / matchingSlots.length;
+
+            context.fillText(stepNumber + "歩目", slotWidth * centerSlot, 31);
+          }
+        });
 
         orderedDefinitions.forEach(function (definition, slotIndex) {
           const pose = poses.find(function (item) {
