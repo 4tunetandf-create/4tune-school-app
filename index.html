@@ -185,8 +185,8 @@
       }
 
       .schedule-calendar td.schedule-closed {
-        background: #e6f2fa;
-        color: #285a73;
+        background: #eceeef;
+        color: #4f5659;
       }
 
       .schedule-calendar td.has-schedule:active {
@@ -198,7 +198,7 @@
       }
 
       .schedule-calendar td.schedule-closed:active {
-        background: #cde5f4;
+        background: #d5d9db;
       }
 
       .schedule-legend {
@@ -221,7 +221,7 @@
       }
 
       .schedule-legend-closed {
-        color: #326c8a;
+        color: #555d61;
       }
 
       .schedule-home-button {
@@ -662,6 +662,44 @@
         font-size: clamp(19px, 5vw, 24px);
       }
 
+      .home-greeting-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+
+      .home-greeting-head h2 {
+        min-width: 0;
+        margin: 0;
+      }
+
+      .admin-link-button {
+        flex: 0 0 auto;
+        min-height: 34px;
+        margin: 0;
+        padding: 6px 10px;
+        background: #31584f;
+        font-size: 12px;
+        white-space: nowrap;
+      }
+
+      .admin-placeholder-card {
+        max-width: 420px;
+        margin: 20vh auto 0;
+        text-align: center;
+      }
+
+      .admin-placeholder-card h2 {
+        color: #31584f;
+      }
+
+      .admin-placeholder-card button {
+        width: 100%;
+        margin: 8px 0 0;
+      }
+
       .home-member-row {
         display: flex;
         align-items: center;
@@ -918,6 +956,7 @@
         profile: null,
         members: null,
         schedules: null,
+        isAdmin: null,
 
         // 分析ファイル一覧
         analysisMembers: null,
@@ -1291,6 +1330,23 @@
             });
 
             CACHE.members = memberData.members || [];
+            CACHE.isAdmin = Boolean(memberData.isAdmin);
+          }
+
+          // =====================
+          // 管理者判定
+          // =====================
+          if (CACHE.isAdmin === null) {
+            try {
+              const adminData = await apiGet("getAdminByLineId", {
+                lineUserId: CACHE.profile.userId,
+              });
+
+              CACHE.isAdmin = Boolean(adminData.success && adminData.isAdmin);
+            } catch (error) {
+              console.error("管理者判定の取得エラー", error);
+              CACHE.isAdmin = false;
+            }
           }
 
           // =====================
@@ -1355,16 +1411,22 @@
         `;
 
         const analysisHtml = createAnalysisListHtml();
+        const adminButtonHtml = CACHE.isAdmin
+          ? `<button class="admin-link-button" onclick="showAdminPlaceholder()">管理者画面</button>`
+          : "";
 
         document.getElementById("status").innerHTML = `
 
       <section class="card home-card home-greeting">
 
-        <h2>
-          こんにちは
-          ${escapeHtml(CACHE.profile.displayName)}
-          さま
-        </h2>
+        <div class="home-greeting-head">
+          <h2>
+            こんにちは
+            ${escapeHtml(CACHE.profile.displayName)}
+            さま
+          </h2>
+          ${adminButtonHtml}
+        </div>
 
         <div class="home-member-row">
           <p class="home-member-label">登録会員</p>
@@ -1397,6 +1459,24 @@
 
       </section>
     `;
+      }
+
+      function showAdminPlaceholder() {
+        if (!CACHE.isAdmin) {
+          return;
+        }
+
+        document
+          .getElementById("status")
+          .classList.remove("home-screen", "analysis-screen", "schedule-screen");
+
+        document.getElementById("status").innerHTML = `
+          <section class="card admin-placeholder-card">
+            <h2>管理者画面</h2>
+            <p class="muted">管理者機能は現在準備中です</p>
+            <button class="secondary" onclick="renderHome()">ホームへ戻る</button>
+          </section>
+        `;
       }
 
       // =======================
