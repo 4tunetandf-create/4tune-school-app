@@ -1281,24 +1281,32 @@
               <option value="jointAngularVelocity">関節の収縮速度</option>
             </select>
 
-            <select
-              id="analysisGraphPartSelect"
-              class="graph-selector graph-part-selector"
-              onchange="switchAnalysisGraphPart(this.value)"
-              hidden
-            >
-              <option value="rightElbow">肘関節（右）</option>
-              <option value="rightShoulder">肩関節（右）</option>
-              <option value="leftElbow">肘関節（左）</option>
-              <option value="leftShoulder">肩関節（左）</option>
-              <option value="rightHip">股関節（右）</option>
-              <option value="rightKnee">膝関節（右）</option>
-              <option value="rightAnkle">足関節（右）</option>
-              <option value="leftHip">股関節（左）</option>
-              <option value="leftKnee">膝関節（左）</option>
-              <option value="leftAnkle">足関節（左）</option>
-              <option value="forwardLeanAngle">前傾角度</option>
-            </select>
+<select
+  id="analysisGraphPartSelect"
+  class="graph-selector graph-part-selector is-right"
+  onchange="switchAnalysisGraphPart(this.value)"
+  hidden
+>
+  <optgroup label="右側">
+    <option value="rightShoulder">右｜肩関節</option>
+    <option value="rightElbow">右｜肘関節</option>
+    <option value="rightHip">右｜股関節</option>
+    <option value="rightKnee">右｜膝関節</option>
+    <option value="rightAnkle">右｜足関節</option>
+  </optgroup>
+
+  <optgroup label="左側">
+    <option value="leftShoulder">左｜肩関節</option>
+    <option value="leftElbow">左｜肘関節</option>
+    <option value="leftHip">左｜股関節</option>
+    <option value="leftKnee">左｜膝関節</option>
+    <option value="leftAnkle">左｜足関節</option>
+  </optgroup>
+
+  <optgroup label="その他">
+    <option value="forwardLeanAngle">前傾角度</option>
+  </optgroup>
+</select>
 
             <button
               id="graphOverlayToggle"
