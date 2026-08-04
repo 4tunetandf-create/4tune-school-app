@@ -153,6 +153,13 @@
         background: #fff;
       }
 
+      .d-analysis-result-title {
+        margin: 5px 0 0;
+        color: #3f5d55;
+        font-size: 12px;
+        font-weight: bold;
+      }
+
       .stick-header {
         display: flex;
         align-items: center;
@@ -257,21 +264,29 @@
 
       .basic-info-grid {
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 8px;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 6px;
         padding-top: 4px;
       }
 
       .basic-info-item {
-        padding: 12px 6px;
+        grid-column: span 2;
+        padding: 10px 3px;
         border: 1px solid #dfe7e4;
         border-radius: 9px;
         background: #f5f7f6;
         text-align: center;
       }
 
-      .basic-info-item:last-child {
-        grid-column: 1 / -1;
+      .basic-info-item:nth-child(4),
+      .basic-info-item:nth-child(5) {
+        grid-column: span 3;
+      }
+
+      .basic-info-item:nth-child(3) {
+        border-color: #4f9c8a;
+        background: #e6f3ef;
+        box-shadow: 0 1px 4px rgba(79, 156, 138, 0.16);
       }
 
       .basic-info-label {
@@ -283,7 +298,7 @@
 
       .basic-info-value {
         color: #222;
-        font-size: 20px;
+        font-size: 18px;
         font-weight: bold;
         line-height: 1.2;
       }
@@ -296,7 +311,7 @@
       }
 
       .analysis-graph-card {
-        padding: 10px 8px 8px;
+        padding: 5px 8px 6px;
         border: 1px solid #dfe7e4;
         border-radius: 9px;
         background: #fff;
@@ -370,21 +385,16 @@
       .analysis-graph-header {
         display: flex;
         align-items: baseline;
-        justify-content: space-between;
-        gap: 8px;
-        margin: 0 4px 6px;
-      }
-
-      .analysis-graph-title {
-        color: #27312e;
-        font-size: 13px;
-        font-weight: bold;
+        justify-content: flex-end;
+        margin: 0 4px -1px;
       }
 
       .analysis-graph-current {
+        display: inline-block;
         color: #4f9c8a;
         font-size: 12px;
         font-weight: bold;
+        transform: translateY(3px);
       }
 
       #centerOfMassGraph,
@@ -1305,7 +1315,7 @@
             aria-controls="analysisTab-basic"
             onclick="switchAnalysisTab('basic')"
           >
-            基礎情報
+            分析結果
           </button>
 
           <button
@@ -1494,14 +1504,13 @@
           >
             <div class="analysis-graph-card">
               <div class="analysis-graph-header">
-                <span class="analysis-graph-title">重心高</span>
                 <span id="centerOfMassCurrent" class="analysis-graph-current">- m</span>
               </div>
 
               <canvas
                 id="centerOfMassGraph"
                 width="720"
-                height="360"
+                height="330"
                 aria-label="重心高のグラフ"
               ></canvas>
             </div>
@@ -1514,14 +1523,13 @@
           >
             <div class="analysis-graph-card">
               <div class="analysis-graph-header">
-                <span class="analysis-graph-title">関節角度</span>
                 <span id="jointAngleCurrent" class="analysis-graph-current">-°</span>
               </div>
 
               <canvas
                 id="jointAngleGraph"
                 width="720"
-                height="360"
+                height="330"
                 aria-label="関節角度のグラフ"
               ></canvas>
             </div>
@@ -1534,7 +1542,6 @@
           >
             <div class="analysis-graph-card">
               <div class="analysis-graph-header">
-                <span class="analysis-graph-title">関節の収縮速度</span>
                 <span
                   id="jointContractionVelocityCurrent"
                   class="analysis-graph-current"
@@ -1544,7 +1551,7 @@
               <canvas
                 id="jointContractionVelocityGraph"
                 width="720"
-                height="360"
+                height="330"
                 aria-label="関節の収縮速度のグラフ"
               ></canvas>
             </div>
@@ -1919,6 +1926,8 @@
               ></canvas>
             </div>
 
+            <div class="d-analysis-result-title">分析結果</div>
+
             <div class="basic-info-grid">
               <div class="basic-info-item">
                 <div class="basic-info-label">ピッチ</div>
@@ -2200,10 +2209,10 @@
           this.fps = 30;
           this.currentFrame = 0;
           this.margin = {
-            left: 58,
+            left: 46,
             right: 18,
-            top: 18,
-            bottom: 48,
+            top: 14,
+            bottom: 56,
           };
         }
 
@@ -2372,11 +2381,6 @@
             this.canvas.height - 3,
           );
 
-          context.save();
-          context.translate(13, (plotTop + plotBottom) / 2);
-          context.rotate(-Math.PI / 2);
-          context.fillText(this.yAxisLabel, 0, 0);
-          context.restore();
         }
 
         drawLine(min, max) {
