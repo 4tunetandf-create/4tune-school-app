@@ -2399,16 +2399,16 @@
             x: (rightShoulder.x + leftShoulder.x) / 2,
             y: (rightShoulder.y + leftShoulder.y) / 2,
           };
-          const verticalPoint = {
-            x: hipCenter.x,
-            y: hipCenter.y + 1,
-          };
+const horizontalPoint = {
+  x: hipCenter.x + 1,
+  y: hipCenter.y,
+};
 
-          this.drawAngleSector(
-            this.toCanvas(verticalPoint),
-            this.toCanvas(hipCenter),
-            this.toCanvas(shoulderCenter),
-          );
+this.drawAngleSector(
+  this.toCanvas(horizontalPoint),
+  this.toCanvas(hipCenter),
+  this.toCanvas(shoulderCenter),
+);
         }
 
         drawAngleSector(first, vertex, second) {
