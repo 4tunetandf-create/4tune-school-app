@@ -419,6 +419,8 @@
 
       let stickViewer = null;
       let centerOfMassGraph = null;
+      let jointAngleGraph = null;
+      let currentAnalysisData = null;
 
       const STICK_BONES = [
         [0, 1],
@@ -1015,6 +1017,8 @@
       }
       
       function renderStickViewer(data) {
+        currentAnalysisData = data;
+
         document.getElementById("status").classList.add("analysis-screen");
 
         document.getElementById("status").innerHTML = `
@@ -1269,7 +1273,19 @@
             class="graph-content-panel"
             hidden
           >
-            <p class="graph-coming-soon">関節角度グラフは次に追加します</p>
+            <div class="analysis-graph-card">
+              <div class="analysis-graph-header">
+                <span class="analysis-graph-title">関節角度</span>
+                <span id="jointAngleCurrent" class="analysis-graph-current">-°</span>
+              </div>
+
+              <canvas
+                id="jointAngleGraph"
+                width="720"
+                height="360"
+                aria-label="関節角度のグラフ"
+              ></canvas>
+            </div>
           </div>
 
           <div
@@ -1294,12 +1310,37 @@
         centerOfMassGraph = new LightweightLineGraph(
           document.getElementById("centerOfMassGraph"),
           document.getElementById("centerOfMassCurrent"),
+          {
+            yAxisLabel: "重心高（m）",
+            unit: " m",
+            precision: 3,
+          },
         );
 
         centerOfMassGraph.setData(data.centerOfMassHeight, data.fps);
 
+        jointAngleGraph = new LightweightLineGraph(
+          document.getElementById("jointAngleGraph"),
+          document.getElementById("jointAngleCurrent"),
+          {
+            yAxisLabel: "関節角度（°）",
+            unit: "°",
+            precision: 1,
+          },
+        );
+
+        const selectedPart =
+          document.getElementById("analysisGraphPartSelect")?.value ||
+          "rightAnkle";
+
+        jointAngleGraph.setData(
+          data.jointAngles?.[selectedPart],
+          data.fps,
+        );
+
         stickViewer.onFrameChange = function(frameIndex) {
           centerOfMassGraph?.setCurrentFrame(frameIndex);
+          jointAngleGraph?.setCurrentFrame(frameIndex);
         };
 
         stickViewer.setData(data.rows, data.fps);
@@ -1315,6 +1356,8 @@
         }
 
         centerOfMassGraph = null;
+        jointAngleGraph = null;
+        currentAnalysisData = null;
 
         renderHome();
       }
@@ -1389,13 +1432,32 @@
             centerOfMassGraph.draw();
           });
         }
+
+        if (graphName === "jointAngle" && jointAngleGraph) {
+          requestAnimationFrame(function() {
+            jointAngleGraph.draw();
+          });
+        }
       }
 
       function switchAnalysisGraphPart(partName) {
-        /*
-         * 関節角度・関節角速度のデータ実装時に、
-         * 選択された部位のグラフへ切り替える
-         */
+        const selectedGraph =
+          document.getElementById("analysisGraphSelect")?.value;
+
+        if (
+          selectedGraph === "jointAngle" &&
+          jointAngleGraph &&
+          currentAnalysisData
+        ) {
+          jointAngleGraph.setData(
+            currentAnalysisData.jointAngles?.[partName],
+            currentAnalysisData.fps,
+          );
+
+          if (stickViewer) {
+            jointAngleGraph.setCurrentFrame(stickViewer.frameIndex);
+          }
+        }
       }
 
       // =======================
@@ -1472,10 +1534,15 @@
       // 軽量グラフ
       // =======================
       class LightweightLineGraph {
-        constructor(canvas, currentValueElement) {
+        constructor(canvas, currentValueElement, options = {}) {
           this.canvas = canvas;
           this.context = canvas.getContext("2d");
           this.currentValueElement = currentValueElement;
+          this.yAxisLabel = options.yAxisLabel || "";
+          this.unit = options.unit || "";
+          this.precision = Number.isInteger(options.precision)
+            ? options.precision
+            : 2;
           this.values = [];
           this.fps = 30;
           this.currentFrame = 0;
@@ -1650,7 +1717,7 @@
           context.save();
           context.translate(13, (plotTop + plotBottom) / 2);
           context.rotate(-Math.PI / 2);
-          context.fillText("重心高（m）", 0, 0);
+          context.fillText(this.yAxisLabel, 0, 0);
           context.restore();
         }
 
@@ -1721,8 +1788,8 @@
 
           this.currentValueElement.textContent =
             typeof value === "number" && Number.isFinite(value)
-              ? value.toFixed(3) + " m"
-              : "- m";
+              ? value.toFixed(this.precision) + this.unit
+              : "-" + this.unit;
         }
       }
 
