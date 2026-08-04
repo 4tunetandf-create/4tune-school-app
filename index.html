@@ -138,6 +138,65 @@
         margin: 4px 0;
       }
 
+      .d-analysis-scroll {
+        width: 100%;
+        overflow-x: auto;
+        padding: 2px 0 8px;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .d-step-grid {
+        display: flex;
+        gap: 8px;
+        width: max-content;
+        min-width: 100%;
+      }
+
+      .d-step-card {
+        flex: 0 0 auto;
+        width: 344px;
+        padding: 8px;
+        border: 1px solid #d8dddb;
+        border-radius: 10px;
+        background: #fff;
+      }
+
+      .d-step-card.is-single {
+        width: 174px;
+      }
+
+      .d-step-title {
+        margin: 0 0 5px;
+        color: #263238;
+        text-align: center;
+        font-size: 18px;
+      }
+
+      .d-pose-row {
+        display: flex;
+        gap: 6px;
+      }
+
+      .d-pose-item {
+        width: 160px;
+      }
+
+      .d-pose-label {
+        margin-bottom: 3px;
+        color: #52605c;
+        text-align: center;
+        font-size: 12px;
+        font-weight: bold;
+      }
+
+      .d-stick-canvas {
+        display: block;
+        width: 160px;
+        height: 300px;
+        border: 1px solid #edf0ef;
+        background: #fff;
+      }
+
       .stick-header {
         display: flex;
         align-items: center;
@@ -495,6 +554,9 @@
 
         // 読み込み済みの分析データ
         analysisData: {},
+
+        // 読み込み済みのDコース分析データ
+        dAnalysisData: {},
       };
 
       let stickViewer = null;
@@ -1086,7 +1148,7 @@
         }
 
         if (["D001", "D002"].includes(analysisContext.courseId)) {
-          renderDAnalysisPlaceholder(analysisContext);
+          await loadDAnalysisResult(analysisContext);
           return;
         }
 
@@ -1206,6 +1268,7 @@
 
         // 日付変更時は対象スプレッドシートの最新内容を読み直す
         delete CACHE.analysisData[fileId];
+        delete CACHE.dAnalysisData[fileId];
 
         await openAnalysisResult(fileId);
       }
@@ -1824,18 +1887,87 @@
       }
 
       // =======================
-      // Dコース分析画面（構築用）
+      // Dコース分析データ取得
       // =======================
-      function renderDAnalysisPlaceholder(analysisContext) {
+      async function loadDAnalysisResult(analysisContext) {
         if (stickViewer) {
           stickViewer.destroy();
           stickViewer = null;
         }
 
+        lockUI("Dコース分析結果を読み込み中...");
+
+        try {
+          let data = CACHE.dAnalysisData[analysisContext.file.fileId];
+
+          if (!data) {
+            data = await apiGet("getDAnalysisData", {
+              lineUserId: CACHE.profile.userId,
+              fileId: analysisContext.file.fileId,
+            });
+
+            if (!data.success) {
+              throw new Error(data.message || "Dコース分析結果を読み込めませんでした");
+            }
+
+            CACHE.dAnalysisData[analysisContext.file.fileId] = data;
+          }
+
+          renderDAnalysisViewer(data);
+        } catch (error) {
+          console.error(error);
+          alert(error.message || "Dコース分析結果を読み込めませんでした");
+          renderHome();
+        } finally {
+          unlockUI();
+        }
+      }
+
+      // =======================
+      // Dコース5局面表示
+      // =======================
+      function renderDAnalysisViewer(data) {
         centerOfMassGraph = null;
         jointAngleGraph = null;
         jointContractionVelocityGraph = null;
-        currentAnalysisData = null;
+        currentAnalysisData = data;
+
+        const stepOrder = [3, 2, 1];
+        const stepCards = stepOrder
+          .map(function (stepNumber) {
+            const poses = (data.poses || []).filter(function (pose) {
+              return Number(pose.stepNumber) === stepNumber;
+            });
+
+            const poseItems = poses
+              .map(function (pose, poseIndex) {
+                const canvasId = "dStick-" + stepNumber + "-" + poseIndex;
+
+                return `
+                  <div class="d-pose-item">
+                    <div class="d-pose-label">
+                      ${escapeHtml(pose.phase)}
+                    </div>
+                    <canvas
+                      id="${canvasId}"
+                      class="d-stick-canvas"
+                      width="260"
+                      height="440"
+                      aria-label="${stepNumber}歩目${escapeHtml(pose.phase)}"
+                    ></canvas>
+                  </div>
+                `;
+              })
+              .join("");
+
+            return `
+              <section class="d-step-card${poses.length === 1 ? " is-single" : ""}">
+                <h3 class="d-step-title">${stepNumber}歩目</h3>
+                <div class="d-pose-row">${poseItems}</div>
+              </section>
+            `;
+          })
+          .join("");
 
         document.getElementById("status").classList.add("analysis-screen");
         document.getElementById("status").innerHTML = `
@@ -1848,18 +1980,124 @@
               >
                 戻る
               </button>
+
+              <div
+                class="analysis-date-tabs"
+                role="tablist"
+                aria-label="分析年月日"
+              >
+                ${createAnalysisDateTabsHtml(data)}
+              </div>
             </div>
 
-            <div class="course-analysis-placeholder">
-              <h3>Dコース分析</h3>
-              <p><strong>${escapeHtml(analysisContext.member.memberName)}</strong></p>
-              <p>${escapeHtml(analysisContext.file.displayDate)}</p>
-              <p class="muted">
-                ${escapeHtml(analysisContext.courseId)}用の分析画面を構築していきます
-              </p>
+            <div class="d-analysis-scroll">
+              <div class="d-step-grid">${stepCards}</div>
             </div>
           </section>
         `;
+
+        for (const pose of data.poses || []) {
+          const sameStepPoses = (data.poses || []).filter(function (item) {
+            return Number(item.stepNumber) === Number(pose.stepNumber);
+          });
+          const poseIndex = sameStepPoses.indexOf(pose);
+          const canvas = document.getElementById(
+            "dStick-" + pose.stepNumber + "-" + poseIndex,
+          );
+
+          if (canvas) {
+            drawDStickPose(canvas, pose.row);
+          }
+        }
+      }
+
+      function drawDStickPose(canvas, row) {
+        const context = canvas.getContext("2d");
+        const joints = [];
+
+        for (let column = 0; column < 46; column += 2) {
+          const rawX = row?.[column];
+          const rawY = row?.[column + 1];
+          const x = rawX === null || rawX === "" || rawX === undefined
+            ? NaN
+            : Number(rawX);
+          const y = rawY === null || rawY === "" || rawY === undefined
+            ? NaN
+            : Number(rawY);
+
+          joints.push(
+            Number.isFinite(x) && Number.isFinite(y) ? { x: x, y: y } : null,
+          );
+        }
+
+        const validPoints = joints.filter(Boolean);
+
+        context.fillStyle = "#ffffff";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+
+        if (validPoints.length === 0) {
+          return;
+        }
+
+        const minX = Math.min(...validPoints.map(function (point) { return point.x; }));
+        const maxX = Math.max(...validPoints.map(function (point) { return point.x; }));
+        const minY = Math.min(...validPoints.map(function (point) { return point.y; }));
+        const maxY = Math.max(...validPoints.map(function (point) { return point.y; }));
+        const groundY = canvas.height - 34;
+        const topPadding = 24;
+        const sidePadding = 22;
+        const width = Math.max(maxX - minX, 0.01);
+        const height = Math.max(maxY - minY, 0.01);
+        const scale = Math.min(
+          (canvas.width - sidePadding * 2) / width,
+          (groundY - topPadding) / height,
+        );
+        const centerX = (minX + maxX) / 2;
+
+        function toCanvas(point) {
+          return {
+            x: canvas.width / 2 + (point.x - centerX) * scale,
+            y: groundY - (point.y - minY) * scale,
+          };
+        }
+
+        context.strokeStyle = "#111111";
+        context.lineWidth = 3;
+        context.lineCap = "round";
+        context.lineJoin = "round";
+
+        for (const bone of STICK_BONES) {
+          const firstPoint = joints[bone[0]];
+          const secondPoint = joints[bone[1]];
+
+          if (!firstPoint || !secondPoint) {
+            continue;
+          }
+
+          const start = toCanvas(firstPoint);
+          const end = toCanvas(secondPoint);
+
+          context.beginPath();
+          context.moveTo(start.x, start.y);
+          context.lineTo(end.x, end.y);
+          context.stroke();
+        }
+
+        for (const point of validPoints) {
+          const position = toCanvas(point);
+
+          context.beginPath();
+          context.arc(position.x, position.y, 5, 0, Math.PI * 2);
+          context.fillStyle = "#ff5252";
+          context.fill();
+        }
+
+        context.beginPath();
+        context.moveTo(10, groundY + 1);
+        context.lineTo(canvas.width - 10, groundY + 1);
+        context.lineWidth = 2;
+        context.strokeStyle = "#111111";
+        context.stroke();
       }
 
       // =======================
