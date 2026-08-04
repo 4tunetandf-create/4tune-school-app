@@ -493,11 +493,113 @@
       .stick-trajectory-button.is-active {
         background: #4f9c8a;
       }
+
+      /* 軽量な全画面ローディング表示 */
+      .loading-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: rgba(245, 247, 246, 0.96);
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transition: opacity 180ms ease, visibility 180ms ease;
+      }
+
+      .loading-overlay.is-visible {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+      }
+
+      .loading-panel {
+        width: min(86vw, 360px);
+        padding: 22px 20px 18px;
+        border: 1px solid rgba(79, 156, 138, 0.16);
+        border-radius: 20px;
+        background: #fff;
+        box-shadow: 0 14px 36px rgba(32, 76, 66, 0.12);
+        text-align: center;
+      }
+
+      .loading-logo {
+        display: block;
+        width: 100%;
+        height: auto;
+        animation: loading-float 1.8s ease-in-out infinite;
+        will-change: transform;
+      }
+
+      .loading-progress {
+        height: 3px;
+        margin: 18px 12px 13px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: #dcebe7;
+      }
+
+      .loading-progress::after {
+        content: "";
+        display: block;
+        width: 42%;
+        height: 100%;
+        border-radius: inherit;
+        background: #4f9c8a;
+        animation: loading-slide 1.15s ease-in-out infinite;
+        will-change: transform;
+      }
+
+      .loading-message {
+        margin: 0;
+        color: #3f5d55;
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+      }
+
+      @keyframes loading-float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-4px); }
+      }
+
+      @keyframes loading-slide {
+        0% { transform: translateX(-115%); }
+        50% { transform: translateX(140%); }
+        100% { transform: translateX(275%); }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .loading-logo,
+        .loading-progress::after {
+          animation: none;
+        }
+      }
     </style>
   </head>
 
   <body>
     <main id="status">読み込み中...</main>
+
+    <div
+      id="loadingOverlay"
+      class="loading-overlay"
+      role="status"
+      aria-live="polite"
+      aria-hidden="true"
+    >
+      <div class="loading-panel">
+        <img
+          class="loading-logo"
+          src="./assets/images/team-logo.png"
+          alt="4-tune 京都の本気で楽しむ・速くなる陸上スクール"
+        >
+        <div class="loading-progress" aria-hidden="true"></div>
+        <p id="loadingMessage" class="loading-message">読み込み中...</p>
+      </div>
+    </div>
 
     <div id="scheduleModal" onclick="closeScheduleModal(event)">
       <div id="scheduleModalContent"></div>
@@ -665,12 +767,14 @@
         uiLockCount++;
 
         document.body.style.pointerEvents = "none";
-        document.body.style.opacity = "0.65";
 
-        const status = document.getElementById("status");
+        const overlay = document.getElementById("loadingOverlay");
+        const message = document.getElementById("loadingMessage");
 
-        if (status && text) {
-          status.textContent = text;
+        if (message && text) message.textContent = text;
+        if (overlay) {
+          overlay.classList.add("is-visible");
+          overlay.setAttribute("aria-hidden", "false");
         }
       }
 
@@ -679,7 +783,13 @@
 
         if (uiLockCount === 0) {
           document.body.style.pointerEvents = "auto";
-          document.body.style.opacity = "1";
+
+          const overlay = document.getElementById("loadingOverlay");
+
+          if (overlay) {
+            overlay.classList.remove("is-visible");
+            overlay.setAttribute("aria-hidden", "true");
+          }
         }
       }
 
