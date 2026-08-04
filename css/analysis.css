@@ -1,0 +1,385 @@
+main.analysis-screen {
+        padding: 8px;
+      }
+      .analysis-result-button {
+        width: 100%;
+        margin-top: 6px;
+      }
+
+      .analysis-view-card {
+        padding: 10px;
+        margin-bottom: 0;
+      }
+
+      .course-analysis-placeholder {
+        padding: 24px 14px;
+        border: 1px solid #dfe7e4;
+        border-radius: 12px;
+        background: #f5f8f7;
+        text-align: center;
+      }
+
+      .course-analysis-placeholder h3 {
+        margin: 0 0 8px;
+        color: #2f4f47;
+      }
+
+      .course-analysis-placeholder p {
+        margin: 4px 0;
+      }
+
+      .d-analysis-scroll {
+        width: 100%;
+        overflow: hidden;
+        padding: 2px 0 4px;
+      }
+
+      .d-overview-canvas {
+        display: block;
+        width: 100%;
+        height: auto;
+        border: 1px solid #d8dddb;
+        border-radius: 10px;
+        background: #fff;
+      }
+
+      .d-analysis-result-title {
+        margin: 5px 0 0;
+        color: #3f5d55;
+        font-size: 12px;
+        font-weight: bold;
+      }
+
+      .stick-header {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 4px;
+      }
+
+      .stick-header button {
+        flex: 0 0 auto;
+        min-height: 26px;
+        margin: 0;
+        padding: 3px 8px;
+        border-radius: 6px;
+        font-size: 11px;
+      }
+
+      .analysis-date-tabs {
+        display: flex;
+        flex: 1 1 auto;
+        gap: 4px;
+        min-width: 0;
+        overflow-x: auto;
+        padding: 1px 0 3px;
+        scrollbar-width: thin;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .stick-header .analysis-date-tab {
+        border: 1px solid #cdd9d5;
+        background: #f4f7f6;
+        color: #52605c;
+        white-space: nowrap;
+      }
+
+      .stick-header .analysis-date-tab.is-active {
+        border-color: #4f9c8a;
+        background: #4f9c8a;
+        color: #fff;
+      }
+
+      .stick-canvas-wrap {
+        width: 100%;
+        overflow: hidden;
+        border: 1px solid #d8dddb;
+        border-radius: 12px;
+        background: #fff;
+      }
+
+      #stickCanvas {
+        display: block;
+        width: 100%;
+        height: auto;
+        background: #fff;
+        touch-action: none;
+      }
+
+      .analysis-tabs {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2px;
+        margin-top: 4px;
+        padding: 2px;
+        border-radius: 7px;
+        background: #e9eeec;
+      }
+
+      .analysis-tab-button {
+        min-height: 26px;
+        margin: 0;
+        padding: 2px;
+        border: 0;
+        border-radius: 5px;
+        background: transparent;
+        color: #4d5754;
+        font-size: 11px;
+        font-weight: bold;
+      }
+
+      .analysis-tab-button.is-active {
+        background: #4f9c8a;
+        color: #fff;
+      }
+
+      .analysis-tab-panel {
+        display: none;
+        padding-top: 4px;
+      }
+
+      .analysis-tab-panel.is-active {
+        display: block;
+      }
+
+      .analysis-tab-placeholder {
+        margin: 0;
+        padding: 18px 8px;
+        border-radius: 8px;
+        background: #f5f7f6;
+        color: #777;
+        text-align: center;
+        font-size: 12px;
+      }
+
+      .basic-info-grid {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 6px;
+        padding-top: 4px;
+      }
+
+      .basic-info-item {
+        grid-column: span 2;
+        padding: 10px 3px;
+        border: 1px solid #dfe7e4;
+        border-radius: 9px;
+        background: #f5f7f6;
+        text-align: center;
+      }
+
+      .basic-info-item:nth-child(4),
+      .basic-info-item:nth-child(5) {
+        grid-column: span 3;
+      }
+
+      .basic-info-item:nth-child(3) {
+        border-color: #4f9c8a;
+        background: #e6f3ef;
+        box-shadow: 0 1px 4px rgba(79, 156, 138, 0.16);
+      }
+
+      .basic-info-label {
+        margin-bottom: 5px;
+        color: #56615e;
+        font-size: 11px;
+        font-weight: bold;
+      }
+
+      .basic-info-value {
+        color: #222;
+        font-size: 18px;
+        font-weight: bold;
+        line-height: 1.2;
+      }
+
+      .basic-info-unit {
+        margin-left: 2px;
+        color: #69736f;
+        font-size: 10px;
+        font-weight: normal;
+      }
+
+      .analysis-graph-card {
+        padding: 5px 8px 6px;
+        border: 1px solid #dfe7e4;
+        border-radius: 9px;
+        background: #fff;
+      }
+
+      .graph-selector-row {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 5px;
+        margin: 0 0 6px;
+      }
+
+      .graph-selector {
+        min-width: 0;
+        width: 128px;
+        height: 32px;
+        margin: 0;
+        padding: 2px 28px 2px 9px;
+        border: 1px solid #bdc9c5;
+        border-radius: 6px;
+        background: #fff;
+        color: #27312e;
+        font-size: 12px;
+        font-weight: bold;
+      }
+
+      .graph-part-selector {
+        width: 142px;
+      }
+
+      .graph-overlay-toggle {
+        flex: none;
+        min-width: 48px;
+        height: 32px;
+        margin: 0;
+        padding: 2px 8px;
+        border: 1px solid #4f9c8a;
+        border-radius: 16px;
+        background: #4f9c8a;
+        color: #fff;
+        font-size: 11px;
+        font-weight: bold;
+      }
+
+      .graph-overlay-toggle.is-off {
+        border-color: #aeb9b5;
+        background: #fff;
+        color: #69736f;
+      }
+
+      .graph-content-panel {
+        display: none;
+      }
+
+      .graph-content-panel.is-active {
+        display: block;
+      }
+
+      .graph-coming-soon {
+        margin: 0;
+        padding: 54px 8px;
+        border: 1px solid #dfe7e4;
+        border-radius: 9px;
+        background: #f5f7f6;
+        color: #777;
+        text-align: center;
+        font-size: 12px;
+      }
+
+      .analysis-graph-header {
+        display: flex;
+        align-items: baseline;
+        justify-content: flex-end;
+        margin: 0 4px -1px;
+      }
+
+      .analysis-graph-current {
+        display: inline-block;
+        color: #4f9c8a;
+        font-size: 12px;
+        font-weight: bold;
+        transform: translateY(3px);
+      }
+
+      #centerOfMassGraph,
+      #jointAngleGraph,
+      #jointContractionVelocityGraph {
+        display: block;
+        width: 100%;
+        max-width: 100%;
+        height: auto;
+        background: #fff;
+      }
+
+      .stick-controls {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 4px;
+        margin-top: 4px;
+      }
+
+      .stick-controls button {
+        flex: none;
+        width: 70px;
+        min-height: 32px;
+        margin: 0;
+        padding: 3px 4px;
+        font-size: 11px;
+        font-weight: bold;
+        border-radius: 6px;
+      }
+
+      .stick-controls .play-button {
+        width: 82px;
+        background: #4f9c8a;
+        font-size: 12px;
+      }
+
+      .stick-settings {
+        margin: 0 0 6px;
+        padding: 7px 9px;
+        border-radius: 8px;
+        background: #f5f7f6;
+      }
+
+      .stick-slider-group + .stick-slider-group {
+        margin-top: 6px;
+      }
+
+      .stick-slider-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1px;
+        font-size: 12px;
+        font-weight: bold;
+      }
+
+      .stick-slider {
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        accent-color: #4f9c8a;
+      }
+
+      .speed-scale {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 0;
+        color: #666;
+        font-size: 9px;
+        line-height: 1;
+      }
+
+      .stick-loop-button {
+        width: 100%;
+        min-height: 34px;
+        margin: 6px 0 0;
+        padding: 5px;
+        font-size: 12px;
+        background: #777;
+      }
+
+      .stick-loop-button.is-active {
+        background: #4f9c8a;
+      }
+
+      .stick-trajectory-button {
+        width: 100%;
+        min-height: 34px;
+        margin: 6px 0 0;
+        padding: 5px;
+        font-size: 12px;
+        background: #777;
+      }
+
+      .stick-trajectory-button.is-active {
+        background: #4f9c8a;
+      }
