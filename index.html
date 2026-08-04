@@ -247,20 +247,13 @@
       .graph-selector-row {
         display: flex;
         align-items: center;
-        justify-content: flex-end;
+        justify-content: flex-start;
         gap: 7px;
         margin: 0 0 6px;
       }
 
-      .graph-selector-label {
-        color: #65706c;
-        font-size: 10px;
-        font-weight: bold;
-        white-space: nowrap;
-      }
-
       .graph-selector {
-        width: 150px;
+        width: 132px;
         height: 32px;
         margin: 0;
         padding: 2px 28px 2px 9px;
@@ -270,6 +263,10 @@
         color: #27312e;
         font-size: 12px;
         font-weight: bold;
+      }
+
+      .graph-part-selector {
+        width: 142px;
       }
 
       .graph-content-panel {
@@ -1219,10 +1216,6 @@
           hidden
         >
           <div class="graph-selector-row">
-            <label class="graph-selector-label" for="analysisGraphSelect">
-              表示グラフ
-            </label>
-
             <select
               id="analysisGraphSelect"
               class="graph-selector"
@@ -1231,6 +1224,24 @@
               <option value="centerOfMass">重心高</option>
               <option value="jointAngle">関節角度</option>
               <option value="jointAngularVelocity">関節角速度</option>
+            </select>
+
+            <select
+              id="analysisGraphPartSelect"
+              class="graph-selector graph-part-selector"
+              onchange="switchAnalysisGraphPart(this.value)"
+              hidden
+            >
+              <option value="rightAnkle">足関節（右）</option>
+              <option value="rightKnee">膝関節（右）</option>
+              <option value="rightHip">股関節（右）</option>
+              <option value="rightElbow">肘関節（右）</option>
+              <option value="rightShoulder">肩関節（右）</option>
+              <option value="leftAnkle">足関節（左）</option>
+              <option value="leftKnee">膝関節（左）</option>
+              <option value="leftHip">股関節（左）</option>
+              <option value="leftElbow">肘関節（左）</option>
+              <option value="leftShoulder">肩関節（左）</option>
             </select>
           </div>
 
@@ -1355,6 +1366,14 @@
           return;
         }
 
+        const partSelect = document.getElementById(
+          "analysisGraphPartSelect",
+        );
+
+        if (partSelect) {
+          partSelect.hidden = graphName === "centerOfMass";
+        }
+
         for (const name of graphNames) {
           const panel = document.getElementById("analysisGraph-" + name);
           const isActive = name === graphName;
@@ -1370,6 +1389,13 @@
             centerOfMassGraph.draw();
           });
         }
+      }
+
+      function switchAnalysisGraphPart(partName) {
+        /*
+         * 関節角度・関節角速度のデータ実装時に、
+         * 選択された部位のグラフへ切り替える
+         */
       }
 
       // =======================
