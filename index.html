@@ -2400,14 +2400,13 @@ drawForwardLeanAngle(frame) {
   };
 
   /*
-   * 基礎情報B9が「右」なら右方向、
-   * 「左」なら左方向を水平基準とする
+   * スティックの座標は変更せず、
+   * 前傾角度の水平基準だけを切り替える
    */
-  const directionSign =
-    this.movementDirection === "左" ? -1 : 1;
-
   const horizontalPoint = {
-    x: hipCenter.x + directionSign,
+    x:
+      hipCenter.x +
+      (this.movementDirection === "左" ? -1 : 1),
     y: hipCenter.y,
   };
 
@@ -2422,11 +2421,11 @@ drawForwardLeanAngle(frame) {
 
   const context = this.context;
 
-  /*
-   * 薄い水平基準線
-   */
   context.save();
 
+  /*
+   * 地面と平行な補助線
+   */
   context.beginPath();
   context.moveTo(
     canvasHipCenter.x - 120,
@@ -2438,7 +2437,7 @@ drawForwardLeanAngle(frame) {
   );
 
   context.strokeStyle =
-    "rgba(79, 156, 138, 0.4)";
+    "rgba(79, 156, 138, 0.35)";
   context.lineWidth = 1.5;
   context.setLineDash([5, 4]);
   context.stroke();
@@ -2457,7 +2456,7 @@ drawForwardLeanAngle(frame) {
   );
 
   context.strokeStyle =
-    "rgba(255, 152, 0, 0.45)";
+    "rgba(255, 152, 0, 0.4)";
   context.lineWidth = 1.5;
   context.setLineDash([]);
   context.stroke();
@@ -2465,8 +2464,7 @@ drawForwardLeanAngle(frame) {
   context.restore();
 
   /*
-   * 進行方向の水平線と
-   * 大転子中点－頭頂線の間に扇形を表示
+   * 前傾角度の扇形
    */
   this.drawAngleSector(
     canvasHorizontalPoint,
