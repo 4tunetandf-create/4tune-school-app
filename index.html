@@ -121,6 +121,23 @@
         margin-bottom: 0;
       }
 
+      .course-analysis-placeholder {
+        padding: 24px 14px;
+        border: 1px solid #dfe7e4;
+        border-radius: 12px;
+        background: #f5f8f7;
+        text-align: center;
+      }
+
+      .course-analysis-placeholder h3 {
+        margin: 0 0 8px;
+        color: #2f4f47;
+      }
+
+      .course-analysis-placeholder p {
+        margin: 4px 0;
+      }
+
       .stick-header {
         display: flex;
         align-items: center;
@@ -1042,7 +1059,45 @@
       // =======================
       // 分析結果を開く
       // =======================
+      function findAnalysisContext(fileId) {
+        for (const member of CACHE.analysisMembers || []) {
+          const file = (member.files || []).find(function (item) {
+            return item.fileId === fileId;
+          });
+
+          if (file) {
+            return {
+              member: member,
+              file: file,
+              courseId: String(member.courseId || "").trim().toUpperCase(),
+            };
+          }
+        }
+
+        return null;
+      }
+
       async function openAnalysisResult(fileId) {
+        const analysisContext = findAnalysisContext(fileId);
+
+        if (!analysisContext) {
+          alert("分析結果の会員情報を確認できませんでした");
+          return;
+        }
+
+        if (["D001", "D002"].includes(analysisContext.courseId)) {
+          renderDAnalysisPlaceholder(analysisContext);
+          return;
+        }
+
+        if (!["S001", "S002"].includes(analysisContext.courseId)) {
+          alert(
+            "会員マスタD列のコースIDを確認してください\n\n現在の設定：" +
+              (analysisContext.courseId || "空欄"),
+          );
+          return;
+        }
+
         /*
          * 前のビューアが動いていた場合は停止
          */
@@ -1766,6 +1821,45 @@
         if (stickViewer) {
           stickViewer.toggleLoop();
         }
+      }
+
+      // =======================
+      // Dコース分析画面（構築用）
+      // =======================
+      function renderDAnalysisPlaceholder(analysisContext) {
+        if (stickViewer) {
+          stickViewer.destroy();
+          stickViewer = null;
+        }
+
+        centerOfMassGraph = null;
+        jointAngleGraph = null;
+        jointContractionVelocityGraph = null;
+        currentAnalysisData = null;
+
+        document.getElementById("status").classList.add("analysis-screen");
+        document.getElementById("status").innerHTML = `
+          <section class="card analysis-view-card">
+            <div class="stick-header">
+              <button
+                class="secondary"
+                type="button"
+                onclick="closeAnalysisResult()"
+              >
+                戻る
+              </button>
+            </div>
+
+            <div class="course-analysis-placeholder">
+              <h3>Dコース分析</h3>
+              <p><strong>${escapeHtml(analysisContext.member.memberName)}</strong></p>
+              <p>${escapeHtml(analysisContext.file.displayDate)}</p>
+              <p class="muted">
+                ${escapeHtml(analysisContext.courseId)}用の分析画面を構築していきます
+              </p>
+            </div>
+          </section>
+        `;
       }
 
       // =======================
