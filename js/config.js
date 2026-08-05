@@ -1,5 +1,5 @@
 const GAS_URL =
-        "https://script.google.com/macros/s/AKfycbzjPkLxYBJeBGk9yehLHfUUMhJmQUfxNiaVHyNqjd9MeAqkWOIINjIUBXsxIEpwqa78Mw/exec";
+        "https://script.google.com/macros/s/AKfycbwD4iBmXPlOj9K8jCq8R5zQ7KoKbhtaJD6z9-25mXUr2wb8TgpkZ1hn0Zgm7t7LkEvgVw/exec";
 
       const LIFF_ID = "2010350476-xCTsckal";
 
