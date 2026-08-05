@@ -23,7 +23,9 @@ const ADMIN_ROLE = {
         profile: null,
         members: null,
         schedules: null,
+
         isAdmin: null,
+        admin: null,
 
         // 分析ファイル一覧
         analysisMembers: null,
