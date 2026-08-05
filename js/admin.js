@@ -82,22 +82,22 @@ function showAdminHome() {
             </span>
           </button>
 
-          <button
-            class="admin-menu-button"
-            type="button"
-            onclick="openAdminSection('absence')"
-          >
+<button
+  class="admin-menu-button"
+  type="button"
+  onclick="showAdminAttendance()"
+>
             <span class="admin-menu-icon">
               📝
             </span>
 
-            <span class="admin-menu-label">
-              欠席
-            </span>
+<span class="admin-menu-label">
+  出欠・振替
+</span>
 
-            <span class="admin-menu-description">
-              欠席一覧・登録・変更
-            </span>
+<span class="admin-menu-description">
+  出席・欠席・振替参加を管理
+</span>
           </button>
 
           <button
@@ -195,9 +195,6 @@ function openAdminSection(
   }
 
   const sectionLabels = {
-    absence:
-      "欠席管理",
-
     payment:
       "月謝管理",
 
