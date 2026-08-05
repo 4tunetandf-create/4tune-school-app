@@ -132,6 +132,9 @@ if (
       // ホーム画面
       // =======================
       function renderHome() {
+CACHE.analysisViewMode =
+  "member";
+            
 document
   .getElementById("status")
   .classList.remove(
