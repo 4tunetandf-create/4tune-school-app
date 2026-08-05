@@ -1,0 +1,343 @@
+.admin-attendance-page {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-rows:
+    auto
+    auto
+    auto
+    auto
+    minmax(0, 1fr)
+    auto;
+  gap: 6px;
+  width: 100%;
+  height: calc(100vh - 20px);
+  height: calc(100dvh - 20px);
+  overflow: hidden;
+}
+
+.admin-attendance-toolbar {
+  display: grid;
+  grid-template-columns: 54px 1fr 54px;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-attendance-toolbar h2 {
+  margin: 0;
+  color: #31584f;
+  font-size: 18px;
+  text-align: center;
+}
+
+.admin-attendance-back {
+  width: 54px;
+  min-height: 34px;
+  margin: 0;
+  padding: 5px;
+  background: #777;
+  font-size: 11px;
+}
+
+.admin-attendance-month {
+  display: grid;
+  grid-template-columns: 38px 1fr 38px;
+  align-items: center;
+  gap: 5px;
+}
+
+.admin-attendance-month button {
+  width: 38px;
+  height: 33px;
+  margin: 0;
+  padding: 0;
+}
+
+.admin-attendance-month-label {
+  color: #31584f;
+  font-size: 15px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.admin-attendance-course-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 7px;
+  background: #e9eeec;
+}
+
+.admin-attendance-course-tab {
+  min-height: 29px;
+  margin: 0;
+  padding: 3px;
+  background: transparent;
+  color: #4d5754;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.admin-attendance-course-tab.is-active {
+  background: #4f9c8a;
+  color: #fff;
+}
+
+.admin-attendance-date-tabs {
+  display: flex;
+  gap: 4px;
+  min-height: 34px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.admin-attendance-date-tab {
+  flex: 0 0 auto;
+  min-height: 31px;
+  margin: 0;
+  padding: 4px 8px;
+  border: 1px solid #cdd9d5;
+  background: #f4f7f6;
+  color: #52605c;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.admin-attendance-date-tab.is-active {
+  border-color: #4f9c8a;
+  background: #4f9c8a;
+  color: #fff;
+}
+
+.admin-attendance-date-tab.is-transfer {
+  border-color: #d9b87f;
+}
+
+.admin-attendance-date-tab.is-transfer.is-active {
+  background: #b2761d;
+  color: #fff;
+}
+
+.admin-attendance-date-tab.is-closed {
+  border-color: #777f82;
+  background: #d5dad8;
+  color: #303836;
+}
+
+.admin-attendance-date-tab.is-closed.is-active {
+  background: #555d5a;
+  color: #fff;
+}
+
+.admin-attendance-content {
+  display: grid;
+  grid-template-rows:
+    auto
+    auto
+    minmax(0, 1fr);
+  gap: 6px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.admin-attendance-schedule-info {
+  padding: 7px 9px;
+  border-left: 4px solid #4f9c8a;
+  border-radius: 7px;
+  background: #fff;
+}
+
+.admin-attendance-schedule-info.is-transfer {
+  border-left-color: #c68b2c;
+  background: #fff8ec;
+}
+
+.admin-attendance-schedule-info.is-closed {
+  border-left-color: #555d5a;
+  background: #d5dad8;
+}
+
+.admin-attendance-schedule-title {
+  margin: 0;
+  color: #27312e;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.admin-attendance-schedule-detail {
+  margin: 3px 0 0;
+  color: #626d69;
+  font-size: 9px;
+}
+
+.admin-attendance-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+}
+
+.admin-attendance-actions button {
+  min-height: 31px;
+  margin: 0;
+  padding: 4px;
+  font-size: 10px;
+}
+
+.admin-all-present {
+  background: #4f9c8a;
+}
+
+.admin-all-absent {
+  background: #777f82;
+}
+
+.admin-attendance-roster {
+  min-height: 0;
+  overflow-y: auto;
+  border: 1px solid #dce5e2;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.admin-attendance-member {
+  display: grid;
+  grid-template-columns:
+    28px
+    minmax(0, 1fr)
+    auto;
+  align-items: center;
+  gap: 5px;
+  min-height: 43px;
+  padding: 4px 7px;
+  border-bottom: 1px solid #edf1ef;
+}
+
+.admin-attendance-member:last-child {
+  border-bottom: 0;
+}
+
+.admin-attendance-member.is-disabled {
+  background: #f1f3f2;
+  color: #8a918f;
+}
+
+.admin-attendance-checkbox {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: #4f9c8a;
+}
+
+.admin-attendance-member-name {
+  min-width: 0;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.admin-attendance-member-class {
+  display: block;
+  margin-top: 1px;
+  color: #75807c;
+  font-size: 8px;
+  font-weight: normal;
+}
+
+.admin-attendance-balance {
+  padding: 3px 6px;
+  border-radius: 999px;
+  background: #edf5f2;
+  color: #31584f;
+  font-size: 9px;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.admin-attendance-balance.is-zero {
+  background: #eee;
+  color: #777;
+}
+
+.admin-attendance-empty {
+  padding: 30px 10px;
+  color: #777;
+  text-align: center;
+}
+
+.admin-attendance-update {
+  width: 100%;
+  min-height: 39px;
+  margin: 0;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+
+/* 確認画面 */
+
+.admin-attendance-confirm {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: none;
+  place-items: center;
+  padding: 15px;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.admin-attendance-confirm.is-visible {
+  display: grid;
+}
+
+.admin-attendance-confirm-card {
+  box-sizing: border-box;
+  width: min(100%, 440px);
+  max-height: 85vh;
+  padding: 16px;
+  overflow-y: auto;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.admin-attendance-confirm-card h3 {
+  margin: 0 0 10px;
+  color: #31584f;
+  font-size: 17px;
+}
+
+.admin-attendance-confirm-summary {
+  margin: 0 0 10px;
+  padding: 8px;
+  border-radius: 7px;
+  background: #f1f6f4;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.admin-attendance-confirm-list {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 12px;
+}
+
+.admin-attendance-confirm-list li {
+  margin-bottom: 5px;
+}
+
+.admin-attendance-confirm-change {
+  color: #31584f;
+  font-size: 10px;
+  font-weight: bold;
+}
+
+.admin-attendance-confirm-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.admin-attendance-confirm-buttons button {
+  width: 100%;
+  min-height: 40px;
+  margin: 0;
+}
