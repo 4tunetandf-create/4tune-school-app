@@ -1,0 +1,156 @@
+.admin-analysis-page {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-rows:
+    auto
+    auto
+    minmax(0, 1fr);
+  gap: 7px;
+  width: 100%;
+  height: calc(100vh - 20px);
+  height: calc(100dvh - 20px);
+  overflow: hidden;
+}
+
+.admin-analysis-toolbar {
+  display: grid;
+  grid-template-columns: 54px 1fr 54px;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-analysis-toolbar h2 {
+  margin: 0;
+  color: #31584f;
+  font-size: 18px;
+  text-align: center;
+}
+
+.admin-analysis-back {
+  width: 54px;
+  min-height: 34px;
+  margin: 0;
+  padding: 5px;
+  background: #777;
+  font-size: 11px;
+}
+
+.admin-analysis-course-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 7px;
+  background: #e9eeec;
+}
+
+.admin-analysis-course-tab {
+  min-height: 30px;
+  margin: 0;
+  padding: 3px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: #4d5754;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.admin-analysis-course-tab.is-active {
+  background: #4f9c8a;
+  color: #fff;
+}
+
+.admin-analysis-member-list {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  align-content: start;
+  gap: 7px;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.admin-analysis-member-card {
+  box-sizing: border-box;
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid #d8e3df;
+  border-left: 4px solid #4f9c8a;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.admin-analysis-member-card.is-dash {
+  border-left-color: #32788d;
+}
+
+.admin-analysis-member-name {
+  overflow: hidden;
+  margin: 0;
+  color: #2d5047;
+  font-size: 13px;
+  font-weight: bold;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-analysis-member-class {
+  margin: 2px 0 6px;
+  color: #75807c;
+  font-size: 9px;
+}
+
+.admin-analysis-file-list {
+  display: grid;
+  gap: 4px;
+}
+
+.admin-analysis-file-button {
+  width: 100%;
+  min-height: 31px;
+  margin: 0;
+  padding: 4px 5px;
+  background: #4f9c8a;
+  font-size: 10px;
+}
+
+.admin-analysis-member-card.is-dash
+  .admin-analysis-file-button {
+  background: #32788d;
+}
+
+.admin-analysis-no-file {
+  margin: 0;
+  padding: 10px 3px;
+  border-radius: 6px;
+  background: #f3f5f4;
+  color: #818986;
+  font-size: 9px;
+  text-align: center;
+}
+
+.admin-analysis-empty {
+  grid-column: 1 / -1;
+  padding: 35px 10px;
+  border: 1px solid #dce5e2;
+  border-radius: 9px;
+  background: #fff;
+  color: #777;
+  text-align: center;
+}
+
+@media (max-width: 360px) {
+  .admin-analysis-member-list {
+    gap: 5px;
+  }
+
+  .admin-analysis-member-card {
+    padding: 6px;
+  }
+
+  .admin-analysis-member-name {
+    font-size: 12px;
+  }
+}
