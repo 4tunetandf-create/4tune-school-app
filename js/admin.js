@@ -100,23 +100,27 @@ function showAdminHome() {
 </span>
           </button>
 
-          <button
-            class="admin-menu-button"
-            type="button"
-            onclick="openAdminSection('payment')"
-          >
-            <span class="admin-menu-icon">
-              💴
-            </span>
+<button
+  class="
+    admin-menu-button
+    is-pending
+  "
+  type="button"
+  disabled
+  aria-disabled="true"
+>
+  <span class="admin-menu-icon">
+    💴
+  </span>
 
-            <span class="admin-menu-label">
-              月謝
-            </span>
+  <span class="admin-menu-label">
+    月謝
+  </span>
 
-            <span class="admin-menu-description">
-              支払い状況の確認・変更
-            </span>
-          </button>
+  <span class="admin-menu-description">
+    会計方針を検討中
+  </span>
+</button>
 
           <button
             class="
