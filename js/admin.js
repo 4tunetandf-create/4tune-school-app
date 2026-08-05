@@ -64,11 +64,11 @@ function showAdminHome() {
 
         <div class="admin-menu-grid">
 
-          <button
-            class="admin-menu-button"
-            type="button"
-            onclick="openAdminSection('schedule')"
-          >
+<button
+  class="admin-menu-button"
+  type="button"
+  onclick="showAdminSchedule()"
+>
             <span class="admin-menu-icon">
               📅
             </span>
@@ -194,18 +194,7 @@ function openAdminSection(
     return;
   }
 
-  if (
-  sectionName ===
-  "schedule"
-) {
-  showAdminSchedule();
-  return;
-}
-
   const sectionLabels = {
-    schedule:
-      "スケジュール管理",
-
     absence:
       "欠席管理",
 
