@@ -150,15 +150,13 @@ function renderAdminSchedule() {
           ) &&
           String(schedule.classId)
             .toUpperCase()
-            .startsWith(courseGroup)
+            .startsWith(
+              courseGroup,
+            )
         );
       },
     );
 
-  /*
-   * 通常・雨天・休講を上部、
-   * 振替可を下部へ配置
-   */
   const normalSchedules =
     schedules.filter(
       function (schedule) {
@@ -202,6 +200,38 @@ function renderAdminSchedule() {
         </h2>
 
         <span></span>
+
+      </div>
+
+      <button
+        class="admin-schedule-add"
+        type="button"
+        onclick="showAdminScheduleForm()"
+      >
+        ＋ 新しい予定を登録
+      </button>
+
+      <div class="admin-schedule-month">
+
+        <button
+          type="button"
+          aria-label="前の月"
+          onclick="changeAdminScheduleMonth(-1)"
+        >
+          ◀
+        </button>
+
+        <div class="admin-schedule-month-label">
+          ${year}年${month}月
+        </div>
+
+        <button
+          type="button"
+          aria-label="次の月"
+          onclick="changeAdminScheduleMonth(1)"
+        >
+          ▶
+        </button>
 
       </div>
 
@@ -251,39 +281,7 @@ function renderAdminSchedule() {
 
       </div>
 
-      <button
-        class="admin-schedule-add"
-        type="button"
-        onclick="showAdminScheduleForm()"
-      >
-        ＋ 新しい予定を登録
-      </button>
-
-      <div class="admin-schedule-month">
-
-        <button
-          type="button"
-          aria-label="前の月"
-          onclick="changeAdminScheduleMonth(-1)"
-        >
-          ◀
-        </button>
-
-        <div class="admin-schedule-month-label">
-          ${year}年${month}月
-        </div>
-
-        <button
-          type="button"
-          aria-label="次の月"
-          onclick="changeAdminScheduleMonth(1)"
-        >
-          ▶
-        </button>
-
-      </div>
-
-      <div class="admin-schedule-scroll">
+      <div class="admin-schedule-columns">
 
         ${createAdminScheduleSectionHtml(
           "通常レッスン",
@@ -326,7 +324,16 @@ function createAdminScheduleSectionHtml(
       `;
 
   return `
-    <section class="admin-schedule-section">
+    <section
+      class="
+        admin-schedule-section
+        ${
+          isTransfer
+            ? "is-transfer"
+            : ""
+        }
+      "
+    >
 
       <h3
         class="
@@ -375,36 +382,41 @@ function createAdminScheduleItemHtml(
       "
     >
 
-      <div class="admin-schedule-date">
+      <div class="admin-schedule-item-head">
+
+        <span class="admin-schedule-date">
+          ${escapeHtml(
+            formatAdminScheduleDate(
+              schedule.date,
+            ),
+          )}
+        </span>
+
+        <span class="admin-schedule-type">
+          ${escapeHtml(schedule.type)}
+        </span>
+
+      </div>
+
+      <div class="admin-schedule-class">
         ${escapeHtml(
-          formatAdminScheduleDate(
-            schedule.date,
-          ),
+          schedule.className ||
+          schedule.classId,
         )}
       </div>
 
-      <div class="admin-schedule-content">
+      <p class="admin-schedule-detail">
+        ${escapeHtml(schedule.startTime)}
+        ～
+        ${escapeHtml(schedule.endTime)}
+      </p>
 
-        <div class="admin-schedule-class">
-          ${escapeHtml(
-            schedule.className ||
-            schedule.classId,
-          )}
-
-          <span class="admin-schedule-type">
-            ${escapeHtml(schedule.type)}
-          </span>
-        </div>
-
-        <p class="admin-schedule-detail">
-          ${escapeHtml(schedule.startTime)}
-          ～
-          ${escapeHtml(schedule.endTime)}
-          ／
-          ${escapeHtml(schedule.place)}
-        </p>
-
-      </div>
+      <p
+        class="admin-schedule-detail"
+        title="${escapeHtml(schedule.place)}"
+      >
+        ${escapeHtml(schedule.place)}
+      </p>
 
       <button
         class="admin-schedule-edit"
