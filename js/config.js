@@ -3,6 +3,22 @@ const GAS_URL =
 
       const LIFF_ID = "2010350476-xCTsckal";
 
+const TIME_ZONE = "Asia/Tokyo";
+
+// 動作分析結果全体の親フォルダ
+const ANALYSIS_PARENT_FOLDER_ID =
+  "1Nhq7YKCeIpx4pwxk3OxaEdvXWTNRiWVu";
+
+// 管理者マスタ
+const ADMIN_SHEET_NAME =
+  "管理者マスタ";
+
+// 管理者権限
+const ADMIN_ROLE = {
+  OWNER: "owner",
+  ADMIN: "admin",
+};
+
       const CACHE = {
         profile: null,
         members: null,
