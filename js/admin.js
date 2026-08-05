@@ -128,7 +128,7 @@ function showAdminHome() {
               admin-analysis-button
             "
             type="button"
-            onclick="openAdminSection('analysis')"
+onclick="showAdminAnalysis()"
           >
             <span class="admin-menu-icon">
               📊
@@ -183,9 +183,6 @@ function openAdminSection(
   const sectionLabels = {
     payment:
       "月謝管理",
-
-    analysis:
-      "全会員の分析結果",
   };
 
   const label =
