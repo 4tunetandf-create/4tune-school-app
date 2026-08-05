@@ -7,7 +7,7 @@
     auto
     auto
     minmax(0, 1fr);
-  gap: 7px;
+  gap: 6px;
   width: 100%;
   height: calc(100vh - 20px);
   height: calc(100dvh - 20px);
@@ -37,40 +37,18 @@
   font-size: 11px;
 }
 
-.admin-course-tabs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 3px;
-  padding: 3px;
-  border-radius: 9px;
-  background: #dfe7e4;
-}
-
-.admin-course-tab {
-  min-height: 36px;
-  margin: 0;
-  padding: 5px 8px;
-  background: transparent;
-  color: #52605c;
-  font-size: 12px;
-  font-weight: bold;
-}
-
-.admin-course-tab.is-active {
-  background: #4f9c8a;
-  color: #fff;
-  box-shadow:
-    0 2px 5px
-    rgba(37, 80, 70, 0.15);
-}
-
 .admin-schedule-add {
   width: 100%;
-  min-height: 36px;
+  min-height: 35px;
   margin: 0;
-  padding: 6px 10px;
+  padding: 5px 10px;
   font-size: 12px;
 }
+
+
+/* =======================
+   年月切り替え
+   ======================= */
 
 .admin-schedule-month {
   display: grid;
@@ -81,9 +59,10 @@
 
 .admin-schedule-month button {
   width: 38px;
-  height: 34px;
+  height: 33px;
   margin: 0;
   padding: 0;
+  font-size: 12px;
 }
 
 .admin-schedule-month-label {
@@ -93,32 +72,81 @@
   text-align: center;
 }
 
-.admin-schedule-scroll {
+
+/* =======================
+   ダッシュ・スプリントタブ
+   分析画面のタブと同じ形
+   ======================= */
+
+.admin-course-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 7px;
+  background: #e9eeec;
+}
+
+.admin-course-tab {
+  min-height: 29px;
+  margin: 0;
+  padding: 3px 5px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: #4d5754;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.admin-course-tab.is-active {
+  background: #4f9c8a;
+  color: #fff;
+}
+
+
+/* =======================
+   通常・振替の2分割
+   ======================= */
+
+.admin-schedule-columns {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(0, 1fr);
+  gap: 6px;
   min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-width: thin;
+  overflow: hidden;
 }
 
 .admin-schedule-section {
-  margin-bottom: 8px;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-rows:
+    auto
+    minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid #dce5e2;
+  border-radius: 8px;
+  background: #f7faf9;
 }
 
-.admin-schedule-section:last-child {
-  margin-bottom: 0;
+.admin-schedule-section.is-transfer {
+  border-color: #ead9bb;
+  background: #fffaf2;
 }
 
 .admin-schedule-section-title {
-  position: sticky;
-  top: 0;
-  z-index: 1;
   margin: 0;
-  padding: 5px 8px;
-  border-radius: 7px 7px 0 0;
+  padding: 6px 4px;
   background: #e5f2ee;
   color: #31584f;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: bold;
+  text-align: center;
 }
 
 .admin-schedule-section-title.is-transfer {
@@ -126,87 +154,79 @@
   color: #805617;
 }
 
+
+/* 5件程度まではそのまま表示
+   多い場合のみ各列でスクロール */
 .admin-schedule-list {
   display: grid;
-  gap: 3px;
-  padding: 3px 0;
+  grid-auto-rows: min-content;
+  align-content: start;
+  gap: 4px;
+  min-height: 0;
+  padding: 4px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
 }
 
 .admin-schedule-empty {
-  padding: 12px 8px;
-  border: 1px solid #dce5e2;
-  border-radius: 0 0 7px 7px;
-  background: #fff;
+  padding: 18px 4px;
   color: #77817e;
-  font-size: 11px;
+  font-size: 10px;
   text-align: center;
 }
 
+
+/* =======================
+   予定1件
+   ======================= */
+
 .admin-schedule-item {
-  display: grid;
-  grid-template-columns:
-    minmax(62px, auto)
-    minmax(0, 1fr)
-    42px;
-  align-items: center;
-  gap: 6px;
-  min-height: 48px;
-  padding: 5px 6px;
+  box-sizing: border-box;
+  min-width: 0;
+  padding: 5px;
   border: 1px solid #d8e3df;
-  border-left: 4px solid #4f9c8a;
-  border-radius: 7px;
+  border-left: 3px solid #4f9c8a;
+  border-radius: 6px;
   background: #fff;
 }
 
 .admin-schedule-item.is-transfer {
+  border-color: #ead9bb;
   border-left-color: #c68b2c;
-  background: #fffaf1;
+  background: #fff;
 }
 
 .admin-schedule-item.is-closed {
+  border-color: #d5d9da;
   border-left-color: #777f82;
   background: #f1f3f3;
 }
 
-.admin-schedule-date {
-  color: #2d5047;
-  font-size: 11px;
-  font-weight: bold;
-  line-height: 1.25;
-}
-
-.admin-schedule-content {
+.admin-schedule-item-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 3px;
   min-width: 0;
 }
 
-.admin-schedule-class {
-  overflow: hidden;
-  color: #27312e;
-  font-size: 12px;
-  font-weight: bold;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.admin-schedule-detail {
-  overflow: hidden;
-  margin: 2px 0 0;
-  color: #68736f;
+.admin-schedule-date {
+  color: #2d5047;
   font-size: 10px;
-  line-height: 1.25;
-  text-overflow: ellipsis;
+  font-weight: bold;
+  line-height: 1.2;
   white-space: nowrap;
 }
 
 .admin-schedule-type {
-  display: inline-block;
-  margin-left: 4px;
-  padding: 1px 5px;
+  flex: 0 0 auto;
+  padding: 1px 4px;
   border-radius: 999px;
   background: #e7f3f0;
   color: #356d60;
-  font-size: 8px;
-  vertical-align: 1px;
+  font-size: 7px;
+  font-weight: bold;
 }
 
 .admin-schedule-item.is-transfer
@@ -221,14 +241,40 @@
   color: #555d61;
 }
 
-.admin-schedule-edit {
-  width: 42px;
-  min-height: 30px;
-  margin: 0;
-  padding: 4px 2px;
-  background: #54756d;
+.admin-schedule-class {
+  overflow: hidden;
+  margin-top: 3px;
+  color: #27312e;
   font-size: 10px;
+  font-weight: bold;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
+
+.admin-schedule-detail {
+  overflow: hidden;
+  margin: 2px 0 0;
+  color: #68736f;
+  font-size: 8px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-schedule-edit {
+  width: 100%;
+  min-height: 24px;
+  margin: 4px 0 0;
+  padding: 2px;
+  background: #54756d;
+  font-size: 9px;
+}
+
+
+/* =======================
+   登録・編集フォーム
+   ======================= */
 
 .admin-schedule-form-card {
   max-width: 520px;
