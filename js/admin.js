@@ -119,24 +119,6 @@ function showAdminHome() {
           </button>
 
           <button
-            class="admin-menu-button"
-            type="button"
-            onclick="openAdminSection('members')"
-          >
-            <span class="admin-menu-icon">
-              👥
-            </span>
-
-            <span class="admin-menu-label">
-              保護者・会員
-            </span>
-
-            <span class="admin-menu-description">
-              登録情報の確認・管理
-            </span>
-          </button>
-
-          <button
             class="
               admin-menu-button
               admin-analysis-button
@@ -197,9 +179,6 @@ function openAdminSection(
   const sectionLabels = {
     payment:
       "月謝管理",
-
-    members:
-      "保護者・会員管理",
 
     analysis:
       "全会員の分析結果",
