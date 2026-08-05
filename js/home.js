@@ -132,7 +132,13 @@ if (
       // ホーム画面
       // =======================
       function renderHome() {
-        document.getElementById("status").classList.remove("analysis-screen", "schedule-screen");
+document
+  .getElementById("status")
+  .classList.remove(
+    "analysis-screen",
+    "schedule-screen",
+    "admin-screen",
+  );
         document.getElementById("status").classList.add("home-screen");
 
         const membersHtml = CACHE.members.length
@@ -152,9 +158,19 @@ if (
         `;
 
         const analysisHtml = createAnalysisListHtml();
-        const adminButtonHtml = CACHE.isAdmin
-          ? `<button class="admin-link-button" onclick="showAdminPlaceholder()">管理者画面</button>`
-          : "";
+const adminButtonHtml =
+  CACHE.isAdmin &&
+  CACHE.admin
+    ? `
+      <button
+        class="admin-link-button"
+        type="button"
+        onclick="showAdminHome()"
+      >
+        管理者画面
+      </button>
+    `
+    : "";
 
         document.getElementById("status").innerHTML = `
 
