@@ -12,18 +12,30 @@
   overflow: hidden;
 }
 
+
+/* =======================
+   上部ツールバー
+======================= */
+
 .admin-analysis-toolbar {
   display: grid;
-  grid-template-columns: 54px 1fr 54px;
+  grid-template-columns:
+    54px
+    minmax(0, 1fr)
+    54px;
   align-items: center;
   gap: 6px;
 }
 
 .admin-analysis-toolbar h2 {
+  overflow: hidden;
   margin: 0;
   color: #31584f;
   font-size: 18px;
+  line-height: 1.25;
   text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .admin-analysis-back {
@@ -35,24 +47,31 @@
   font-size: 11px;
 }
 
+
+/* =======================
+   コース切り替えタブ
+======================= */
+
 .admin-analysis-course-tabs {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2px;
-  padding: 2px;
-  border-radius: 7px;
+  grid-template-columns:
+    1fr
+    1fr;
+  gap: 3px;
+  padding: 3px;
+  border-radius: 8px;
   background: #e9eeec;
 }
 
 .admin-analysis-course-tab {
-  min-height: 30px;
+  min-height: 32px;
   margin: 0;
-  padding: 3px;
+  padding: 4px 6px;
   border: 0;
-  border-radius: 5px;
+  border-radius: 6px;
   background: transparent;
   color: #4d5754;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: bold;
 }
 
@@ -61,30 +80,87 @@
   color: #fff;
 }
 
+
+/* =======================
+   会員一覧
+======================= */
+
 .admin-analysis-member-list {
   display: grid;
+
+  /*
+   * 横2列
+   */
   grid-template-columns:
     repeat(2, minmax(0, 1fr));
+
+  /*
+   * 縦3行
+   * 4行目以降も同じ高さで追加される
+   */
+  grid-template-rows:
+    repeat(3, minmax(0, 1fr));
+
+  grid-auto-rows:
+    calc((100% - 14px) / 3);
+
   align-content: start;
   gap: 7px;
   min-height: 0;
+  padding-right: 2px;
+  overflow-x: hidden;
   overflow-y: auto;
+  overscroll-behavior: contain;
   scrollbar-width: thin;
+  scrollbar-color:
+    #9dbbb3
+    #edf2f0;
 }
+
+.admin-analysis-member-list::-webkit-scrollbar {
+  width: 5px;
+}
+
+.admin-analysis-member-list::-webkit-scrollbar-track {
+  border-radius: 5px;
+  background: #edf2f0;
+}
+
+.admin-analysis-member-list::-webkit-scrollbar-thumb {
+  border-radius: 5px;
+  background: #9dbbb3;
+}
+
+
+/* =======================
+   会員カード
+======================= */
 
 .admin-analysis-member-card {
   box-sizing: border-box;
+  display: grid;
+  grid-template-rows:
+    auto
+    auto
+    minmax(0, 1fr);
   min-width: 0;
-  padding: 8px;
+  min-height: 0;
+  padding: 7px;
   border: 1px solid #d8e3df;
   border-left: 4px solid #4f9c8a;
   border-radius: 8px;
   background: #fff;
+  overflow: hidden;
 }
 
 .admin-analysis-member-card.is-dash {
   border-left-color: #32788d;
 }
+
+
+/* =======================
+   会員情報
+======================= */
 
 .admin-analysis-member-name {
   overflow: hidden;
@@ -92,28 +168,71 @@
   color: #2d5047;
   font-size: 13px;
   font-weight: bold;
+  line-height: 1.25;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .admin-analysis-member-class {
-  margin: 2px 0 6px;
+  overflow: hidden;
+  margin: 2px 0 5px;
   color: #75807c;
   font-size: 9px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
+
+
+/* =======================
+   分析結果の日付一覧
+======================= */
 
 .admin-analysis-file-list {
   display: grid;
+  grid-auto-rows: min-content;
+  align-content: start;
   gap: 4px;
+  min-height: 0;
+  padding-right: 2px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color:
+    #9dbbb3
+    #edf2f0;
 }
 
+.admin-analysis-file-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.admin-analysis-file-list::-webkit-scrollbar-track {
+  border-radius: 4px;
+  background: #edf2f0;
+}
+
+.admin-analysis-file-list::-webkit-scrollbar-thumb {
+  border-radius: 4px;
+  background: #9dbbb3;
+}
+
+
+/* =======================
+   分析結果ボタン
+======================= */
+
 .admin-analysis-file-button {
+  box-sizing: border-box;
   width: 100%;
-  min-height: 31px;
+  min-height: 29px;
   margin: 0;
   padding: 4px 5px;
+  border-radius: 6px;
   background: #4f9c8a;
   font-size: 10px;
+  line-height: 1.2;
 }
 
 .admin-analysis-member-card.is-dash
@@ -121,15 +240,26 @@
   background: #32788d;
 }
 
+
+/* =======================
+   分析結果なし
+======================= */
+
 .admin-analysis-no-file {
   margin: 0;
-  padding: 10px 3px;
+  padding: 9px 3px;
   border-radius: 6px;
   background: #f3f5f4;
   color: #818986;
   font-size: 9px;
+  line-height: 1.3;
   text-align: center;
 }
+
+
+/* =======================
+   対象会員なし
+======================= */
 
 .admin-analysis-empty {
   grid-column: 1 / -1;
@@ -141,16 +271,94 @@
   text-align: center;
 }
 
-@media (max-width: 360px) {
+
+/* =======================
+   小さい画面
+======================= */
+
+@media (max-width: 480px) {
+  .admin-analysis-page {
+    gap: 5px;
+    height: calc(100vh - 12px);
+    height: calc(100dvh - 12px);
+  }
+
+  .admin-analysis-toolbar {
+    grid-template-columns:
+      48px
+      minmax(0, 1fr)
+      48px;
+    gap: 4px;
+  }
+
+  .admin-analysis-toolbar h2 {
+    font-size: 16px;
+  }
+
+  .admin-analysis-back {
+    width: 48px;
+    min-height: 31px;
+    padding: 4px;
+    font-size: 10px;
+  }
+
+  .admin-analysis-course-tab {
+    min-height: 29px;
+    padding: 3px;
+    font-size: 11px;
+  }
+
   .admin-analysis-member-list {
     gap: 5px;
+    grid-auto-rows:
+      calc((100% - 10px) / 3);
   }
 
   .admin-analysis-member-card {
     padding: 6px;
+    border-left-width: 3px;
   }
 
   .admin-analysis-member-name {
     font-size: 12px;
+  }
+
+  .admin-analysis-member-class {
+    margin-bottom: 4px;
+    font-size: 8px;
+  }
+
+  .admin-analysis-file-list {
+    gap: 3px;
+  }
+
+  .admin-analysis-file-button {
+    min-height: 27px;
+    padding: 3px 4px;
+    font-size: 9px;
+  }
+}
+
+
+/* =======================
+   特に横幅が狭い画面
+======================= */
+
+@media (max-width: 360px) {
+  .admin-analysis-member-list {
+    column-gap: 4px;
+  }
+
+  .admin-analysis-member-card {
+    padding: 5px;
+  }
+
+  .admin-analysis-member-name {
+    font-size: 11px;
+  }
+
+  .admin-analysis-file-button {
+    min-height: 26px;
+    font-size: 8px;
   }
 }
