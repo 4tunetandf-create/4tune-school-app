@@ -74,12 +74,16 @@ main.admin-screen {
   display: grid;
   grid-template-columns:
     repeat(2, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
   gap: 8px;
 }
 
 .admin-menu-button {
+  box-sizing: border-box;
   display: flex;
-  min-height: 84px;
+  width: 100%;
+  min-width: 0;
+  min-height: 92px;
   margin: 0;
   padding: 10px;
   flex-direction: column;
@@ -117,8 +121,6 @@ main.admin-screen {
 }
 
 .admin-menu-button.admin-analysis-button {
-  grid-column: 1 / -1;
-  min-height: 70px;
   border-color: #c9dde3;
   background: #eef6f8;
   color: #285f70;
@@ -142,4 +144,22 @@ main.admin-screen {
 
 .admin-coming-soon .admin-home-button {
   margin-top: 10px;
+}
+
+.admin-menu-button.is-pending {
+  border-color: #d5d9d8;
+  background: #e7eae9;
+  color: #6e7673;
+  box-shadow: none;
+  cursor: default;
+  opacity: 0.82;
+}
+
+.admin-menu-button.is-pending
+  .admin-menu-description {
+  color: #7d8582;
+}
+
+.admin-menu-button.is-pending:active {
+  background: #e7eae9;
 }
