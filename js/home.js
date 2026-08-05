@@ -5,33 +5,90 @@
         lockUI("会員情報を取得中...");
 
         try {
-          // =====================
-          // 会員情報取得
-          // =====================
-          if (!CACHE.members) {
-            const memberData = await apiGet("getMembersByLineId", {
-              lineUserId: CACHE.profile.userId,
-            });
+// =====================
+// 会員情報取得
+// =====================
+if (!CACHE.members) {
+  const memberData =
+    await apiGet(
+      "getMembersByLineId",
+      {
+        lineUserId:
+          CACHE.profile.userId,
+      },
+    );
 
-            CACHE.members = memberData.members || [];
-            CACHE.isAdmin = Boolean(memberData.isAdmin);
-          }
+  if (!memberData.success) {
+    throw new Error(
+      memberData.message ||
+        "会員情報を取得できませんでした",
+    );
+  }
 
-          // =====================
-          // 管理者判定
-          // =====================
-          if (CACHE.isAdmin === null) {
-            try {
-              const adminData = await apiGet("getAdminByLineId", {
-                lineUserId: CACHE.profile.userId,
-              });
+  CACHE.members =
+    memberData.members || [];
 
-              CACHE.isAdmin = Boolean(adminData.success && adminData.isAdmin);
-            } catch (error) {
-              console.error("管理者判定の取得エラー", error);
-              CACHE.isAdmin = false;
-            }
-          }
+  /*
+   * app.jsで管理者情報を取得できていない場合の
+   * 予備処理
+   */
+  if (CACHE.isAdmin === null) {
+    CACHE.isAdmin =
+      Boolean(
+        memberData.isAdmin,
+      );
+  }
+
+  if (
+    !CACHE.admin &&
+    memberData.admin
+  ) {
+    CACHE.admin =
+      memberData.admin;
+  }
+}
+
+
+// =====================
+// 管理者情報の予備取得
+// =====================
+if (
+  CACHE.isAdmin === null ||
+  (
+    CACHE.isAdmin &&
+    !CACHE.admin
+  )
+) {
+  try {
+    const adminData =
+      await apiGet(
+        "getAdminByLineId",
+        {
+          lineUserId:
+            CACHE.profile.userId,
+        },
+      );
+
+    CACHE.isAdmin =
+      Boolean(
+        adminData.success &&
+        adminData.isAdmin,
+      );
+
+    CACHE.admin =
+      CACHE.isAdmin
+        ? adminData.admin
+        : null;
+  } catch (error) {
+    console.error(
+      "管理者判定の取得エラー",
+      error,
+    );
+
+    CACHE.isAdmin = false;
+    CACHE.admin = null;
+  }
+}
 
           // =====================
           // 分析ファイル一覧取得
