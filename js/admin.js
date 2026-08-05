@@ -194,6 +194,14 @@ function openAdminSection(
     return;
   }
 
+  if (
+  sectionName ===
+  "schedule"
+) {
+  showAdminSchedule();
+  return;
+}
+
   const sectionLabels = {
     schedule:
       "スケジュール管理",
