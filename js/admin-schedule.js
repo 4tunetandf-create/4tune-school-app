@@ -3,12 +3,16 @@
 // =======================
 const ADMIN_SCHEDULE_STATE = {
   data: null,
+
   currentMonth:
     new Date(
       new Date().getFullYear(),
       new Date().getMonth(),
       1,
     ),
+
+  // D：ダッシュ、S：スプリント
+  selectedCourseGroup: "D",
 };
 
 
@@ -130,33 +134,58 @@ function renderAdminSchedule() {
       "0",
     );
 
+  const courseGroup =
+    ADMIN_SCHEDULE_STATE
+      .selectedCourseGroup;
+
   const schedules =
     (
       ADMIN_SCHEDULE_STATE
         .data?.schedules || []
     ).filter(
       function (schedule) {
-        return schedule.date.startsWith(
-          monthPrefix,
+        return (
+          schedule.date.startsWith(
+            monthPrefix,
+          ) &&
+          String(schedule.classId)
+            .toUpperCase()
+            .startsWith(courseGroup)
         );
       },
     );
 
-  const listHtml =
-    schedules.length
-      ? schedules
-          .map(
-            createAdminScheduleItemHtml,
-          )
-          .join("")
-      : `
-        <div class="admin-schedule-empty">
-          この月の予定はありません
-        </div>
-      `;
+  /*
+   * 通常・雨天・休講を上部、
+   * 振替可を下部へ配置
+   */
+  const normalSchedules =
+    schedules.filter(
+      function (schedule) {
+        return (
+          schedule.type !==
+          "振替可"
+        );
+      },
+    );
+
+  const transferSchedules =
+    schedules.filter(
+      function (schedule) {
+        return (
+          schedule.type ===
+          "振替可"
+        );
+      },
+    );
 
   status.innerHTML = `
-    <div class="admin-page">
+    <div
+      class="
+        admin-page
+        admin-schedule-page
+      "
+    >
 
       <div class="admin-schedule-toolbar">
 
@@ -176,6 +205,52 @@ function renderAdminSchedule() {
 
       </div>
 
+      <div
+        class="admin-course-tabs"
+        role="tablist"
+        aria-label="コース選択"
+      >
+
+        <button
+          class="
+            admin-course-tab
+            ${
+              courseGroup === "D"
+                ? "is-active"
+                : ""
+            }
+          "
+          type="button"
+          role="tab"
+          aria-selected="${
+            courseGroup === "D"
+          }"
+          onclick="changeAdminCourseGroup('D')"
+        >
+          ダッシュ
+        </button>
+
+        <button
+          class="
+            admin-course-tab
+            ${
+              courseGroup === "S"
+                ? "is-active"
+                : ""
+            }
+          "
+          type="button"
+          role="tab"
+          aria-selected="${
+            courseGroup === "S"
+          }"
+          onclick="changeAdminCourseGroup('S')"
+        >
+          スプリント
+        </button>
+
+      </div>
+
       <button
         class="admin-schedule-add"
         type="button"
@@ -184,39 +259,94 @@ function renderAdminSchedule() {
         ＋ 新しい予定を登録
       </button>
 
-      <section class="card">
+      <div class="admin-schedule-month">
 
-        <div class="admin-schedule-month">
+        <button
+          type="button"
+          aria-label="前の月"
+          onclick="changeAdminScheduleMonth(-1)"
+        >
+          ◀
+        </button>
 
-          <button
-            type="button"
-            aria-label="前の月"
-            onclick="changeAdminScheduleMonth(-1)"
-          >
-            ◀
-          </button>
-
-          <div class="admin-schedule-month-label">
-            ${year}年${month}月
-          </div>
-
-          <button
-            type="button"
-            aria-label="次の月"
-            onclick="changeAdminScheduleMonth(1)"
-          >
-            ▶
-          </button>
-
+        <div class="admin-schedule-month-label">
+          ${year}年${month}月
         </div>
 
-        <div class="admin-schedule-list">
-          ${listHtml}
-        </div>
+        <button
+          type="button"
+          aria-label="次の月"
+          onclick="changeAdminScheduleMonth(1)"
+        >
+          ▶
+        </button>
 
-      </section>
+      </div>
+
+      <div class="admin-schedule-scroll">
+
+        ${createAdminScheduleSectionHtml(
+          "通常レッスン",
+          normalSchedules,
+          false,
+        )}
+
+        ${createAdminScheduleSectionHtml(
+          "振替レッスン",
+          transferSchedules,
+          true,
+        )}
+
+      </div>
 
     </div>
+  `;
+}
+
+
+// =======================
+// 通常・振替セクション
+// =======================
+function createAdminScheduleSectionHtml(
+  title,
+  schedules,
+  isTransfer,
+) {
+  const listHtml =
+    schedules.length
+      ? schedules
+          .map(
+            createAdminScheduleItemHtml,
+          )
+          .join("")
+      : `
+        <div class="admin-schedule-empty">
+          予定はありません
+        </div>
+      `;
+
+  return `
+    <section class="admin-schedule-section">
+
+      <h3
+        class="
+          admin-schedule-section-title
+          ${
+            isTransfer
+              ? "is-transfer"
+              : ""
+          }
+        "
+      >
+        ${escapeHtml(title)}
+        （${schedules.length}件）
+      </h3>
+
+      <div class="admin-schedule-list">
+        ${listHtml}
+      </div>
+
+    </section>
   `;
 }
 
@@ -245,43 +375,41 @@ function createAdminScheduleItemHtml(
       "
     >
 
-      <div class="admin-schedule-item-head">
-
-        <div class="admin-schedule-date">
-          ${escapeHtml(
-            formatAdminScheduleDate(
-              schedule.date,
-            ),
-          )}
-        </div>
-
-        <span class="admin-schedule-type">
-          ${escapeHtml(schedule.type)}
-        </span>
-
-      </div>
-
-      <div class="admin-schedule-class">
+      <div class="admin-schedule-date">
         ${escapeHtml(
-          schedule.className ||
-          schedule.classId,
+          formatAdminScheduleDate(
+            schedule.date,
+          ),
         )}
       </div>
 
-      <p class="admin-schedule-detail">
-        ${escapeHtml(schedule.startTime)}
-        ～
-        ${escapeHtml(schedule.endTime)}
-      </p>
+      <div class="admin-schedule-content">
 
-      <p class="admin-schedule-detail">
-        ${escapeHtml(schedule.place)}
-      </p>
+        <div class="admin-schedule-class">
+          ${escapeHtml(
+            schedule.className ||
+            schedule.classId,
+          )}
+
+          <span class="admin-schedule-type">
+            ${escapeHtml(schedule.type)}
+          </span>
+        </div>
+
+        <p class="admin-schedule-detail">
+          ${escapeHtml(schedule.startTime)}
+          ～
+          ${escapeHtml(schedule.endTime)}
+          ／
+          ${escapeHtml(schedule.place)}
+        </p>
+
+      </div>
 
       <button
         class="admin-schedule-edit"
         type="button"
-        onclick="showAdminScheduleForm('${escapeHtml(schedule.scheduleId)}')"
+        onclick="showAdminScheduleForm('${schedule.scheduleId}')"
       >
         編集
       </button>
@@ -324,12 +452,33 @@ function formatAdminScheduleDate(
 
   return (
     Number(parts[1]) +
-    "月" +
+    "/" +
     Number(parts[2]) +
-    "日（" +
+    "（" +
     weekDays[date.getDay()] +
     "）"
   );
+}
+
+
+// =======================
+// ダッシュ・スプリント切替
+// =======================
+function changeAdminCourseGroup(
+  courseGroup,
+) {
+  if (
+    courseGroup !== "D" &&
+    courseGroup !== "S"
+  ) {
+    return;
+  }
+
+  ADMIN_SCHEDULE_STATE
+    .selectedCourseGroup =
+    courseGroup;
+
+  renderAdminSchedule();
 }
 
 
@@ -390,8 +539,42 @@ function showAdminScheduleForm(
     return;
   }
 
+  /*
+   * 編集対象に合わせて
+   * D・Sタブも切り替える
+   */
+  if (schedule) {
+    const firstCharacter =
+      String(schedule.classId)
+        .toUpperCase()
+        .charAt(0);
+
+    if (
+      firstCharacter === "D" ||
+      firstCharacter === "S"
+    ) {
+      ADMIN_SCHEDULE_STATE
+        .selectedCourseGroup =
+        firstCharacter;
+    }
+  }
+
+  const courseGroup =
+    ADMIN_SCHEDULE_STATE
+      .selectedCourseGroup;
+
   const classes =
-    data.classes || [];
+    (data.classes || []).filter(
+      function (classItem) {
+        return String(
+          classItem.classId,
+        )
+          .toUpperCase()
+          .startsWith(
+            courseGroup,
+          );
+      },
+    );
 
   const scheduleTypes =
     data.scheduleTypes || [];
@@ -501,7 +684,11 @@ function showAdminScheduleForm(
           ${
             schedule
               ? "予定を編集"
-              : "予定を登録"
+              : (
+                  courseGroup === "D"
+                    ? "ダッシュの予定を登録"
+                    : "スプリントの予定を登録"
+                )
           }
         </h2>
 
@@ -608,7 +795,7 @@ function showAdminScheduleForm(
 
 
 // =======================
-// クラス変更時に標準時間を反映
+// クラス変更時に標準時間反映
 // =======================
 function changeAdminScheduleClass() {
   const classId =
@@ -678,7 +865,7 @@ function formatDateForAdminInput(
 
 
 // =======================
-// 登録・編集を送信
+// 登録・編集送信
 // =======================
 async function submitAdminSchedule() {
   const scheduleId =
@@ -789,14 +976,16 @@ async function submitAdminSchedule() {
       );
     }
 
-    /*
-     * 一般会員用と管理者用の
-     * キャッシュを破棄する
-     */
     CACHE.schedules = null;
 
     ADMIN_SCHEDULE_STATE.data =
       null;
+
+    ADMIN_SCHEDULE_STATE
+      .selectedCourseGroup =
+      String(classId)
+        .toUpperCase()
+        .charAt(0);
 
     const selectedDate =
       new Date(
