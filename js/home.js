@@ -218,24 +218,6 @@ const adminButtonHtml =
     `;
       }
 
-      function showAdminPlaceholder() {
-        if (!CACHE.isAdmin) {
-          return;
-        }
-
-        document
-          .getElementById("status")
-          .classList.remove("home-screen", "analysis-screen", "schedule-screen");
-
-        document.getElementById("status").innerHTML = `
-          <section class="card admin-placeholder-card">
-            <h2>管理者画面</h2>
-            <p class="muted">管理者機能は現在準備中です</p>
-            <button class="secondary" onclick="renderHome()">ホームへ戻る</button>
-          </section>
-        `;
-      }
-
       // =======================
       // 動作分析結果一覧の作成
       // =======================
