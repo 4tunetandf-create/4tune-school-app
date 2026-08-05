@@ -27,9 +27,16 @@ const ADMIN_ROLE = {
         isAdmin: null,
         admin: null,
 
-        // 分析ファイル一覧
-        analysisMembers: null,
-        analysisError: null,
+// 一般会員用の分析ファイル一覧
+analysisMembers: null,
+analysisError: null,
+
+// 管理者用の全会員分析一覧
+adminAnalysisMembers: null,
+
+// member：一般会員
+// admin：管理者
+analysisViewMode: "member",
 
         // 読み込み済みの分析データ
         analysisData: {},
