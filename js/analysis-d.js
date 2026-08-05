@@ -29,7 +29,7 @@
         } catch (error) {
           console.error(error);
           alert(error.message || "Dコース分析結果を読み込めませんでした");
-          renderHome();
+returnFromAnalysisResult();
         } finally {
           unlockUI();
         }
