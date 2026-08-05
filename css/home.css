@@ -60,21 +60,6 @@ main.home-screen {
         white-space: nowrap;
       }
 
-      .admin-placeholder-card {
-        max-width: 420px;
-        margin: 20vh auto 0;
-        text-align: center;
-      }
-
-      .admin-placeholder-card h2 {
-        color: #31584f;
-      }
-
-      .admin-placeholder-card button {
-        width: 100%;
-        margin: 8px 0 0;
-      }
-
       .home-member-row {
         display: flex;
         align-items: center;
