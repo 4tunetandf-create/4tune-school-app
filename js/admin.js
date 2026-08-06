@@ -1,4 +1,67 @@
 // =======================
+// 会員登録用コース一覧
+// =======================
+const REGISTRATION_COURSES = [
+  {
+    value: "S001",
+    label: "S001",
+  },
+  {
+    value: "S002",
+    label: "S002",
+  },
+  {
+    value: "D001",
+    label: "D001",
+  },
+  {
+    value: "D002",
+    label: "D002",
+  },
+];
+
+
+// =======================
+// コース選択肢HTML
+// =======================
+function createRegistrationCourseOptionsHtml(
+  selectedCourseId = "",
+) {
+  const placeholderHtml = `
+    <option value="">
+      コースを選択
+    </option>
+  `;
+
+  const optionsHtml =
+    REGISTRATION_COURSES
+      .map(
+        function (course) {
+          const selected =
+            course.value ===
+            selectedCourseId
+              ? "selected"
+              : "";
+
+          return `
+            <option
+              value="${escapeHtml(course.value)}"
+              ${selected}
+            >
+              ${escapeHtml(course.label)}
+            </option>
+          `;
+        },
+      )
+      .join("");
+
+  return (
+    placeholderHtml +
+    optionsHtml
+  );
+}
+
+// =======================
 // 管理者ホーム
 // =======================
 function showAdminHome() {
