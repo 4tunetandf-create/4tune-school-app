@@ -1,46 +1,118 @@
 // =======================
-// コース選択肢HTML
+// コース選択カードHTML
 // =======================
-function createRegistrationCourseOptionsHtml(
+function createRegistrationCourseCardsHtml(
   selectedCourseId = "",
 ) {
-  const placeholderHtml = `
-    <option value="">
-      コースを選択
-    </option>
-  `;
-
   const courses =
     CACHE.adminRegistrationData
       ?.courses || [];
 
-  const optionsHtml =
-    courses
-      .map(
-        function (course) {
-          const selected =
-            course.classId ===
-            selectedCourseId
-              ? "selected"
-              : "";
+  if (!courses.length) {
+    return `
+      <p class="registration-course-empty">
+        選択できるコースがありません
+      </p>
+    `;
+  }
 
-          return `
-            <option
-              value="${escapeHtml(course.classId)}"
-              ${selected}
-            >
-              ${escapeHtml(course.className)}
-              （${escapeHtml(course.classId)}）
-            </option>
-          `;
-        },
-      )
-      .join("");
+  return `
+    <div class="registration-course-picker">
+      ${courses
+        .map(
+          function (course) {
+            const selected =
+              course.classId ===
+              selectedCourseId;
 
-  return (
-    placeholderHtml +
-    optionsHtml
+            return `
+              <button
+                class="registration-course-card${selected ? " is-selected" : ""}"
+                type="button"
+                data-course-id="${escapeHtml(course.classId)}"
+                aria-pressed="${selected ? "true" : "false"}"
+                onclick="selectRegistrationCourse(this)"
+              >
+                <span class="registration-course-check" aria-hidden="true">
+                  ${selected ? "✓" : ""}
+                </span>
+                <span class="registration-course-name">
+                  ${escapeHtml(course.className)}
+                </span>
+                <span class="registration-course-id">
+                  ${escapeHtml(course.classId)}
+                </span>
+              </button>
+            `;
+          },
+        )
+        .join("")}
+    </div>
+  `;
+}
+
+
+// =======================
+// コースカード選択
+// =======================
+function selectRegistrationCourse(
+  button,
+) {
+  const container =
+    button.closest(
+      ".registration-course-field",
+    );
+
+  if (!container) {
+    return;
+  }
+
+  const hiddenInput =
+    container.querySelector(
+      ".registration-course-value",
+    );
+
+  const buttons =
+    container.querySelectorAll(
+      ".registration-course-card",
+    );
+
+  buttons.forEach(
+    function (courseButton) {
+      const selected =
+        courseButton === button;
+
+      courseButton.classList.toggle(
+        "is-selected",
+        selected,
+      );
+
+      courseButton.setAttribute(
+        "aria-pressed",
+        selected
+          ? "true"
+          : "false",
+      );
+
+      const check =
+        courseButton.querySelector(
+          ".registration-course-check",
+        );
+
+      if (check) {
+        check.textContent =
+          selected
+            ? "✓"
+            : "";
+      }
+    },
   );
+
+  if (hiddenInput) {
+    hiddenInput.value =
+      button.dataset.courseId ||
+      "";
+  }
 }
 
 // =======================
@@ -528,9 +600,9 @@ function createPendingRegistrationHtml(
             .map(
               function (member) {
                 return `
-                  <label>
+                  <div class="admin-registration-member-item">
 
-                    <span>
+                    <span class="admin-registration-member-name">
                       ${
                         escapeHtml(
                           member.memberName,
@@ -538,23 +610,29 @@ function createPendingRegistrationHtml(
                       }
                     </span>
 
-                    <select
-                      class="admin-approval-class"
+                    <div class="registration-course-field">
+                      <input
+                        class="
+                          admin-approval-class
+                          registration-course-value
+                        "
+                        type="hidden"
                       data-member-id="${
                         escapeHtml(
                           member.memberId,
                         )
                       }"
-                    >
+                        value="${escapeHtml(member.classId || "")}"
+                      >
                       ${
-                        createRegistrationCourseOptionsHtml(
+                        createRegistrationCourseCardsHtml(
                           member.classId ||
                             "",
                         )
                       }
-                    </select>
+                    </div>
 
-                  </label>
+                  </div>
                 `;
               },
             )
@@ -681,26 +759,44 @@ function createAdminPreChildRowHtml(
   removable = true,
 ) {
   return `
-    <div class="admin-pre-child-row">
+    <div class="admin-pre-child-row${removable ? " has-remove" : ""}">
 
-      <input
-        class="admin-pre-child-name"
-        placeholder="子どもの氏名"
-      >
+      <div class="admin-pre-child-content">
 
-      <select
-        class="admin-pre-child-class"
-      >
-        ${
-          createRegistrationCourseOptionsHtml()
-        }
-      </select>
+        <input
+          class="admin-pre-child-name"
+          placeholder="子どもの氏名"
+        >
+
+        <p class="admin-pre-course-label">
+          所属コース
+        </p>
+
+        <div class="registration-course-field">
+          <input
+            class="
+              admin-pre-child-class
+              registration-course-value
+            "
+            type="hidden"
+            value=""
+          >
+
+          ${
+            createRegistrationCourseCardsHtml()
+          }
+        </div>
+
+      </div>
 
       ${
         removable
           ? `
             <button
-              class="secondary"
+              class="
+                secondary
+                admin-pre-child-remove
+              "
               type="button"
               onclick="
                 this
