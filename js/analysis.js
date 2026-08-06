@@ -312,6 +312,14 @@ function renderStickViewer(data) {
           戻る
         </button>
 
+        <button
+          class="analysis-compare-start-button"
+          type="button"
+          onclick="showAnalysisComparisonPicker()"
+        >
+          比較
+        </button>
+
         <div
           class="analysis-date-tabs"
           role="tablist"
@@ -1002,6 +1010,13 @@ function renderStickViewer(data) {
 // 分析結果を閉じる
 // =======================
 function closeAnalysisResult() {
+  if (
+    typeof destroyAnalysisComparison ===
+    "function"
+  ) {
+    destroyAnalysisComparison();
+  }
+
   if (stickViewer) {
     stickViewer.destroy();
     stickViewer = null;
