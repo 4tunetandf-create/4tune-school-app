@@ -556,21 +556,21 @@ function createPendingRegistrationHtml(
                       }
                     </span>
 
-                    <input
+                    <select
                       class="admin-approval-class"
                       data-member-id="${
                         escapeHtml(
                           member.memberId,
                         )
                       }"
-                      placeholder="所属コースID"
-                      value="${
-                        escapeHtml(
+                    >
+                      ${
+                        createRegistrationCourseOptionsHtml(
                           member.classId ||
                             "",
                         )
-                      }"
-                    >
+                      }
+                    </select>
 
                   </label>
                 `;
@@ -706,10 +706,13 @@ function createAdminPreChildRowHtml(
         placeholder="子どもの氏名"
       >
 
-      <input
+      <select
         class="admin-pre-child-class"
-        placeholder="所属コースID"
       >
+        ${
+          createRegistrationCourseOptionsHtml()
+        }
+      </select>
 
       ${
         removable
