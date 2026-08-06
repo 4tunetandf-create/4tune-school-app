@@ -1,52 +1,207 @@
 body {
-        font-family: sans-serif;
-        margin: 0;
-        background: #f5f7f6;
-        color: #222;
-      }
+  margin: 0;
+  background: #f5f7f6;
+  color: #222;
+  font-family: sans-serif;
+}
 
-      main {
-        max-width: 560px;
-        margin: 0 auto;
-        padding: 20px;
-      }
+main {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 20px;
+}
 
-      .card {
-        background: #fff;
-        border-radius: 12px;
-        padding: 16px;
-        margin-bottom: 14px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-      }
+.card {
+  margin-bottom: 14px;
+  padding: 16px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow:
+    0 2px 8px
+    rgba(0, 0, 0, 0.06);
+}
 
-      input,
-      button {
-        box-sizing: border-box;
-        font: inherit;
-      }
+input,
+button {
+  box-sizing: border-box;
+  font: inherit;
+}
 
-      input {
-        width: 100%;
-        padding: 11px;
-        margin: 5px 0 10px;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-      }
+input {
+  width: 100%;
+  margin: 5px 0 10px;
+  padding: 11px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
 
-      button {
-        padding: 10px 14px;
-        margin: 4px 2px;
-        border: 0;
-        border-radius: 8px;
-        background: #4f9c8a;
-        color: #fff;
-        cursor: pointer;
-      }
+button {
+  margin: 4px 2px;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 8px;
+  background: #4f9c8a;
+  color: #fff;
+  cursor: pointer;
+}
 
-      button.secondary {
-        background: #777;
-      }
+button.secondary {
+  background: #777;
+}
 
-      .muted {
-        color: #666;
-      }
+.muted {
+  color: #666;
+}
+
+
+/* =======================
+   初回登録画面
+======================= */
+
+main.registration-screen {
+  box-sizing: border-box;
+  display: grid;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 14px;
+  place-items: center;
+}
+
+.registration-card {
+  box-sizing: border-box;
+  width: min(100%, 460px);
+  margin: 0;
+}
+
+.registration-card h2 {
+  margin: 0 0 8px;
+  color: #31584f;
+  text-align: center;
+}
+
+.registration-intro {
+  margin: 0 0 12px;
+  text-align: center;
+}
+
+.registration-choice {
+  display: grid;
+  grid-template-columns:
+    repeat(
+      2,
+      minmax(0, 1fr)
+    );
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.registration-choice-button {
+  min-height: 50px;
+  margin: 0;
+  padding: 8px;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.registration-choice-button.is-active {
+  background: #4f9c8a;
+  box-shadow:
+    0 2px 7px
+    rgba(49, 88, 79, 0.18);
+}
+
+.registration-panel[hidden] {
+  display: none;
+}
+
+.registration-panel label {
+  display: block;
+  color: #31584f;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.registration-panel
+  > button:last-child {
+  width: 100%;
+  min-height: 44px;
+  margin: 8px 0 0;
+}
+
+.registration-panel h3 {
+  margin: 12px 0 6px;
+  color: #31584f;
+  font-size: 15px;
+}
+
+
+/* =======================
+   子どもの入力欄
+======================= */
+
+.childRow {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr)
+    40px;
+  align-items: center;
+  gap: 6px;
+}
+
+.childRow:only-child {
+  grid-template-columns:
+    minmax(0, 1fr);
+}
+
+.childRow input {
+  margin-bottom: 6px;
+}
+
+.child-remove-button {
+  width: 40px;
+  height: 40px;
+  margin: 0 0 6px;
+  padding: 0;
+  font-size: 20px;
+}
+
+.registration-add-child {
+  width: 100%;
+  margin: 4px 0;
+}
+
+
+/* =======================
+   承認待機画面
+======================= */
+
+.registration-pending-card {
+  text-align: center;
+}
+
+.registration-pending-icon {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 12px;
+  place-items: center;
+  border-radius: 50%;
+  background: #e4f3ef;
+  color: #327766;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.registration-pending-card p {
+  margin: 7px 0;
+  line-height: 1.55;
+}
+
+.registration-pending-note {
+  margin-top: 16px !important;
+  padding: 10px;
+  border-radius: 8px;
+  background: #f4f7f6;
+  color: #5d6864;
+  font-size: 13px;
+}
