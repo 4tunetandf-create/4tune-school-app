@@ -496,3 +496,26 @@ main.admin-screen {
     width: 100%;
   }
 }
+
+/* =======================
+   会員登録用コース選択
+======================= */
+
+.admin-registration-card select {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 40px;
+  margin: 3px 0;
+  padding: 9px 32px 9px 9px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: #fff;
+  color: #294b43;
+  font: inherit;
+}
+
+.admin-registration-card select:focus {
+  border-color: #4f9c8a;
+  outline: 2px solid
+    rgba(79, 156, 138, 0.18);
+}
