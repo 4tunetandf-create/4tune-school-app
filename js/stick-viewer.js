@@ -62,6 +62,10 @@
 
           this.centerX = 0;
           this.centerY = 0;
+
+          /* 比較モード用 */
+          this.transparentBackground = false;
+          this.informationVisible = true;
         }
 
         // =====================
@@ -398,9 +402,12 @@
         draw() {
           const context = this.context;
 
-          context.fillStyle = "#ffffff";
+          context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-          context.fillRect(0, 0, this.canvas.width, this.canvas.height);
+          if (!this.transparentBackground) {
+            context.fillStyle = "#ffffff";
+            context.fillRect(0, 0, this.canvas.width, this.canvas.height);
+          }
 
           const frame = this.frames[this.frameIndex];
 
@@ -471,7 +478,9 @@
             context.stroke();
           });
 
-          this.drawInformationOverlay();
+          if (this.informationVisible) {
+            this.drawInformationOverlay();
+          }
 
           if (typeof this.onFrameChange === "function") {
             this.onFrameChange(this.frameIndex);
