@@ -1,27 +1,4 @@
 // =======================
-// 会員登録用コース一覧
-// =======================
-const REGISTRATION_COURSES = [
-  {
-    value: "S001",
-    label: "S001",
-  },
-  {
-    value: "S002",
-    label: "S002",
-  },
-  {
-    value: "D001",
-    label: "D001",
-  },
-  {
-    value: "D002",
-    label: "D002",
-  },
-];
-
-
-// =======================
 // コース選択肢HTML
 // =======================
 function createRegistrationCourseOptionsHtml(
@@ -33,22 +10,27 @@ function createRegistrationCourseOptionsHtml(
     </option>
   `;
 
+  const courses =
+    CACHE.adminRegistrationData
+      ?.courses || [];
+
   const optionsHtml =
-    REGISTRATION_COURSES
+    courses
       .map(
         function (course) {
           const selected =
-            course.value ===
+            course.classId ===
             selectedCourseId
               ? "selected"
               : "";
 
           return `
             <option
-              value="${escapeHtml(course.value)}"
+              value="${escapeHtml(course.classId)}"
               ${selected}
             >
-              ${escapeHtml(course.label)}
+              ${escapeHtml(course.className)}
+              （${escapeHtml(course.classId)}）
             </option>
           `;
         },
