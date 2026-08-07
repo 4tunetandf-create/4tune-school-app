@@ -371,7 +371,7 @@ function renderStickViewer(data) {
 
       </div>
 
-      <div
+            <div
         class="analysis-tabs"
         role="tablist"
         aria-label="分析メニュー"
@@ -414,6 +414,18 @@ function renderStickViewer(data) {
           onclick="switchAnalysisTab('graphs')"
         >
           グラフ
+        </button>
+
+        <button
+          id="analysisTabButton-comments"
+          class="analysis-tab-button"
+          type="button"
+          role="tab"
+          aria-selected="false"
+          aria-controls="analysisTab-comments"
+          onclick="switchAnalysisTab('comments')"
+        >
+          コメント
         </button>
 
       </div>
@@ -636,7 +648,7 @@ function renderStickViewer(data) {
           <div
             class="basic-info-item"
           >
-            <div
+                      <div
               class="basic-info-label"
             >
               滞空時間
@@ -852,6 +864,19 @@ function renderStickViewer(data) {
 
       </div>
 
+      <div
+        id="analysisTab-comments"
+        class="analysis-tab-panel"
+        role="tabpanel"
+        aria-labelledby="analysisTabButton-comments"
+        hidden
+      >
+        ${createAnalysisCommentPanelHtml(
+          data.fileId,
+          "analysisCommentPanel",
+        )}
+      </div>
+
     </section>
   `;
 
@@ -1044,6 +1069,7 @@ function switchAnalysisTab(
     "controls",
     "basic",
     "graphs",
+    "comments",
   ];
 
   if (
@@ -1090,6 +1116,14 @@ function switchAnalysisTab(
   }
 
   updateStickGraphOverlay();
+
+  if (
+    tabName === "comments"
+  ) {
+    loadAnalysisComment(
+      "analysisCommentPanel",
+    );
+  }
 
   if (
     tabName === "graphs" &&
@@ -1213,8 +1247,7 @@ function switchAnalysisGraphPart(
     jointAngleGraph.setData(
       currentAnalysisData
         .jointAngles?.[partName],
-
-      currentAnalysisData.fps,
+        currentAnalysisData.fps,
     );
 
     if (stickViewer) {
@@ -1428,5 +1461,326 @@ function changeStickSpeed(index) {
   if (display) {
     display.textContent =
       selectedSpeed + "倍";
+  }
+}
+
+
+// =======================
+// 分析コメント
+// =======================
+function createAnalysisCommentPanelHtml(
+  fileId,
+  panelId,
+) {
+  return `
+    <section
+      id="${panelId}"
+      class="analysis-comment-card"
+      data-file-id="${escapeHtml(fileId)}"
+      data-loaded="false"
+    >
+      <div class="analysis-comment-head">
+        <strong>スクールからのコメント</strong>
+        ${CACHE.isAdmin ? `
+          <button
+            class="analysis-comment-edit-button"
+            type="button"
+            onclick="startAnalysisCommentEdit('${panelId}')"
+            hidden
+          >
+            編集
+          </button>
+        ` : ""}
+      </div>
+
+      <p class="analysis-comment-message">
+        コメントを読み込み中...
+      </p>
+
+      <div class="analysis-comment-editor" hidden>
+        <textarea
+          maxlength="2000"
+          aria-label="分析コメント"
+          placeholder="保護者へ表示するコメントを入力"
+        ></textarea>
+
+        <div class="analysis-comment-editor-actions">
+          <button
+            class="secondary"
+            type="button"
+            onclick="cancelAnalysisCommentEdit('${panelId}')"
+          >
+            キャンセル
+          </button>
+
+          <button
+            type="button"
+            onclick="saveAnalysisComment('${panelId}')"
+          >
+            保存
+          </button>
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+
+async function loadAnalysisComment(
+  panelId,
+  force = false,
+) {
+  const panel =
+    document.getElementById(panelId);
+
+  if (
+    !panel ||
+    (
+      !force &&
+      panel.dataset.loaded === "true"
+    )
+  ) {
+    return;
+  }
+
+  const message =
+    panel.querySelector(
+      ".analysis-comment-message",
+    );
+  if (message) {
+    message.textContent =
+      "コメントを読み込み中...";
+  }
+
+  try {
+    const data = await apiGet(
+      "getAnalysisComment",
+      {
+        lineUserId:
+          CACHE.profile.userId,
+        fileId:
+          panel.dataset.fileId,
+      },
+    );
+
+    if (!data.success) {
+      throw new Error(
+        data.message ||
+        "コメントを取得できませんでした",
+      );
+    }
+
+    panel.dataset.comment =
+      String(data.comment || "");
+    panel.dataset.loaded = "true";
+
+    if (message) {
+      message.textContent =
+        panel.dataset.comment ||
+        "コメントはまだありません";
+
+      message.classList.toggle(
+        "is-empty",
+        !panel.dataset.comment,
+      );
+    }
+
+    const editButton =
+      panel.querySelector(
+        ".analysis-comment-edit-button",
+      );
+
+    if (editButton) {
+      editButton.hidden = false;
+
+      editButton.textContent =
+        panel.dataset.comment
+          ? "編集"
+          : "コメントを入力";
+    }
+  } catch (error) {
+    console.error(error);
+
+    if (message) {
+      message.textContent =
+        error.message ||
+        "コメントを取得できませんでした";
+
+      message.classList.add(
+        "is-error",
+      );
+    }
+  }
+}
+
+
+function startAnalysisCommentEdit(
+  panelId,
+) {
+  const panel =
+    document.getElementById(panelId);
+
+  if (!panel || !CACHE.isAdmin) {
+    return;
+  }
+
+  const editor =
+    panel.querySelector(
+      ".analysis-comment-editor",
+    );
+
+  const textarea =
+    editor?.querySelector(
+      "textarea",
+    );
+
+  if (!editor || !textarea) {
+    return;
+  }
+
+  textarea.value =
+    panel.dataset.comment || "";
+
+  editor.hidden = false;
+
+  panel
+    .querySelector(
+      ".analysis-comment-message",
+    )
+    ?.setAttribute(
+      "hidden",
+      "",
+    );
+
+  panel
+    .querySelector(
+      ".analysis-comment-edit-button",
+    )
+    ?.setAttribute(
+      "hidden",
+      "",
+    );
+
+  textarea.focus();
+}
+
+
+function cancelAnalysisCommentEdit(
+  panelId,
+) {
+  const panel =
+    document.getElementById(panelId);
+
+  if (!panel) {
+    return;
+  }
+
+  panel
+    .querySelector(
+      ".analysis-comment-editor",
+    )
+    ?.setAttribute(
+      "hidden",
+      "",
+    );
+
+  panel
+    .querySelector(
+      ".analysis-comment-message",
+    )
+    ?.removeAttribute(
+      "hidden",
+    );
+
+  panel
+    .querySelector(
+      ".analysis-comment-edit-button",
+    )
+    ?.removeAttribute(
+      "hidden",
+    );
+}
+
+
+async function saveAnalysisComment(
+  panelId,
+) {
+  const panel =
+    document.getElementById(panelId);
+
+  const textarea =
+    panel?.querySelector(
+      ".analysis-comment-editor textarea",
+    );
+
+  const saveButton =
+    panel?.querySelector(
+      ".analysis-comment-editor-actions button:last-child",
+    );
+
+  if (
+    !panel ||
+    !textarea ||
+    !CACHE.isAdmin
+  ) {
+    return;
+  }
+
+  if (saveButton) {
+    saveButton.disabled = true;
+
+    saveButton.textContent =
+      "保存中...";
+  }
+
+  try {
+    const data =
+      await apiPost({
+        action:
+          "saveAnalysisComment",
+
+        lineUserId:
+          CACHE.profile.userId,
+
+        fileId:
+          panel.dataset.fileId,
+
+        comment:
+          textarea.value,
+      });
+
+    if (!data.success) {
+      throw new Error(
+        data.message ||
+          "コメントを保存できませんでした",
+      );
+    }
+
+    panel.dataset.loaded =
+      "false";
+
+    cancelAnalysisCommentEdit(
+      panelId,
+    );
+
+    await loadAnalysisComment(
+      panelId,
+      true,
+    );
+  } catch (error) {
+    console.error(error);
+
+    alert(
+      error.message ||
+        "コメントを保存できませんでした",
+    );
+  } finally {
+    if (saveButton) {
+      saveButton.disabled =
+        false;
+
+      saveButton.textContent =
+        "保存";
+    }
   }
 }
